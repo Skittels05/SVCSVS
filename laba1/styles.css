@@ -1,0 +1,41 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body{
+    font-family: Roboto;
+    color: rgba(116, 116, 116, 1);
+    background-color:rgba(245, 245, 245, 1);
+    font-size: 18px;
+}
+header
+{
+    display: flex;
+    justify-content: space-between;
+    margin: 0 74px;
+}
+.header{
+    margin-top: 41px;
+    margin-bottom: 13px;
+}
+.email
+{
+    color:black;
+}
+nav
+{
+    margin-right: 30px;
+}
+.nav{
+    margin-top: 31px;
+    list-style: none;
+    display: flex;
+    gap: 24px;
+}
+ul a {
+    text-decoration: none; 
+    color:black;
+    font-weight: bold;
+}
