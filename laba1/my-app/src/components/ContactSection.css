@@ -1,0 +1,66 @@
+.contact {
+  margin-top: 13rem;
+  background-color: black;
+  display: flex;
+  justify-content: space-between;
+  padding-top: 11.5rem;
+  padding-inline: 12rem;
+}
+
+.bold4 {
+  color: white;
+  font-weight: bold;
+  font-size: 9.4rem;
+  text-transform: uppercase;
+}
+
+.regular11 {
+  color: white;
+  font-weight: normal;
+  font-size: 6.6rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-left: 2.6rem;
+  position: relative;
+  top: -0.5rem;
+}
+
+.contact p {
+  margin-top: 2.6rem;
+  font-size: 2.1rem;
+  line-height: 2.52rem;
+  margin-bottom: 9.3rem;
+  color: white;
+}
+
+.circle3 {
+  width: 14rem;
+  height: 14rem;
+  background-color: white;
+  color: black;
+  display: flex;
+  justify-content: center;
+  border-radius: 50%;
+  text-align: center;
+  font-size: 1.4rem;
+  font-weight: normal;
+  line-height: 2rem;
+  letter-spacing: 0.1rem;
+  text-transform: uppercase;
+  align-items: center;
+  margin-right: -0.7rem;
+  margin-top: -0.5rem;
+  border: none;
+}
+
+.circle3:hover {
+  opacity: 50%;
+}
+
+@media (max-width: 560px) {
+  .contact {
+    flex-wrap: wrap;
+    justify-content: center;
+    padding-bottom: 5rem;
+  }
+}

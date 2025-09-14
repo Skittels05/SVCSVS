@@ -93,7 +93,12 @@ footer h5 {
     margin-top: 3rem;
     font-size: 1.7rem;
 }
-
+@media (max-width:768px) {
+    .sitemapf
+    {
+        display: none;
+    }
+}
 @media (max-width: 560px) {
     footer {
         display: flex;

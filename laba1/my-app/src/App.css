@@ -1,16 +1,22 @@
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 html {
-    font-size: 10px;
+  font-size: 10px;
 }
 
 body {
-    font-family: 'Roboto', sans-serif;
-    color: rgba(116, 116, 116, 1);
-    background-color: rgb(255, 255, 255);
-    font-size: 1.8rem;
+  font-family: Roboto, sans-serif;
+  color: rgba(116, 116, 116, 1);
+  background-color: rgb(255, 255, 255);
+  font-size: 1.8rem;
+}
+
+@media (max-width: 320px) {
+  html {
+    font-size: 8px;
+  }
 }

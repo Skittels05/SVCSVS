@@ -1,0 +1,76 @@
+.facts-section {
+  margin-top: 11.5rem;
+  text-align: center;
+}
+
+.facts-section h2 {
+  text-transform: uppercase;
+  display: flex;
+  gap: 1.5rem;
+  justify-content: center;
+  margin-left: 1.3rem;
+  margin-bottom: 5.6rem;
+}
+
+.bold3 {
+  font-size: 4.8rem;
+  line-height: 5.28rem;
+  font-weight: bold;
+}
+
+.regular8 {
+  font-size: 3.7rem;
+  line-height: 5.28rem;
+  font-weight: normal;
+  letter-spacing: 1px;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(25rem, 1fr));
+  gap: 3rem;
+  text-align: center;
+  margin: 6rem 20% 0;
+  max-width: 120rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.facts img {
+  margin-top: -0.5rem;
+  width: 6rem;
+  height: 6rem;
+}
+
+.facts div {
+  display: flex;
+  justify-content: center;
+}
+
+.facts p {
+  display: flex;
+  flex-direction: column;
+}
+
+.digit {
+  font-size: 5.3rem;
+  line-height: 5rem;
+  color: black;
+  font-weight: bold;
+}
+
+.digit2 {
+  font-size: 4.3rem;
+  line-height: 5rem;
+  color: black;
+  font-weight: bold;
+}
+
+.killer123 {
+  text-align: left;
+}
+
+.regular9 {
+  font-size: 1.9rem;
+  line-height: 2.47rem;
+}
