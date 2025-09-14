@@ -1,13 +1,15 @@
 import './Hero.css';
+import roby from "../images/roby.png"
+import man from "../images/man.png"
 
 function Hero() {
   return (
     <div className="hero">
       <div className="roby">
-        <img src="../images/roby.png" alt="roby" className="name" />
+        <img src={roby} alt="roby" className="name" />
       </div>
       <div className="moto">
-        <img src="../images/man.png" alt="Мужик" className="man" />
+        <img src={man} alt="Мужик" className="man" />
         <div>
           <h1>
             <span className="x1">“</span>
