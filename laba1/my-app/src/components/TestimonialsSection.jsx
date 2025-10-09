@@ -4,16 +4,18 @@ import testimonialsData from '../data/testimonials.json';
 
 const TestimonialsSection = () => {
   const [testimonials, setTestimonials] = useState([]);
-  const [selectedItems, setSelectedItems] = useState([]);
+  const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
     setTestimonials(testimonialsData);
   }, []);
 
-  const handleSelect = (id) => {
-    setSelectedItems((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
-    );
+  const handleNext = () => {
+    setActiveIndex((prev) => (prev + 1) % testimonials.length);
+  };
+
+  const handlePrev = () => {
+    setActiveIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
   };
 
   return (
@@ -23,28 +25,36 @@ const TestimonialsSection = () => {
         <span className="regular6">they</span>
         <span className="bold">think</span>
       </h2>
+      <div className="carousel-controls">
+        <button onClick={handlePrev}>Previous</button>
+        <button onClick={handleNext}>Next</button>
+      </div>
       <section className="cards">
-        {testimonials.map((testimonial) => (
+        {testimonials.map((testimonial, index) => (
           <div
             key={testimonial.id}
-            className={`${testimonial.name.toLowerCase().replace(' ', '')} ${
-              selectedItems.includes(testimonial.id) ? 'selected' : ''
-            }`}
-            onClick={() => handleSelect(testimonial.id)}
+            className={`card ${index === activeIndex ? 'active' : ''}`}
           >
             <p className={testimonial.name === 'Matthew Webster' ? 'quote-w' : 'quote'}>
               {testimonial.quote}
             </p>
-            <img src={require(`../images/${testimonial.img}`)} alt={testimonial.name} />
+            <img
+              src={require(`../images/${testimonial.img}`)}
+              alt={testimonial.name}
+              onError={(e) => (e.target.src = require('../images/placeholder.png'))}
+            />
             <p className="card-name">{testimonial.name}</p>
             <p className="status">{testimonial.status}</p>
           </div>
         ))}
       </section>
       <div className="rectangles">
-        <div className="chosen"></div>
-        {[...Array(4)].map((_, index) => (
-          <div key={index} className="rectangle"></div>
+        {testimonials.map((_, index) => (
+          <div
+            key={index}
+            className={`rectangle ${index === activeIndex ? 'chosen' : ''}`}
+            onClick={() => setActiveIndex(index)}
+          ></div>
         ))}
       </div>
     </section>

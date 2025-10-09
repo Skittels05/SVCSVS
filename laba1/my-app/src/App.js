@@ -1,38 +1,27 @@
 import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
 import Footer from './components/Footer';
-import Hero from './components/Hero';
-import Partners from './components/Partners';
-import AgencySection from './components/AgencySection';
-import WorkSection from './components/WorkSection';
-import WebSection from './components/WebSection';
-import TestimonialsSection from './components/TestimonialsSection';
-import SkillsSection from './components/SkillsSection';
-import FactsSection from './components/FactsSection';
-import BlogSection from './components/BlogSection';
-import ContactSection from './components/ContactSection';
+import HomePage from './pages/HomePage';
+import AboutPage from './pages/AboutPage';
+import BlogPage from './pages/BlogPage';
 import roby from './images/roby.png';
 import './App.css';
 
-class App extends React.Component {
-  render() {
-    return (
+const App = () => {
+  return (
+    <Router>
       <div>
-        <Header logo={roby} /> 
-        <Hero logo={roby} />
-        <Partners />
-        <AgencySection />
-        <WorkSection />
-        <WebSection />
-        <TestimonialsSection />
-        <SkillsSection />
-        <FactsSection />
-        <BlogSection />
-        <ContactSection />
+        <Header logo={roby} />
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/blog" element={<BlogPage />} />
+        </Routes>
         <Footer />
       </div>
-    );
-  }
-}
+    </Router>
+  );
+};
 
 export default App;
