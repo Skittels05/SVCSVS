@@ -56,7 +56,51 @@
   margin-bottom: 2.1rem;
   font-size: 1.8rem;
 }
+.selected {
+  background-color: rgba(0, 0, 0, 0.1);
+}
 
+.add-work {
+  margin-top: 2rem;
+  text-align: center;
+}
+
+.add-work input {
+  margin: 0 1rem;
+  padding: 0.5rem;
+  font-size: 1.6rem;
+}
+
+.add-work button {
+  padding: 0.5rem 1rem;
+  font-size: 1.6rem;
+  text-transform: uppercase;
+  background-color: black;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.add-work button:hover {
+  opacity: 0.7;
+}
+
+.work-images div button {
+  margin: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 1.4rem;
+  text-transform: uppercase;
+  background-color: black;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.work-images div button:hover {
+  opacity: 0.7;
+}
 @media (max-width: 320px) {
   .work-images {
     flex-direction: column;

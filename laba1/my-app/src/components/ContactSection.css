@@ -56,7 +56,51 @@
 .circle3:hover {
   opacity: 50%;
 }
+.add-post {
+  margin-top: 2rem;
+  text-align: center;
+}
 
+.add-post input {
+  margin: 0 1rem;
+  padding: 0.5rem;
+  font-size: 1.6rem;
+}
+
+.add-post button {
+  padding: 0.5rem 1rem;
+  font-size: 1.6rem;
+  text-transform: uppercase;
+  background-color: black;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.add-post button:hover {
+  opacity: 0.7;
+}
+
+.blogs div button {
+  margin: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 1.4rem;
+  text-transform: uppercase;
+  background-color: black;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.blogs div button:hover {
+  opacity: 0.7;
+}
+
+.blogs div.selected {
+  background-color: rgba(0, 0, 0, 0.1);
+}
 @media (max-width: 560px) {
   .contact {
     flex-wrap: wrap;
