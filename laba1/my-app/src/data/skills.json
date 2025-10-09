@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "name": "graphic design",
+    "percentage": 80,
+    "className": "design"
+  },
+  {
+    "id": 2,
+    "name": "lead generation",
+    "percentage": 41,
+    "className": "lead"
+  },
+  {
+    "id": 3,
+    "name": "photoshop",
+    "percentage": 70,
+    "className": "photoshop"
+  },
+  {
+    "id": 4,
+    "name": "illustration",
+    "percentage": 100,
+    "className": "illustration"
+  }
+]

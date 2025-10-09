@@ -1,0 +1,23 @@
+[
+  {
+    "id": 1,
+    "name": "Paige Brennan",
+    "quote": "The public is more familiar with bad design than good design...",
+    "img": "brennan.png",
+    "status": "Webflow Founder"
+  },
+  {
+    "id": 2,
+    "name": "Caitlin Ward",
+    "quote": "The public is more familiar with bad design than good design...",
+    "img": "ward.png",
+    "status": "Webflow Founder"
+  },
+  {
+    "id": 3,
+    "name": "Matthew Webster",
+    "quote": "A designer knows he has achieved perfection not when there is nothing left to add...",
+    "img": "webster.png",
+    "status": "Webflow Founder"
+  }
+]

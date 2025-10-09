@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "img": "medal.svg",
+    "digit": "8",
+    "text": "Years on market",
+    "className": "killer123"
+  },
+  {
+    "id": 2,
+    "img": "image.svg",
+    "digit": "110+",
+    "text": "Projects done"
+  },
+  {
+    "id": 3,
+    "digit": "15",
+    "text": "Hero's member"
+  },
+  {
+    "id": 4,
+    "img": "cup.svg",
+    "digit": "100+",
+    "text": "Cups of coffee"
+  }
+]

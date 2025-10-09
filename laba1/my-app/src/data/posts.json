@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "img": "blog_img1.png",
+    "category": "marketing",
+    "title": "Curating a workplace that inspires all of us",
+    "date": "February 3, 2021",
+    "description": "Detailed description of the workplace curation process."
+  },
+  {
+    "id": 2,
+    "img": "blog_img2.png",
+    "category": "design",
+    "title": "Designers who changed the web with Webflow",
+    "date": "February 25, 2021",
+    "description": "How designers revolutionized web development."
+  },
+  {
+    "id": 3,
+    "img": "blog_img3.png",
+    "category": "code",
+    "title": "Communication between studio departments",
+    "date": "March 9, 2021",
+    "description": "Effective communication strategies for studios."
+  }
+]

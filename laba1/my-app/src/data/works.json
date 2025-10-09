@@ -1,0 +1,38 @@
+[
+  {
+    "id": 1,
+    "img": "bike.png",
+    "title": "Conference",
+    "desc": "Art Direction, Design"
+  },
+  {
+    "id": 2,
+    "img": "ivor.png",
+    "title": "Ivor Application",
+    "desc": "User Interface"
+  },
+  {
+    "id": 3,
+    "img": "moon.png",
+    "title": "Flying to the moon",
+    "desc": "User Experiences"
+  },
+  {
+    "id": 4,
+    "img": "bottle.png",
+    "title": "Magazine",
+    "desc": "Logo, User Interface"
+  },
+  {
+    "id": 5,
+    "img": "white.png",
+    "title": "Black Apple Watch",
+    "desc": "Logo, User Interface"
+  },
+  {
+    "id": 6,
+    "img": "black.png",
+    "title": "Dharma Webfont",
+    "desc": "Branding, Web Design"
+  }
+]
