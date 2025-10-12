@@ -1,11 +1,11 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Header from './components/Header';
-import Footer from './components/Footer';
-import HomePage from './pages/HomePage';
-import AboutPage from './pages/AboutPage';
-import BlogPage from './pages/BlogPage';
-import NotFoundPage from './pages/NotFoundPage';
+import Header from './components/Header/Header';
+import Footer from './components/Footer/Footer';
+import HomePage from './pages/HomePage/HomePage';
+import AboutPage from './pages/AboutPage/AboutPage';
+import BlogPage from './pages/BlogPage/BlogPage';
+import NotFoundPage from './pages/NotFoundPage/NotFoundPage';
 import roby from './images/roby.png';
 import './App.css';
 

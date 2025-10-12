@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import './NotFoundPage.css';
-import placeholder from '../images/placeholder.png';
+import placeholder from '../../images/placeholder.png';
 
 const NotFoundPage = () => {
   const [isButtonHovered, setIsButtonHovered] = useState(false);
