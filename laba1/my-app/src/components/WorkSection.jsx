@@ -28,6 +28,7 @@ const WorkSection = () => {
       setNewWork({ title: '', desc: '' });
     }
   };
+  
 
   const handleDelete = (id) => {
     setWorks((prev) => prev.filter((work) => work.id !== id));

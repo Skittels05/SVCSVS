@@ -54,17 +54,17 @@
 }
 
 .brennan {
-  /* Сохраняем для совместимости */
+ 
 }
 
 .ward {
-  /* Сохраняем для совместимости */
+  
 }
 
 .webster {
   position: relative;
   left: 2rem;
-  /* Сохраняем для совместимости */
+
 }
 
 .quote {
@@ -147,7 +147,7 @@
   border-radius: 50%;
 }
 
-/* Медиа-запросы для отзывчивости */
+
 @media (max-width: 768px) {
   .think {
     margin-top: 2rem;
