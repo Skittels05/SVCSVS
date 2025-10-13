@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './BlogSection.css';
-import Modal from './Modal';
-import postsData from '../data/posts.json';
+import Modal from '../../../components/Modal/Modal';
+import postsData from '../../../data/posts.json';
 
 const BlogSection = () => {
   const [posts, setPosts] = useState([]);
@@ -57,7 +57,7 @@ const BlogSection = () => {
             className={selectedItems.includes(post.id) ? 'selected' : ''}
             onClick={() => handleSelect(post.id)}
           >
-            <img src={require(`../images/${post.img}`)} alt="blog" />
+            <img src={require(`../../../images/${post.img}`)} alt="blog" />
             <button className="post-buttons">{post.category}</button>
             <h3>{post.title}</h3>
             <p>{post.date}</p>

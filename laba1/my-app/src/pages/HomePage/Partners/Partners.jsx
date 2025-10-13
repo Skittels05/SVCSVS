@@ -1,6 +1,6 @@
 import React from 'react';
 import './Partners.css';
-import partnersImage from '../images/partners.png';
+import partnersImage from '../../../images/partners.png';
 
 const Partners = () => {
   return (

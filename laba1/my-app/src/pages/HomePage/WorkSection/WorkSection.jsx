@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './WorkSection.css';
-import Modal from './Modal';
-import worksData from '../data/works.json';
+import Modal from '../../../components/Modal/Modal';
+import worksData from '../../../data/works.json';
 
 const WorkSection = () => {
   const [works, setWorks] = useState([]);
@@ -54,7 +54,7 @@ const WorkSection = () => {
               className={selectedItems.includes(work.id) ? 'selected' : ''}
               onClick={() => handleSelect(work.id)}
             >
-              <img src={require(`../images/${work.img}`)} alt={work.title} />
+              <img src={require(`../../../images/${work.img}`)} alt={work.title} />
               <h4>{work.title}</h4>
               <p>{work.desc}</p>
               <button onClick={() => setSelectedWork(work)}>View Details</button>
@@ -69,7 +69,7 @@ const WorkSection = () => {
               className={selectedItems.includes(work.id) ? 'selected' : ''}
               onClick={() => handleSelect(work.id)}
             >
-              <img src={require(`../images/${work.img}`)} alt={work.title} />
+              <img src={require(`../../../images/${work.img}`)} alt={work.title} />
               <h4>{work.title}</h4>
               <p>{work.desc}</p>
               <button onClick={() => setSelectedWork(work)}>View Details</button>

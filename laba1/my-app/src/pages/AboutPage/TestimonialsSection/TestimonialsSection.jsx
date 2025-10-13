@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './TestimonialsSection.css';
-import testimonialsData from '../data/testimonials.json';
+import testimonialsData from '../../../data/testimonials.json';
 
 const TestimonialsSection = () => {
   const [testimonials, setTestimonials] = useState([]);
@@ -39,9 +39,9 @@ const TestimonialsSection = () => {
               {testimonial.quote}
             </p>
             <img
-              src={require(`../images/${testimonial.img}`)}
+              src={require(`../../../images/${testimonial.img}`)}
               alt={testimonial.name}
-              onError={(e) => (e.target.src = require('../images/placeholder.png'))}
+              onError={(e) => (e.target.src = require('../../../images/placeholder.png'))}
             />
             <p className="card-name">{testimonial.name}</p>
             <p className="status">{testimonial.status}</p>

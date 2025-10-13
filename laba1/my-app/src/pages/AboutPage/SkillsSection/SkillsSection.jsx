@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './SkillsSection.css';
-import teamImage from '../images/team.png';
-import skillsData from '../data/skills.json';
+import teamImage from '../../../images/team.png';
+import skillsData from '../../../data/skills.json';
 
 const SkillsSection = () => {
   const [skills, setSkills] = useState([]);

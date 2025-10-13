@@ -1,7 +1,7 @@
 import React from 'react';
 import './WebSection.css';
-import websiteImage from '../images/website.png';
-import phoneImage from '../images/phone.png';
+import websiteImage from '../../../images/website.png';
+import phoneImage from '../../../images/phone.png';
 
 const WebSection = () => {
   return (

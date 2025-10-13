@@ -1,6 +1,6 @@
 import React from 'react';
-import BlogSection from '../components/BlogSection';
-import ContactSection from '../components/ContactSection';
+import BlogSection from './BlogSection/BlogSection';
+import ContactSection from './ContactSection/ContactSection';
 
 const BlogPage = () => {
   return (

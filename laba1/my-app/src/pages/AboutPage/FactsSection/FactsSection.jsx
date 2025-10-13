@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './FactsSection.css';
-import factsData from '../data/facts.json';
+import factsData from '../../../data/facts.json';
 
 const FactsSection = () => {
   const [facts, setFacts] = useState([]);
@@ -29,7 +29,7 @@ const FactsSection = () => {
             className={selectedItems.includes(fact.id) ? 'selected' : ''}
             onClick={() => handleSelect(fact.id)}
           >
-            {fact.img && <img src={require(`../images/${fact.img}`)} alt="icon" />}
+            {fact.img && <img src={require(`../../../images/${fact.img}`)} alt="icon" />}
             <p className={fact.className || ''}>
               <span className={fact.digit.length > 2 ? 'digit2' : 'digit'}>
                 {fact.digit}
