@@ -5,9 +5,7 @@ import man from '../../../images/man.png';
 const Hero = ({ logo }) => {
   return (
     <div className="hero">
-      <div className="roby">
-        <img src={logo} alt="roby" className="name" />
-      </div>
+      
       <div className="moto">
         <img src={man} alt="Мужик" className="man" />
         <div>
