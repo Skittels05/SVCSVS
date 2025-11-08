@@ -3,9 +3,9 @@ import { Provider } from 'react-redux';
 import { BrowserRouter as Router, Routes, Route, Navigate, NavLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import store from './store';
-import ProjectList from './components/ProjectList';
-import TaskList from './components/TaskList';
-import MemberList from './components/MemberList';
+import ProjectList from './components/ProjectList/ProjectList';
+import TaskList from './components/TaskList/TaskList';
+import MemberList from './components/MemberList/MemberList';
 import './locales/i18n';
 import './App.css';
 

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
-import { addTask, updateTask, selectTasksError, clearTaskError } from '../store/slices/tasksSlice';
-import { selectAllProjects } from '../store/slices/projectsSlice';
-import { selectAllMembers } from '../store/slices/membersSlice';
+import { addTask, updateTask, selectTasksError, clearTaskError } from '../../store/slices/tasksSlice';
+import { selectAllProjects } from '../../store/slices/projectsSlice';
+import { selectAllMembers } from '../../store/slices/membersSlice';
 import './TaskForm.css';
 
 const TaskForm = ({ task, onCancel }) => {

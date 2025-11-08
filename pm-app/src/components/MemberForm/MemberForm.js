@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import './MemberForm.css';
-import { addMember, updateMember, selectMembersError, clearError } from '../store/slices/membersSlice';
+import { addMember, updateMember, selectMembersError, clearError } from '../../store/slices/membersSlice';
 
 const MemberForm = ({ member, onCancel }) => {
   const { t } = useTranslation();

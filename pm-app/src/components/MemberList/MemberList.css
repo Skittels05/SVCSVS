@@ -2,32 +2,72 @@
   width: 100%;
 }
 
+.member-list .list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.member-list .list-header h2 {
+  color: #2c3e50;
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 600;
+}
+
 .members-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  width: 100%;
 }
 
 .member-card {
   background: white;
   padding: 1.5rem;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: all 0.3s;
+  border: 1px solid #e1e8ed;
+  display: flex;
+  flex-direction: column;
+  height: fit-content;
 }
 
 .member-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.member-card .card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  gap: 1rem;
+}
+
+.member-card .card-header h3 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.4;
+  flex: 1;
 }
 
 .member-info {
   margin: 1rem 0;
+  flex: 1;
 }
 
 .member-info p {
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
   font-size: 0.9rem;
+  line-height: 1.4;
 }
 
 .member-info strong {
@@ -37,19 +77,28 @@
 .member-actions {
   display: flex;
   gap: 0.5rem;
-  margin-top: 1rem;
+  margin-top: auto;
 }
 
 .member-list > p {
   text-align: center;
   color: #7f8c8d;
   font-style: italic;
-  padding: 2rem;
+  padding: 3rem;
+  font-size: 1.1rem;
+  grid-column: 1 / -1;
 }
 
 @media (max-width: 768px) {
+  .member-list .list-header {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+  
   .members-grid {
     grid-template-columns: 1fr;
+    gap: 1rem;
   }
   
   .member-actions {
@@ -60,5 +109,11 @@
 @media (max-width: 480px) {
   .member-card {
     padding: 1rem;
+  }
+  
+  .member-card .card-header {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: stretch;
   }
 }

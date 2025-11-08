@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import './ProjectForm.css';
-import { addProject, updateProject, selectProjectsError, clearError } from '../store/slices/projectsSlice';
+import { addProject, updateProject, selectProjectsError, clearError } from '../../store/slices/projectsSlice';
 
 const ProjectForm = ({ project, onCancel }) => {
   const { t } = useTranslation();

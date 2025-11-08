@@ -6,8 +6,8 @@ import {
   selectAllMembers, 
   deleteMember,
   selectMembersError 
-} from '../store/slices/membersSlice';
-import MemberForm from './MemberForm';
+} from '../../store/slices/membersSlice';
+import MemberForm from '../MemberForm/MemberForm';
 
 const MemberList = () => {
   const { t } = useTranslation();

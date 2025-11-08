@@ -7,8 +7,8 @@ import {
   deleteProject, 
   setSortBy,
   selectProjectsSortBy 
-} from '../store/slices/projectsSlice';
-import ProjectForm from './ProjectForm';
+} from '../../store/slices/projectsSlice';
+import ProjectForm from '../ProjectForm/ProjectForm';
 
 const ProjectList = () => {
   const { t } = useTranslation();

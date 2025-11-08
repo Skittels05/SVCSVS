@@ -10,10 +10,10 @@ import {
   setTaskSortBy,
   selectTasksFilters,
   selectTasksSortBy 
-} from '../store/slices/tasksSlice';
-import { selectAllProjects } from '../store/slices/projectsSlice';
-import { selectAllMembers } from '../store/slices/membersSlice';
-import TaskForm from './TaskForm';
+} from '../../store/slices/tasksSlice';
+import { selectAllProjects } from '../../store/slices/projectsSlice';
+import { selectAllMembers } from '../../store/slices/membersSlice';
+import TaskForm from '../TaskForm/TaskForm';
 
 const TaskList = () => {
   const { t } = useTranslation();
