@@ -1,0 +1,35 @@
+.member-form {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  margin-bottom: 1.5rem;
+}
+
+.member-form h3 {
+  color: #2c3e50;
+  margin-bottom: 1rem;
+  font-size: 1.25rem;
+}
+
+.form-group label[for*="name"],
+.form-group label[for*="email"] {
+  position: relative;
+}
+
+.form-group label[for*="name"]::after,
+.form-group label[for*="email"]::after {
+  content: "*";
+  color: #e74c3c;
+  margin-left: 0.25rem;
+}
+
+@media (max-width: 768px) {
+  .member-form {
+    padding: 1rem;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+  }
+}
