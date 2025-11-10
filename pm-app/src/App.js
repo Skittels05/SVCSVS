@@ -6,34 +6,9 @@ import store from './store';
 import ProjectList from './components/ProjectList/ProjectList';
 import TaskList from './components/TaskList/TaskList';
 import MemberList from './components/MemberList/MemberList';
+import Header from './components/Header/Header'; // Импортируем новый компонент
 import './locales/i18n';
 import './App.css';
-
-const Header = () => {
-  const { t, i18n } = useTranslation();
-
-  const changeLanguage = (lng) => {
-    i18n.changeLanguage(lng);
-  };
-
-  return (
-    <header className="app-header">
-      <h1>{t('projectManagement')}</h1>
-      <div className="language-switcher">
-        <button 
-          onClick={() => changeLanguage('ru')}
-        >
-          RU
-        </button>
-        <button 
-          onClick={() => changeLanguage('en')}
-        >
-          EN
-        </button>
-      </div>
-    </header>
-  );
-};
 
 const Navigation = () => {
   const { t } = useTranslation();
@@ -52,7 +27,7 @@ function App() {
     <Provider store={store}>
       <Router>
         <div className="App">
-          <Header />
+          <Header /> 
           <Navigation />
           <main className="main-content">
             <Routes>
