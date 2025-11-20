@@ -1,57 +1,61 @@
-const fs = require('fs');
+const fs = require('fs').promises;
 const path = require('path');
-const { Writable } = require('stream');
+const readline = require('readline');
 
-class ProjectWriter extends Writable {
-    constructor(filename, options = {}) {
-        super(options);
-        this.filename = filename;
-        this.projects = [];
-    }
-
-    _write(chunk, encoding, callback) {
-        try {
-            const project = JSON.parse(chunk.toString());
-            this.projects.push(project);
-            console.log(`Записан проект: ${project.name}`);
-            callback();
-        } catch (err) {
-            callback(err);
-        }
-    }
-
-    _final(callback) {
-        fs.writeFile(this.filename, JSON.stringify(this.projects, null, 2), (err) => {
-            if (err) return callback(err);
-            console.log(`✅ Все проекты сохранены в: ${this.filename}`);
-            callback();
-        });
-    }
-}
-
-function writeProjects() {
+async function writeProjects() {
     const args = process.argv.slice(2);
     
     if (args.length < 1) {
         console.log('Использование: node src/streams/write.js <выходной_файл>');
         console.log('Затем введите проекты в формате JSON (по одному в строке)');
+        console.log('Для завершения ввода: Ctrl+D → Enter');
         process.exit(1);
     }
 
     const filename = args[0];
-    const writer = new ProjectWriter(filename);
+    const projects = [];
     
-    console.log('Введите проекты в формате JSON (Ctrl+D для завершения):');
-    
-    process.stdin.pipe(writer);
-    
-    writer.on('finish', () => {
-        console.log('Запись завершена');
+    console.log('Введите проекты в формате JSON (по одному в строке):');
+    console.log('Для завершения ввода: Ctrl+D → Enter');
+    console.log('───────────────────────');
+
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout
     });
-    
-    writer.on('error', (err) => {
-        console.error('Ошибка записи:', err.message);
-    });
+
+    try {
+        for await (const line of rl) {
+            const trimmedLine = line.trim();
+            if (trimmedLine) {
+                try {
+                    const project = JSON.parse(trimmedLine);
+                    projects.push(project);
+                    console.log(`Добавлен проект: ${project.name}`);
+                } catch (parseError) {
+                    console.log('Ошибка парсинга JSON, строка пропущена');
+                }
+            }
+        }
+
+        if (projects.length === 0) {
+            console.log('Нет данных для записи');
+            return;
+        }
+
+        await fs.writeFile(filename, JSON.stringify(projects, null, 2));
+        console.log(`Все проекты (${projects.length}) сохранены в: ${filename}`);
+        
+    } catch (error) {
+        console.error('Ошибка:', error.message);
+        process.exit(1);
+    } finally {
+        rl.close();
+    }
 }
 
-writeProjects();
+if (require.main === module) {
+    writeProjects();
+}
+
+module.exports = { writeProjects };

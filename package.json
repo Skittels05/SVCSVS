@@ -1,16 +1,27 @@
 {
-  "name": "svcsvs",
+  "name": "project-manager",
   "version": "1.0.0",
-  "description": "",
+  "description": "Система управления проектами с файловым хранилищем",
   "main": "index.js",
   "scripts": {
+    "create": "node src/fs/create.js",
+    "read": "node src/fs/read.js",
+    "list": "node src/fs/list.js",
+    "delete": "node src/fs/delete.js",
+    "rename": "node src/fs/rename.js",
+    "copy": "node src/fs/copy.js",
+    "search": "node src/fs/search.js",
+    "stream-read": "node src/streams/read.js",
+    "stream-write": "node src/streams/write.js",
+    "stream-transform": "node src/streams/transform.js",
+    "wt-search": "node src/wt/spawn.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Skittels05/SVCSVS.git"
   },
-  "keywords": [],
+  "keywords": ["project", "management", "file-system", "streams"],
   "author": "",
   "license": "ISC",
   "bugs": {
