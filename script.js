@@ -84,20 +84,25 @@ async function addProject() {
 async function exportData(format) {
     const resultDiv = document.getElementById('exportResult');
     resultDiv.innerHTML = 'Exporting data...';
-
+    
     try {
         const headers = {};
-        if (format === 'html') {
+        if (format === 'xml') {
+            headers['Accept'] = 'application/xml';
+        } else if (format === 'html') {
             headers['Accept'] = 'text/html';
         } else {
             headers['Accept'] = 'application/json';
         }
-
+        
         const response = await fetch(`${API_BASE}/projects/export`, { headers });
-
+        
         if (format === 'json') {
             const data = await response.json();
             resultDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+        } else if (format === 'xml') {
+            const text = await response.text();
+            resultDiv.innerHTML = `<pre>${escapeHtml(text)}</pre>`;
         } else if (format === 'html') {
             const html = await response.text();
             resultDiv.innerHTML = `<div>${html}</div>`;
@@ -106,6 +111,12 @@ async function exportData(format) {
         resultDiv.innerHTML = 'Error exporting data';
         console.error('Error:', error);
     }
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 function downloadFile(format) {

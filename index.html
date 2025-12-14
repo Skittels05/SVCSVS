@@ -51,12 +51,14 @@
         </div>
         <div class="section">
             <h2>Export Data</h2>
-            <p>Get data in different formats:</p>
+            <p>Get data in different formats based on Accept header:</p>
             <button onclick="exportData('json')">Export as JSON</button>
+            <button onclick="exportData('xml')">Export as XML</button>
             <button onclick="exportData('html')">Export as HTML</button>
 
             <p>Download data as files:</p>
             <button onclick="downloadFile('json')">Download JSON</button>
+            <button onclick="downloadFile('xml')">Download XML</button>
             <button onclick="downloadFile('html')">Download HTML</button>
 
             <div id="exportResult"></div>
