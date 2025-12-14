@@ -41,6 +41,81 @@ app.get('/api/projects', async (req, res) => {
     }
 });
 
+app.get('/api/projects/export', async (req, res) => {
+    try {
+        const data = await readJsonFile(PROJECTS_FILE);
+        const acceptHeader = req.headers.accept || 'application/json';
+        
+        if (acceptHeader.includes('text/html')) {
+            let html = '<!DOCTYPE html><html><head><title>Projects Export</title>';
+            html += '<style>table {border-collapse: collapse; width: 100%;} th, td {border: 1px solid #ddd; padding: 8px;} th {background-color: #f2f2f2;}</style>';
+            html += '</head><body><h1>Projects List</h1>';
+            html += `<p>Total projects: ${data.projects.length}</p>`;
+            html += '<table><tr><th>ID</th><th>Title</th><th>Description</th><th>Status</th><th>Created At</th></tr>';
+            
+            data.projects.forEach(project => {
+                html += `<tr>
+                    <td>${project.id}</td>
+                    <td>${project.title}</td>
+                    <td>${project.description}</td>
+                    <td>${project.status}</td>
+                    <td>${new Date(project.createdAt).toLocaleDateString()}</td>
+                </tr>`;
+            });
+            
+            html += '</table></body></html>';
+            res.header('Content-Type', 'text/html');
+            res.send(html);
+            
+        } else {
+            res.json(data);
+        }
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to export data' });
+    }
+});
+
+app.get('/download/:format', async (req, res) => {
+    try {
+        const format = req.params.format.toLowerCase();
+        const data = await readJsonFile(PROJECTS_FILE);
+        
+        if (format === 'json') {
+            const jsonString = JSON.stringify(data, null, 2);
+            res.header('Content-Type', 'application/json');
+            res.header('Content-Disposition', 'attachment; filename="projects.json"');
+            res.send(jsonString);
+            
+        } else if (format === 'html') {
+            let html = '<!DOCTYPE html><html><head><title>Projects Export</title>';
+            html += '<style>table {border-collapse: collapse; width: 100%;} th, td {border: 1px solid #ddd; padding: 8px;} th {background-color: #f2f2f2;}</style>';
+            html += '</head><body><h1>Projects List</h1>';
+            html += `<p>Total projects: ${data.projects.length}</p>`;
+            html += '<table><tr><th>ID</th><th>Title</th><th>Description</th><th>Status</th><th>Created At</th></tr>';
+            
+            data.projects.forEach(project => {
+                html += `<tr>
+                    <td>${project.id}</td>
+                    <td>${project.title}</td>
+                    <td>${project.description}</td>
+                    <td>${project.status}</td>
+                    <td>${new Date(project.createdAt).toLocaleDateString()}</td>
+                </tr>`;
+            });
+            
+            html += '</table></body></html>';
+            res.header('Content-Type', 'text/html');
+            res.header('Content-Disposition', 'attachment; filename="projects.html"');
+            res.send(html);
+            
+        } else {
+            res.status(400).json({ error: 'Invalid format. Use json or html' });
+        }
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to generate download file' });
+    }
+});
+
 app.post('/api/projects/summary', async (req, res) => {
     try {
         const data = await readJsonFile(PROJECTS_FILE);
