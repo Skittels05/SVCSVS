@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Management</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Project Management System</h1>
+        
+        <div class="section">
+            <h2>Projects List</h2>
+            <button onclick="loadProjects()">Load Projects</button>
+            <button onclick="getProjectSummary()">Get Summary</button>
+            <div id="projectsList"></div>
+        </div>
+        
+        <div class="section">
+            <h2>Add New Project</h2>
+            <div class="form-group">
+                <label for="projectTitle">Title:</label>
+                <input type="text" id="projectTitle" placeholder="Enter project title">
+            </div>
+            <div class="form-group">
+                <label for="projectDescription">Description:</label>
+                <textarea id="projectDescription" placeholder="Enter project description"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="projectStatus">Status:</label>
+                <select id="projectStatus">
+                    <option value="active">Active</option>
+                    <option value="completed">Completed</option>
+                </select>
+            </div>
+            <button onclick="addProject()">Add Project</button>
+            <div id="addProjectResult"></div>
+        </div>
+        
+        <div class="section">
+            <h2>Delete Project</h2>
+            <div class="form-group">
+                <label for="deleteProjectId">Project ID:</label>
+                <input type="number" id="deleteProjectId" placeholder="Enter project ID to delete">
+            </div>
+            <button class="delete-btn" onclick="deleteProject()">Delete Project</button>
+            <div id="deleteResult"></div>
+        </div>
+    </div>
+<script src="script.js"></script>
+</body>
+</html>
