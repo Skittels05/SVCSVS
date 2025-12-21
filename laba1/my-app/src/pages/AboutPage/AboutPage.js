@@ -1,17 +1,17 @@
 import React from 'react';
 import AgencySection from './AgencySection/AgencySection';
-import TestimonialsSection from './TestimonialsSection/TestimonialsSection';
-import SkillsSection from './SkillsSection/SkillsSection';
 import FactsSection from './FactsSection/FactsSection';
+import SkillsSection from './SkillsSection/SkillsSection';
+import TestimonialsSection from './TestimonialsSection/TestimonialsSection';
 
 const AboutPage = () => {
   return (
-    <div>
+    <>
       <AgencySection />
       <TestimonialsSection />
       <SkillsSection />
       <FactsSection />
-    </div>
+    </>
   );
 };
 

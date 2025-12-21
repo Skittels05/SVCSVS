@@ -1,45 +1,69 @@
 import React, { useState, useEffect } from 'react';
-import './FactsSection.css';
+import styled from 'styled-components';
+import { Container, Card } from '../../../components/ui';
 import factsData from '../../../data/facts.json';
+
+const FactsWrapper = styled.section`
+  margin-top: 11.5rem;
+  text-align: center;
+`;
+
+const FactsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(25rem, 1fr));
+  gap: 3rem;
+  margin: 6rem 20% 0;
+
+  @media (max-width: 768px) {
+    margin: 4rem 5%;
+  }
+`;
+
+const FactCard = styled(Card)`
+  padding: 2rem;
+  background-color: ${props => props.$selected ? props.theme.colors.factSelected : 'transparent'};
+  cursor: pointer;
+`;
+
+const Digit = styled.span`
+  font-size: ${props => props.$large ? '5.3rem' : '4.3rem'};
+  font-weight: bold;
+`;
 
 const FactsSection = () => {
   const [facts, setFacts] = useState([]);
-  const [selectedItems, setSelectedItems] = useState([]);
+  const [selected, setSelected] = useState([]);
 
-  useEffect(() => {
-    setFacts(factsData);
-  }, []);
+  useEffect(() => setFacts(factsData), []);
 
-  const handleSelect = (id) => {
-    setSelectedItems((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
-    );
-  };
+  const toggle = (id) => setSelected(prev => 
+    prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+  );
 
   return (
-    <section className="facts-section">
-      <h2>
-        <span className="bold3">fun</span>
-        <span className="regular8">facts</span>
-      </h2>
-      <div className="facts">
-        {facts.map((fact) => (
-          <div
-            key={fact.id}
-            className={selectedItems.includes(fact.id) ? 'selected' : ''}
-            onClick={() => handleSelect(fact.id)}
-          >
-            {fact.img && <img src={require(`../../../images/${fact.img}`)} alt="icon" />}
-            <p className={fact.className || ''}>
-              <span className={fact.digit.length > 2 ? 'digit2' : 'digit'}>
-                {fact.digit}
-              </span>
-              <span className="regular9">{fact.text}</span>
-            </p>
-          </div>
-        ))}
-      </div>
-    </section>
+    <Container>
+      <FactsWrapper>
+        <h2>
+          <span style={{fontSize: '4.8rem', fontWeight: 'bold'}}>fun</span>{' '}
+          <span style={{fontSize: '3.7rem'}}>facts</span>
+        </h2>
+        <FactsGrid>
+          {facts.map(fact => (
+            <FactCard
+              key={fact.id}
+              $selected={selected.includes(fact.id)}
+              onClick={() => toggle(fact.id)}
+            >
+              {fact.img && <img src={require(`../../../images/${fact.img}`)} alt="" style={{width: '6rem'}} />}
+              <p>
+                <Digit $large={fact.digit.length <= 2}>{fact.digit}</Digit>
+                <span style={{fontSize: '1.9rem', display: 'block'}}>{fact.text}</span>
+              </p>
+            </FactCard>
+          ))}
+        </FactsGrid>
+      </FactsWrapper>
+    </Container>
   );
 };
 
