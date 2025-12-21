@@ -4,10 +4,10 @@ import ContactSection from './ContactSection/ContactSection';
 
 const BlogPage = () => {
   return (
-    <div>
+    <>
       <BlogSection />
       <ContactSection />
-    </div>
+    </>
   );
 };
 
