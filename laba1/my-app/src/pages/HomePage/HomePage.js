@@ -7,12 +7,12 @@ import roby from '../../images/roby.png';
 
 const HomePage = () => {
   return (
-    <div>
+    <>
       <Hero logo={roby} />
       <Partners />
       <WorkSection />
       <WebSection />
-    </div>
+    </>
   );
 };
 
