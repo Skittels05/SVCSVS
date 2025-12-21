@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { Container, Card } from '../../../components/ui';
+import { Container, Card, Title } from '../../../components/ui';
 import factsData from '../../../data/facts.json';
 
 const FactsWrapper = styled.section`
@@ -25,9 +25,29 @@ const FactCard = styled(Card)`
   cursor: pointer;
 `;
 
+const FactIcon = styled.img`
+  width: 6rem;
+  margin-bottom: 1rem;
+`;
+
 const Digit = styled.span`
+  display: block;
   font-size: ${props => props.$large ? '5.3rem' : '4.3rem'};
   font-weight: bold;
+`;
+
+const FactText = styled.span`
+  display: block;
+  font-size: 1.9rem;
+`;
+
+const FunBold = styled.span`
+  font-size: 4.8rem;
+  font-weight: bold;
+`;
+
+const FactsRegular = styled.span`
+  font-size: 3.7rem;
 `;
 
 const FactsSection = () => {
@@ -43,10 +63,10 @@ const FactsSection = () => {
   return (
     <Container>
       <FactsWrapper>
-        <h2>
-          <span style={{fontSize: '4.8rem', fontWeight: 'bold'}}>fun</span>{' '}
-          <span style={{fontSize: '3.7rem'}}>facts</span>
-        </h2>
+        <Title>
+          <FunBold>fun</FunBold>{' '}
+          <FactsRegular>facts</FactsRegular>
+        </Title>
         <FactsGrid>
           {facts.map(fact => (
             <FactCard
@@ -54,10 +74,10 @@ const FactsSection = () => {
               $selected={selected.includes(fact.id)}
               onClick={() => toggle(fact.id)}
             >
-              {fact.img && <img src={require(`../../../images/${fact.img}`)} alt="" style={{width: '6rem'}} />}
+              {fact.img && <FactIcon src={require(`../../../images/${fact.img}`)} alt="" />}
               <p>
                 <Digit $large={fact.digit.length <= 2}>{fact.digit}</Digit>
-                <span style={{fontSize: '1.9rem', display: 'block'}}>{fact.text}</span>
+                <FactText>{fact.text}</FactText>
               </p>
             </FactCard>
           ))}

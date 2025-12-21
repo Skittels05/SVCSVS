@@ -1,5 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
+import { Button } from '../../../components/ui';
 import man from '../../../images/man.png';
 import man2 from '../../../images/man2.png';
 
@@ -106,29 +107,19 @@ const QuoteClose = styled.span`
   display: block;
 `;
 
-const CircleButton = styled.button`
+const WorkButton = styled(Button)`
   width: 14rem;
   height: 14rem;
-  background-color: ${props => props.theme.colors.primary};
-  color: ${props => props.theme.colors.background};
-  border: none;
   border-radius: 50%;
   font-size: 1.4rem;
-  text-transform: uppercase;
   line-height: 2rem;
   letter-spacing: 0.1rem;
+  margin-top: 8rem;
+  margin-left: 6rem;
   display: flex;
   justify-content: center;
   align-items: center;
   text-align: center;
-  margin-top: 8rem;
-  margin-left: 6rem;
-  cursor: pointer;
-  transition: opacity 0.3s;
-
-  &:hover {
-    opacity: 0.5;
-  }
 
   @media (max-width: 768px) {
     background-color: aliceblue;
@@ -156,9 +147,9 @@ const Hero = ({ logo }) => {
             <QuoteClose>.”</QuoteClose>
           </h1>
 
-          <CircleButton>
+          <WorkButton $round>
             WORK<br />WITH US
-          </CircleButton>
+          </WorkButton>
         </TextBlock>
       </Moto>
     </HeroWrapper>

@@ -33,6 +33,17 @@ const TeamImg = styled.img`
   }
 `;
 
+const TitleWrapper = styled.h2`
+  color: white;
+  font-size: 6rem;
+  margin-top: 9rem;
+`;
+
+const TeamSpan = styled.span`
+  font-size: 4.2rem;
+  font-weight: normal;
+`;
+
 const Graphic = styled.div`
   width: 42.3rem;
   margin: 0 auto;
@@ -60,6 +71,11 @@ const Bar = styled.hr`
   margin: 1rem 0 3rem;
 `;
 
+const Note = styled.p`
+  color: white;
+  margin-top: 2rem;
+`;
+
 const SkillsSection = () => {
   const [skills, setSkills] = useState([]);
   useEffect(() => setSkills(skillsData), []);
@@ -67,9 +83,9 @@ const SkillsSection = () => {
   return (
     <Section>
       <SkillsBlock>
-        <h2 style={{color: 'white', fontSize: '6rem', marginTop: '9rem'}}>
-          our <span style={{fontSize: '4.2rem', fontWeight: 'normal'}}>team</span> skills
-        </h2>
+        <TitleWrapper>
+          our <TeamSpan>team</TeamSpan> skills
+        </TitleWrapper>
         <Graphic>
           {skills.map(skill => (
             <SkillItem key={skill.id}>
@@ -77,10 +93,10 @@ const SkillsSection = () => {
                 <span>{skill.name}</span>
                 <span>{skill.percentage}%</span>
               </SkillText>
-              <Bar width={`${skill.percentage}%`} className={skill.className} />
+              <Bar width={`${skill.percentage}%`} />
             </SkillItem>
           ))}
-          <p style={{color: 'white', marginTop: '2rem'}}>* Over 8 years creating templates on Marketplace.</p>
+          <Note>* Over 8 years creating templates on Marketplace.</Note>
         </Graphic>
       </SkillsBlock>
       <TeamImg src={teamImage} alt="team" />

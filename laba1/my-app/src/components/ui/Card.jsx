@@ -12,7 +12,7 @@ export const Card = styled.div`
   padding: 2rem;
   opacity: ${props => props.$active ? 1 : 0.5};
   transition: opacity 0.3s ease;
-  animation: ${props => props.$active ? fadeIn : 'none'} 0.5s ease;
+  animation: ${props => props.$active || props.$selected ? fadeIn : 'none'} 0.5s ease;
 
   @media (max-width: 768px) {
     width: 90%;

@@ -1,15 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-
-const Container = styled.div`
-  max-width: 140rem;
-  margin: 0 auto;
-  padding: 0 3rem;
-
-  @media (max-width: 768px) {
-    padding: 0 2rem;
-  }
-`;
+import { Container, Title } from '../../../components/ui';
 
 const Section = styled.section`
   margin-top: 12.4rem;
@@ -33,15 +24,6 @@ const AgencyText = styled.div`
 
   @media (max-width: 1024px) {
     margin-left: 0;
-  }
-
-  @media (max-width: 768px) {
-    margin: 0;
-  }
-
-  h2 {
-    line-height: 1.1;
-    margin-bottom: 3rem;
   }
 
   p {
@@ -73,10 +55,6 @@ const Awards = styled.div`
   flex: 1;
   min-width: 300px;
   max-width: 50rem;
-
-  @media (max-width: 1024px) {
-    margin: 0;
-  }
 
   @media (max-width: 768px) {
     width: 100%;
@@ -111,10 +89,6 @@ const AwardItem = styled.li`
   display: flex;
   justify-content: space-between;
   padding: 0.8rem 0;
-
-  &:not(:last-child) {
-    border-bottom: 1px solid ${props => props.theme.colors.primary}20; /* лёгкая линия для разделения */
-  }
 `;
 
 const AgencySection = () => {
@@ -143,10 +117,10 @@ const AgencySection = () => {
     <Container>
       <Section>
         <AgencyText>
-          <h2>
+          <Title as="h2">
             <Bold>THE PERFECT</Bold>
             <Light>AGENCY FOR YOUR BRAND</Light>
-          </h2>
+          </Title>
           <p>
             We love what we do and create partnerships with our clients to ensure
             their digital transformation is positioned for long-term success.

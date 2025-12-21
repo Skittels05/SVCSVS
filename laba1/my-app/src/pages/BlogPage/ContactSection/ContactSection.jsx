@@ -1,5 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
+import { Button } from '../../../components/ui';
 
 const Section = styled.section`
   margin-top: 13rem;
@@ -47,31 +48,6 @@ const Regular = styled.span`
   top: -0.5rem;
 `;
 
-const DesignerButton = styled.button`
-  width: 14rem;
-  height: 14rem;
-  background-color: ${props => props.theme.colors.background};
-  color: ${props => props.theme.colors.primary};
-  border: none;
-  border-radius: 50%;
-  font-size: 1.4rem;
-  text-transform: uppercase;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  line-height: 2rem;
-  letter-spacing: 0.1rem;
-  cursor: pointer;
-  margin-right: -0.7rem;
-  margin-top: -0.5rem;
-  transition: opacity 0.3s;
-
-  &:hover {
-    opacity: 0.5;
-  }
-`;
-
 const ContactSection = () => {
   return (
     <Section>
@@ -81,9 +57,9 @@ const ContactSection = () => {
         </h2>
         <p>Feel free to contact us</p>
       </TextBlock>
-      <DesignerButton>
+      <Button $round>
         view on <br />designer
-      </DesignerButton>
+      </Button>
     </Section>
   );
 };

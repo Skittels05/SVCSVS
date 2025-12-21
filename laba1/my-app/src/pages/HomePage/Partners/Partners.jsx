@@ -1,6 +1,6 @@
-// src/pages/HomePage/Partners/Partners.jsx
 import React from 'react';
 import styled from 'styled-components';
+import { Container } from '../../../components/ui';
 import partnersImage from '../../../images/partners.png';
 
 const PartnersWrapper = styled.div`
@@ -37,16 +37,18 @@ const PartnersImg = styled.img`
 
 const Partners = () => {
   return (
-    <PartnersWrapper>
-      <p>
-        <span>We partner with</span>
-        <span className="style1">forward-thinking</span>
-        <span>startups.</span>
-      </p>
-      <Icons>
-        <PartnersImg src={partnersImage} alt="partners" />
-      </Icons>
-    </PartnersWrapper>
+    <Container>
+      <PartnersWrapper>
+        <p>
+          <span>We partner with</span>
+          <span className="style1">forward-thinking</span>
+          <span>startups.</span>
+        </p>
+        <Icons>
+          <PartnersImg src={partnersImage} alt="partners" />
+        </Icons>
+      </PartnersWrapper>
+    </Container>
   );
 };
 

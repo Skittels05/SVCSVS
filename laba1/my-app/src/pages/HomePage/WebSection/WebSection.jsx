@@ -1,4 +1,3 @@
-// src/pages/HomePage/WebSection/WebSection.jsx
 import React from 'react';
 import styled from 'styled-components';
 import websiteImage from '../../../images/website.png';

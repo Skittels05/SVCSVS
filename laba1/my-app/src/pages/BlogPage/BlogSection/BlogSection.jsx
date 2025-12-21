@@ -1,15 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
+import { Container, Title, Card, Button } from '../../../components/ui';
 import Modal from '../../../components/Modal/Modal';
 import postsData from '../../../data/posts.json';
 
 const Section = styled.section`
   margin-top: 15.5rem;
-  text-align: center;
-
-  @media (max-width: 320px) {
-    text-align: center;
-  }
 `;
 
 const Head = styled.div`
@@ -30,43 +26,13 @@ const Head = styled.div`
   }
 `;
 
-const Title = styled.h2`
-  color: ${props => props.theme.colors.primary};
-`;
-
-const Bold = styled.span`
+const OurBold = styled.span`
   font-size: 6rem;
   font-weight: bold;
 `;
 
-const Regular = styled.span`
-  font-weight: normal;
+const BlogRegular = styled.span`
   font-size: 5.7rem;
-  letter-spacing: 1px;
-  margin-left: 2rem;
-`;
-
-const ViewAllButton = styled.button`
-  width: 14rem;
-  height: 14rem;
-  background-color: ${props => props.theme.colors.primary};
-  color: ${props => props.theme.colors.background};
-  border: none;
-  border-radius: 50%;
-  font-size: 1.4rem;
-  text-transform: uppercase;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  line-height: 2rem;
-  letter-spacing: 0.1rem;
-  cursor: pointer;
-  transition: opacity 0.3s;
-
-  &:hover {
-    opacity: 0.5;
-  }
 `;
 
 const BlogsGrid = styled.div`
@@ -81,20 +47,11 @@ const BlogsGrid = styled.div`
   }
 `;
 
-const PostCard = styled.div`
-  display: flex;
-  flex-direction: column;
+const StyledPostCard = styled(Card)`
   cursor: pointer;
+  background-color: ${props => props.$selected ? 'rgba(0, 0, 0, 0.1)' : 'transparent'};
   transition: background-color 0.3s;
-
-  &.selected {
-    background-color: rgba(0, 0, 0, 0.1);
-  }
-
-  @media (max-width: 768px) {
-    width: 70vw;
-    margin: 0 auto;
-  }
+  opacity: 1 !important;
 
   img {
     width: 373px;
@@ -106,9 +63,9 @@ const PostCard = styled.div`
   }
 `;
 
-const CategoryButton = styled.button`
+const CategoryTag = styled.div`
   margin-top: 4.5rem;
-  width: fit-content;
+  align-self: center;
   padding: 0 1.5rem;
   height: 34px;
   background-color: ${props => props.theme.colors.background};
@@ -118,13 +75,9 @@ const CategoryButton = styled.button`
   text-transform: uppercase;
   font-size: 1.2rem;
   font-weight: bold;
-  letter-spacing: 1px;
-  cursor: default;
-  align-self: center;
-
-  &:hover {
-    opacity: 0.5;
-  }
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   @media (max-width: 768px) {
     margin-left: auto;
@@ -137,7 +90,6 @@ const PostTitle = styled.h3`
   font-weight: bold;
   text-transform: uppercase;
   font-size: 2.6rem;
-  width: 37.3rem;
   color: ${props => props.theme.colors.primary};
 
   @media (max-width: 768px) {
@@ -150,27 +102,11 @@ const PostDate = styled.p`
   color: ${props => props.theme.colors.primary};
 `;
 
-const ActionButtons = styled.div`
+const ActionWrapper = styled.div`
   display: flex;
   gap: 1rem;
-  margin-top: 1rem;
   justify-content: center;
-`;
-
-const ActionButton = styled.button`
-  padding: 0.5rem 1rem;
-  font-size: 1.4rem;
-  text-transform: uppercase;
-  background-color: ${props => props.theme.colors.primary};
-  color: ${props => props.theme.colors.background};
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: opacity 0.3s;
-
-  &:hover {
-    opacity: 0.7;
-  }
+  margin-top: 1rem;
 `;
 
 const AddPostForm = styled.div`
@@ -191,23 +127,6 @@ const AddPostForm = styled.div`
       margin: 1rem auto;
     }
   }
-
-  button {
-    margin-top: 1rem;
-    padding: 0.8rem 1.5rem;
-    font-size: 1.6rem;
-    text-transform: uppercase;
-    background-color: ${props => props.theme.colors.primary};
-    color: ${props => props.theme.colors.background};
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: opacity 0.3s;
-
-    &:hover {
-      opacity: 0.7;
-    }
-  }
 `;
 
 const BlogSection = () => {
@@ -216,9 +135,7 @@ const BlogSection = () => {
   const [selectedItems, setSelectedItems] = useState([]);
   const [newPost, setNewPost] = useState({ title: '', category: '', date: '', description: '' });
 
-  useEffect(() => {
-    setPosts(postsData);
-  }, []);
+  useEffect(() => setPosts(postsData), []);
 
   const handleSelect = (id) => {
     setSelectedItems((prev) =>
@@ -248,75 +165,53 @@ const BlogSection = () => {
   };
 
   return (
-    <Section>
-      <Head>
-        <Title>
-          <Bold>our</Bold> <Regular>blog</Regular>
-        </Title>
-        <ViewAllButton>
-          view all <br />posts
-        </ViewAllButton>
-      </Head>
+    <Container>
+      <Section>
+        <Head>
+          <Title>
+            <OurBold>our</OurBold> <BlogRegular>blog</BlogRegular>
+          </Title>
+          <Button $round>
+            view all <br />posts
+          </Button>
+        </Head>
 
-      <BlogsGrid>
-        {posts.map((post) => (
-          <PostCard
-            key={post.id}
-            className={selectedItems.includes(post.id) ? 'selected' : ''}
-            onClick={() => handleSelect(post.id)}
-          >
-            <img src={require(`../../../images/${post.img}`)} alt={post.title} />
-            <CategoryButton>{post.category}</CategoryButton>
-            <PostTitle>{post.title}</PostTitle>
-            <PostDate>{post.date}</PostDate>
-            <ActionButtons>
-              <ActionButton onClick={(e) => { e.stopPropagation(); setSelectedPost(post); }}>
-                View Details
-              </ActionButton>
-              <ActionButton onClick={(e) => { e.stopPropagation(); handleDelete(post.id); }}>
-                Delete
-              </ActionButton>
-            </ActionButtons>
-          </PostCard>
-        ))}
-      </BlogsGrid>
+        <BlogsGrid>
+          {posts.map((post) => (
+            <StyledPostCard
+              key={post.id}
+              $selected={selectedItems.includes(post.id)}
+              onClick={() => handleSelect(post.id)}
+            >
+              <img src={require(`../../../images/${post.img}`)} alt={post.title} />
+              <CategoryTag>{post.category}</CategoryTag>
+              <PostTitle>{post.title}</PostTitle>
+              <PostDate>{post.date}</PostDate>
+              <ActionWrapper>
+                <Button onClick={(e) => { e.stopPropagation(); setSelectedPost(post); }}>
+                  View Details
+                </Button>
+                <Button onClick={(e) => { e.stopPropagation(); handleDelete(post.id); }}>
+                  Delete
+                </Button>
+              </ActionWrapper>
+            </StyledPostCard>
+          ))}
+        </BlogsGrid>
 
-      <AddPostForm>
-        <input
-          type="text"
-          placeholder="Title"
-          value={newPost.title}
-          onChange={(e) => setNewPost({ ...newPost, title: e.target.value })}
-        />
-        <input
-          type="text"
-          placeholder="Category"
-          value={newPost.category}
-          onChange={(e) => setNewPost({ ...newPost, category: e.target.value })}
-        />
-        <input
-          type="text"
-          placeholder="Date"
-          value={newPost.date}
-          onChange={(e) => setNewPost({ ...newPost, date: e.target.value })}
-        />
-        <input
-          type="text"
-          placeholder="Description"
-          value={newPost.description}
-          onChange={(e) => setNewPost({ ...newPost, description: e.target.value })}
-        />
-        <button onClick={handleAdd}>Add Post</button>
-      </AddPostForm>
+        <AddPostForm>
+          <input type="text" placeholder="Title" value={newPost.title} onChange={(e) => setNewPost({ ...newPost, title: e.target.value })} />
+          <input type="text" placeholder="Category" value={newPost.category} onChange={(e) => setNewPost({ ...newPost, category: e.target.value })} />
+          <input type="text" placeholder="Date" value={newPost.date} onChange={(e) => setNewPost({ ...newPost, date: e.target.value })} />
+          <input type="text" placeholder="Description" value={newPost.description} onChange={(e) => setNewPost({ ...newPost, description: e.target.value })} />
+          <Button $large onClick={handleAdd}>Add Post</Button>
+        </AddPostForm>
 
-      {selectedPost && (
-        <Modal
-          content={selectedPost}
-          onClose={() => setSelectedPost(null)}
-          onEdit={handleEdit}
-        />
-      )}
-    </Section>
+        {selectedPost && (
+          <Modal content={selectedPost} onClose={() => setSelectedPost(null)} onEdit={handleEdit} />
+        )}
+      </Section>
+    </Container>
   );
 };
 
