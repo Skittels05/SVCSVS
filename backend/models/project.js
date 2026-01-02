@@ -47,7 +47,7 @@ module.exports = (sequelize) => {
       allowNull: false,
     },
   }, {
-    tableName: 'Projects',
+    tableName: 'projects',
     timestamps: false,
   });
 

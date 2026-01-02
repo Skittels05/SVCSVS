@@ -48,7 +48,7 @@ module.exports = (sequelize) => {
       },
     },
   }, {
-    tableName: 'Iterations',
+    tableName: 'iterations',
     timestamps: false,
   });
 

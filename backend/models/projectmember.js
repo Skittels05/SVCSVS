@@ -17,7 +17,7 @@ module.exports = (sequelize) => {
       },
     },
   }, {
-    tableName: 'ProjectMembers',
+    tableName: 'projectmembers',
     timestamps: false,
     indexes: [
       { unique: true, fields: ['project_id', 'user_id'], name: 'unique_project_user' },

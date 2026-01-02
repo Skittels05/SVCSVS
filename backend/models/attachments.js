@@ -31,7 +31,7 @@ module.exports = (sequelize) => {
       allowNull: false,
     },
   }, {
-    tableName: 'Attachments',
+    tableName: 'attachments',
     timestamps: false,
   });
 

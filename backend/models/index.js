@@ -1,41 +1,61 @@
-const Sequelize = require('sequelize');
-const config = require('../config/config')['development'];
-const sequelize = new Sequelize(config.database, config.username, config.password, config);
+const sequelize = require('../config/database');
 
 const db = {};
-db.Sequelize = Sequelize;
+
 db.sequelize = sequelize;
+db.Sequelize = sequelize.constructor;
 
 db.Project = require('./project')(sequelize);
 db.User = require('./user')(sequelize);
 db.ProjectMember = require('./projectmember')(sequelize);
 db.Iteration = require('./iteration')(sequelize);
 db.Task = require('./task')(sequelize);
-db.Attachment = require('./attachment')(sequelize);
+db.Attachment = require('./attachments')(sequelize);
 
-db.Project.hasMany(db.ProjectMember, { foreignKey: 'project_id', onDelete: 'CASCADE' });
-db.User.hasMany(db.ProjectMember, { foreignKey: 'user_id', onDelete: 'CASCADE' });
-db.ProjectMember.belongsTo(db.Project);
-db.ProjectMember.belongsTo(db.User);
+const {
+  Project,
+  User,
+  ProjectMember,
+  Iteration,
+  Task,
+  Attachment,
+} = db;
 
-db.Project.hasMany(db.Iteration, { foreignKey: 'project_id', onDelete: 'CASCADE' });
-db.Iteration.belongsTo(db.Project);
+Project.hasMany(ProjectMember, { foreignKey: 'project_id', onDelete: 'CASCADE' });
+User.hasMany(ProjectMember, { foreignKey: 'user_id', onDelete: 'CASCADE' });
+ProjectMember.belongsTo(Project, { foreignKey: 'project_id' });
+ProjectMember.belongsTo(User, { foreignKey: 'user_id' });
 
-db.Project.hasMany(db.Task, { foreignKey: 'project_id', onDelete: 'CASCADE' });
-db.Task.belongsTo(db.Project);
-db.Iteration.hasMany(db.Task, { foreignKey: 'iteration_id', onDelete: 'SET NULL' });
-db.Task.belongsTo(db.Iteration);
-db.Task.belongsTo(db.Task, { as: 'ParentTask', foreignKey: 'parent_task_id', onDelete: 'SET NULL' });
-db.Task.hasMany(db.Task, { as: 'SubTasks', foreignKey: 'parent_task_id' });
+Project.hasMany(Iteration, { foreignKey: 'project_id', onDelete: 'CASCADE' });
+Iteration.belongsTo(Project, { foreignKey: 'project_id' });
 
-db.User.hasMany(db.Task, { as: 'ReportedTasks', foreignKey: 'reporter_id', onDelete: 'SET NULL' });
-db.Task.belongsTo(db.User, { as: 'Reporter', foreignKey: 'reporter_id' });
-db.User.hasMany(db.Task, { as: 'AssignedTasks', foreignKey: 'assignee_id', onDelete: 'SET NULL' });
-db.Task.belongsTo(db.User, { as: 'Assignee', foreignKey: 'assignee_id' });
+Project.hasMany(Task, { foreignKey: 'project_id', onDelete: 'CASCADE' });
+Task.belongsTo(Project, { foreignKey: 'project_id' });
 
-db.Task.hasMany(db.Attachment, { foreignKey: 'task_id', onDelete: 'CASCADE' });
-db.Attachment.belongsTo(db.Task);
-db.User.hasMany(db.Attachment, { foreignKey: 'user_id', onDelete: 'SET NULL' });
-db.Attachment.belongsTo(db.User, { as: 'Uploader' });
+Iteration.hasMany(Task, { foreignKey: 'iteration_id', onDelete: 'SET NULL' });
+Task.belongsTo(Iteration, { foreignKey: 'iteration_id' });
+
+Task.belongsTo(Task, { as: 'ParentTask', foreignKey: 'parent_task_id' });
+Task.hasMany(Task, { as: 'SubTasks', foreignKey: 'parent_task_id' });
+
+User.hasMany(Task, { as: 'ReportedTasks', foreignKey: 'reporter_id', onDelete: 'SET NULL' });
+Task.belongsTo(User, { as: 'Reporter', foreignKey: 'reporter_id' });
+
+User.hasMany(Task, { as: 'AssignedTasks', foreignKey: 'assignee_id', onDelete: 'SET NULL' });
+Task.belongsTo(User, { as: 'Assignee', foreignKey: 'assignee_id' });
+
+Task.hasMany(Attachment, { foreignKey: 'task_id', onDelete: 'CASCADE' });
+Attachment.belongsTo(Task, { foreignKey: 'task_id' });
+
+User.hasMany(Attachment, { foreignKey: 'user_id', onDelete: 'SET NULL' });
+Attachment.belongsTo(User, { as: 'Uploader', foreignKey: 'user_id' });
+
+db.Project.addHook('beforeUpdate', (instance) => {
+  instance.updated_at = new Date();
+});
+
+db.Task.addHook('beforeUpdate', (instance) => {
+  instance.updated_at = new Date();
+});
 
 module.exports = db;

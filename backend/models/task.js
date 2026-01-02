@@ -68,7 +68,7 @@ module.exports = (sequelize) => {
       allowNull: false,
     },
   }, {
-    tableName: 'Tasks',
+    tableName: 'tasks',
     timestamps: false,
   });
 
