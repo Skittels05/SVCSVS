@@ -34,10 +34,10 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "projects"],
               "query": [
-                {"key": "name", "value": "Новый проект", "description": "Название проекта"},
-                {"key": "description", "value": "Описание проекта", "description": "Описание"},
-                {"key": "project_type", "value": "scrum", "description": "Тип проекта (scrum/kanban и т.д.)"},
-                {"key": "status", "value": "planned", "description": "Статус проекта"}
+                {"key": "name", "value": "Новый проект"},
+                {"key": "description", "value": "Описание проекта"},
+                {"key": "project_type", "value": "scrum"},
+                {"key": "status", "value": "planned"}
               ]
             }
           }
@@ -51,11 +51,11 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "projects"],
               "query": [
-                {"key": "page", "value": "1", "description": "Номер страницы"},
-                {"key": "limit", "value": "10", "description": "Количество на странице"},
-                {"key": "sort", "value": "name:desc", "description": "Поле:asc или Поле:desc"},
-                {"key": "status", "value": "active", "description": "Фильтр по статусу"},
-                {"key": "project_type", "value": "scrum", "description": "Тип проекта"}
+                {"key": "page", "value": "1"},
+                {"key": "limit", "value": "10"},
+                {"key": "sort", "value": "name:desc"},
+                {"key": "status", "value": "active"},
+                {"key": "project_type", "value": "scrum"}
               ]
             }
           }
@@ -69,11 +69,11 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "projects"],
               "query": [
-                {"key": "search", "value": "CRM", "description": "Строка поиска"},
-                {"key": "searchFields", "value": "name,description", "description": "Поля через запятую"},
-                {"key": "page", "value": "1", "description": "Номер страницы (опционально)"},
-                {"key": "limit", "value": "10", "description": "Количество на странице (опционально)"},
-                {"key": "sort", "value": "", "description": "Сортировка (опционально)"}
+                {"key": "search", "value": "CRM"},
+                {"key": "searchFields", "value": "name,description"},
+                {"key": "page", "value": "1"},
+                {"key": "limit", "value": "10"},
+                {"key": "sort", "value": ""}
               ]
             }
           }
@@ -86,7 +86,7 @@
               "raw": "{{baseUrl}}/api/projects/:projectId",
               "host": ["{{baseUrl}}"],
               "path": ["api", "projects", ":projectId"],
-              "variable": [{"key": "projectId", "value": "1", "description": "ID проекта"}]
+              "variable": [{"key": "projectId", "value": "1"}]
             }
           }
         },
@@ -106,10 +106,10 @@
               "path": ["api", "projects", ":projectId"],
               "variable": [{"key": "projectId", "value": "1"}],
               "query": [
-                {"key": "name", "value": "Обновлённый проект", "description": "Новое название"},
-                {"key": "description", "value": "", "description": "Новое описание (опционально)"},
-                {"key": "project_type", "value": "", "description": "Новый тип (опционально)"},
-                {"key": "status", "value": "active", "description": "Новый статус"}
+                {"key": "name", "value": "Обновлённый проект"},
+                {"key": "description", "value": ""},
+                {"key": "project_type", "value": ""},
+                {"key": "status", "value": "active"}
               ]
             }
           }
@@ -154,9 +154,11 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"],
               "query": [
-                {"key": "full_name", "value": "Тест Тестов", "description": "Полное имя"},
-                {"key": "email", "value": "test@example.com", "description": "Email"}
+                {"key": "full_name", "value": "Тест Тестов"},
+                {"key": "email", "value": "test@example.com"}
               ]
             }
           }
@@ -167,6 +169,8 @@
             "method": "GET",
             "url": {
               "raw": "{{baseUrl}}/api/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"],
               "query": [
                 {"key": "page", "value": "1"},
                 {"key": "limit", "value": "15"},
@@ -181,11 +185,13 @@
             "method": "GET",
             "url": {
               "raw": "{{baseUrl}}/api/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"],
               "query": [
                 {"key": "search", "value": "Иванов"},
                 {"key": "searchFields", "value": "full_name,email"},
-                {"key": "page", "value": "1", "description": "Опционально"},
-                {"key": "limit", "value": "15", "description": "Опционально"}
+                {"key": "page", "value": "1"},
+                {"key": "limit", "value": "15"}
               ]
             }
           }
@@ -196,6 +202,8 @@
             "method": "GET",
             "url": {
               "raw": "{{baseUrl}}/api/users/:userId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", ":userId"],
               "variable": [{"key": "userId", "value": "1"}]
             }
           }
@@ -211,10 +219,12 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/users/:userId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", ":userId"],
               "variable": [{"key": "userId", "value": "1"}],
               "query": [
-                {"key": "full_name", "value": "Новое имя", "description": "Новое полное имя"},
-                {"key": "email", "value": "", "description": "Новый email (опционально)"}
+                {"key": "full_name", "value": "Новое имя"},
+                {"key": "email", "value": ""}
               ]
             }
           }
@@ -225,6 +235,8 @@
             "method": "DELETE",
             "url": {
               "raw": "{{baseUrl}}/api/users/:userId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", ":userId"],
               "variable": [{"key": "userId", "value": "1"}]
             }
           }
@@ -235,6 +247,8 @@
             "method": "HEAD",
             "url": {
               "raw": "{{baseUrl}}/api/users/:userId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", ":userId"],
               "variable": [{"key": "userId", "value": "1"}]
             }
           }
@@ -255,10 +269,12 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/project-members",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "project-members"],
               "query": [
-                {"key": "project_id", "value": "1", "description": "ID проекта"},
-                {"key": "user_id", "value": "5", "description": "ID пользователя"},
-                {"key": "role", "value": "Developer", "description": "Роль в проекте"}
+                {"key": "project_id", "value": "1"},
+                {"key": "user_id", "value": "5"},
+                {"key": "role", "value": "Developer"}
               ]
             }
           }
@@ -269,6 +285,8 @@
             "method": "GET",
             "url": {
               "raw": "{{baseUrl}}/api/project-members",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "project-members"],
               "query": [
                 {"key": "project_id", "value": "1"},
                 {"key": "page", "value": "1"},
@@ -283,11 +301,13 @@
             "method": "GET",
             "url": {
               "raw": "{{baseUrl}}/api/project-members",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "project-members"],
               "query": [
                 {"key": "search", "value": "Manager"},
                 {"key": "searchFields", "value": "role"},
-                {"key": "page", "value": "1", "description": "Опционально"},
-                {"key": "limit", "value": "20", "description": "Опционально"}
+                {"key": "page", "value": "1"},
+                {"key": "limit", "value": "20"}
               ]
             }
           }
@@ -298,6 +318,8 @@
             "method": "GET",
             "url": {
               "raw": "{{baseUrl}}/api/project-members/:memberId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "project-members", ":memberId"],
               "variable": [{"key": "memberId", "value": "1"}]
             }
           }
@@ -313,11 +335,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/project-members/:memberId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "project-members", ":memberId"],
               "variable": [{"key": "memberId", "value": "1"}],
               "query": [
-                {"key": "project_id", "value": "", "description": "Новый ID проекта (опционально)"},
-                {"key": "user_id", "value": "", "description": "Новый ID пользователя (опционально)"},
-                {"key": "role", "value": "Team Lead", "description": "Новая роль"}
+                {"key": "project_id", "value": ""},
+                {"key": "user_id", "value": ""},
+                {"key": "role", "value": "Team Lead"}
               ]
             }
           }
@@ -328,6 +352,8 @@
             "method": "DELETE",
             "url": {
               "raw": "{{baseUrl}}/api/project-members/:memberId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "project-members", ":memberId"],
               "variable": [{"key": "memberId", "value": "1"}]
             }
           }
@@ -338,6 +364,8 @@
             "method": "HEAD",
             "url": {
               "raw": "{{baseUrl}}/api/project-members/:memberId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "project-members", ":memberId"],
               "variable": [{"key": "memberId", "value": "1"}]
             }
           }
@@ -358,11 +386,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/iterations",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "iterations"],
               "query": [
-                {"key": "project_id", "value": "1", "description": "ID проекта"},
-                {"key": "name", "value": "Sprint 99", "description": "Название итерации"},
-                {"key": "type", "value": "sprint", "description": "Тип (sprint и т.д.)"},
-                {"key": "status", "value": "planned", "description": "Статус"}
+                {"key": "project_id", "value": "1"},
+                {"key": "name", "value": "Sprint 99"},
+                {"key": "type", "value": "sprint"},
+                {"key": "status", "value": "planned"}
               ]
             }
           }
@@ -373,12 +403,14 @@
             "method": "GET",
             "url": {
               "raw": "{{baseUrl}}/api/iterations",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "iterations"],
               "query": [
                 {"key": "project_id", "value": "1"},
                 {"key": "status", "value": "active"},
                 {"key": "sort", "value": "name:desc"},
-                {"key": "page", "value": "1", "description": "Опционально"},
-                {"key": "limit", "value": "10", "description": "Опционально"}
+                {"key": "page", "value": "1"},
+                {"key": "limit", "value": "10"}
               ]
             }
           }
@@ -389,11 +421,13 @@
             "method": "GET",
             "url": {
               "raw": "{{baseUrl}}/api/iterations",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "iterations"],
               "query": [
                 {"key": "search", "value": "Sprint"},
                 {"key": "searchFields", "value": "name"},
-                {"key": "page", "value": "1", "description": "Опционально"},
-                {"key": "limit", "value": "10", "description": "Опционально"}
+                {"key": "page", "value": "1"},
+                {"key": "limit", "value": "10"}
               ]
             }
           }
@@ -404,6 +438,8 @@
             "method": "GET",
             "url": {
               "raw": "{{baseUrl}}/api/iterations/:iterationId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "iterations", ":iterationId"],
               "variable": [{"key": "iterationId", "value": "1"}]
             }
           }
@@ -419,12 +455,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/iterations/:iterationId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "iterations", ":iterationId"],
               "variable": [{"key": "iterationId", "value": "1"}],
               "query": [
-                {"key": "project_id", "value": "", "description": "Опционально"},
-                {"key": "name", "value": "", "description": "Опционально"},
-                {"key": "type", "value": "", "description": "Опционально"},
-                {"key": "status", "value": "completed", "description": "Новый статус"}
+                {"key": "project_id", "value": ""},
+                {"key": "name", "value": ""},
+                {"key": "type", "value": ""},
+                {"key": "status", "value": "completed"}
               ]
             }
           }
@@ -435,6 +473,8 @@
             "method": "DELETE",
             "url": {
               "raw": "{{baseUrl}}/api/iterations/:iterationId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "iterations", ":iterationId"],
               "variable": [{"key": "iterationId", "value": "1"}]
             }
           }
@@ -445,6 +485,8 @@
             "method": "HEAD",
             "url": {
               "raw": "{{baseUrl}}/api/iterations/:iterationId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "iterations", ":iterationId"],
               "variable": [{"key": "iterationId", "value": "1"}]
             }
           }
@@ -465,14 +507,16 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tasks"],
               "query": [
-                {"key": "project_id", "value": "1", "description": "ID проекта"},
-                {"key": "title", "value": "Новая задача", "description": "Заголовок"},
-                {"key": "priority", "value": "critical", "description": "Приоритет"},
-                {"key": "status", "value": "todo", "description": "Статус"},
-                {"key": "story_points", "value": "8", "description": "Story points"},
-                {"key": "reporter_id", "value": "1", "description": "ID репортёра"},
-                {"key": "assignee_id", "value": "2", "description": "ID исполнителя"}
+                {"key": "project_id", "value": "1"},
+                {"key": "title", "value": "Новая задача"},
+                {"key": "priority", "value": "critical"},
+                {"key": "status", "value": "todo"},
+                {"key": "story_points", "value": "8"},
+                {"key": "reporter_id", "value": "1"},
+                {"key": "assignee_id", "value": "2"}
               ]
             }
           }
@@ -483,6 +527,8 @@
             "method": "GET",
             "url": {
               "raw": "{{baseUrl}}/api/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tasks"],
               "query": [
                 {"key": "project_id", "value": "1"},
                 {"key": "status", "value": "in_progress"},
@@ -502,6 +548,8 @@
             "method": "GET",
             "url": {
               "raw": "{{baseUrl}}/api/tasks/:taskId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tasks", ":taskId"],
               "variable": [{"key": "taskId", "value": "1"}]
             }
           }
@@ -517,15 +565,17 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/tasks/:taskId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tasks", ":taskId"],
               "variable": [{"key": "taskId", "value": "1"}],
               "query": [
-                {"key": "project_id", "value": "", "description": "Опционально"},
-                {"key": "title", "value": "", "description": "Опционально"},
-                {"key": "priority", "value": "", "description": "Опционально"},
-                {"key": "status", "value": "done", "description": "Новый статус"},
-                {"key": "story_points", "value": "13", "description": "Новые story points"},
-                {"key": "reporter_id", "value": "", "description": "Опционально"},
-                {"key": "assignee_id", "value": "", "description": "Опционально"}
+                {"key": "project_id", "value": ""},
+                {"key": "title", "value": ""},
+                {"key": "priority", "value": ""},
+                {"key": "status", "value": "done"},
+                {"key": "story_points", "value": "13"},
+                {"key": "reporter_id", "value": ""},
+                {"key": "assignee_id", "value": ""}
               ]
             }
           }
@@ -536,6 +586,8 @@
             "method": "DELETE",
             "url": {
               "raw": "{{baseUrl}}/api/tasks/:taskId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tasks", ":taskId"],
               "variable": [{"key": "taskId", "value": "1"}]
             }
           }
@@ -546,6 +598,8 @@
             "method": "HEAD",
             "url": {
               "raw": "{{baseUrl}}/api/tasks/:taskId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tasks", ":taskId"],
               "variable": [{"key": "taskId", "value": "1"}]
             }
           }
@@ -553,109 +607,136 @@
       ]
     },
     {
-      "name": "Attachments",
-      "item": [
-        {
-          "name": "Создать",
-          "request": {
-            "method": "POST",
-            "header": [{"key": "Content-Type", "value": "application/json"}],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"task_id\": 10,\n  \"user_id\": 1,\n  \"file_name\": \"document.pdf\",\n  \"file_url\": \"https://example.com/doc.pdf\"\n}"
+        "name": "Attachments",
+  "item": [
+    {
+      "name": "Создать",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "description": "Обязательный файл (только изображения: jpg, png, gif, webp и т.д.)"
             },
-            "url": {
-              "raw": "{{baseUrl}}/api/attachments",
-              "query": [
-                {"key": "task_id", "value": "10", "description": "ID задачи"},
-                {"key": "user_id", "value": "1", "description": "ID пользователя"},
-                {"key": "file_name", "value": "document.pdf", "description": "Имя файла"},
-                {"key": "file_url", "value": "https://example.com/doc.pdf", "description": "URL файла"}
-              ]
-            }
-          }
-        },
-        {
-          "name": "Список",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "{{baseUrl}}/api/attachments",
-              "query": [
-                {"key": "task_id", "value": "10"},
-                {"key": "page", "value": "1"},
-                {"key": "limit", "value": "20"}
-              ]
-            }
-          }
-        },
-        {
-          "name": "Поиск",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "{{baseUrl}}/api/attachments",
-              "query": [
-                {"key": "search", "value": "pdf"},
-                {"key": "searchFields", "value": "file_name"},
-                {"key": "page", "value": "1", "description": "Опционально"},
-                {"key": "limit", "value": "20", "description": "Опционально"}
-              ]
-            }
-          }
-        },
-        {
-          "name": "По ID",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "{{baseUrl}}/api/attachments/:attachmentId",
-              "variable": [{"key": "attachmentId", "value": "1"}]
-            }
-          }
-        },
-        {
-          "name": "Обновить",
-          "request": {
-            "method": "PUT",
-            "header": [{"key": "Content-Type", "value": "application/json"}],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"file_name\": \"new_document.pdf\"\n}"
+            {
+              "key": "task_id",
+              "value": "10",
+              "type": "text",
+              "description": "ID задачи (обязательно)"
             },
-            "url": {
-              "raw": "{{baseUrl}}/api/attachments/:attachmentId",
-              "variable": [{"key": "attachmentId", "value": "1"}],
-              "query": [
-                {"key": "task_id", "value": "", "description": "Опционально"},
-                {"key": "user_id", "value": "", "description": "Опционально"},
-                {"key": "file_name", "value": "new_document.pdf", "description": "Новое имя файла"},
-                {"key": "file_url", "value": "", "description": "Новый URL (опционально)"}
-              ]
+            {
+              "key": "user_id",
+              "value": "1",
+              "type": "text",
+              "description": "ID пользователя-загрузчика (опционально, можно будет брать из JWT)"
             }
-          }
+          ]
         },
-        {
-          "name": "Удалить",
-          "request": {
-            "method": "DELETE",
-            "url": {
-              "raw": "{{baseUrl}}/api/attachments/:attachmentId",
-              "variable": [{"key": "attachmentId", "value": "1"}]
-            }
-          }
+        "url": {
+          "raw": "{{baseUrl}}/api/attachments",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "attachments"]
         },
-        {
-          "name": "Проверка (HEAD)",
-          "request": {
-            "method": "HEAD",
-            "url": {
-              "raw": "{{baseUrl}}/api/attachments/:attachmentId",
-              "variable": [{"key": "attachmentId", "value": "1"}]
-            }
-          }
+        "description": "Загрузка вложения. Использует multipart/form-data. Файл обязателен, максимум 10 МБ."
+      }
+    },
+    {
+      "name": "Список",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/attachments",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "attachments"],
+          "query": [
+            {"key": "task_id", "value": "10", "description": "Фильтр по задаче"},
+            {"key": "page", "value": "1"},
+            {"key": "limit", "value": "20"},
+            {"key": "sort", "value": "", "description": "Например: createdAt:desc"},
+            {"key": "search", "value": "", "disabled": true},
+            {"key": "searchFields", "value": "", "disabled": true}
+          ]
         }
-      ]
+      }
+    },
+    {
+      "name": "Поиск",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/attachments",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "attachments"],
+          "query": [
+            {"key": "search", "value": "pdf", "description": "Строка поиска (хотя сейчас только изображения)"},
+            {"key": "searchFields", "value": "file_name", "description": "Поля для поиска"},
+            {"key": "page", "value": "1", "description": "Опционально"},
+            {"key": "limit", "value": "20", "description": "Опционально"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "По ID",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/attachments/:attachmentId",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "attachments", ":attachmentId"],
+          "variable": [{"key": "attachmentId", "value": "1"}]
+        }
+      }
+    },
+    {
+      "name": "Обновить",
+      "request": {
+        "method": "PUT",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"task_id\": 15,\n  \"user_id\": 3\n}",
+          "options": {"raw": {"language": "json"}}
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/attachments/:attachmentId",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "attachments", ":attachmentId"],
+          "variable": [{"key": "attachmentId", "value": "1"}],
+          "description": "Можно обновлять только task_id и user_id. Файл заменить нельзя."
+        }
+      }
+    },
+    {
+      "name": "Удалить",
+      "request": {
+        "method": "DELETE",
+        "url": {
+          "raw": "{{baseUrl}}/api/attachments/:attachmentId",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "attachments", ":attachmentId"],
+          "variable": [{"key": "attachmentId", "value": "1"}],
+          "description": "Удаляет запись из БД и физический файл с диска."
+        }
+      }
+    },
+    {
+      "name": "Проверка (HEAD)",
+      "request": {
+        "method": "HEAD",
+        "url": {
+          "raw": "{{baseUrl}}/api/attachments/:attachmentId",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "attachments", ":attachmentId"],
+          "variable": [{"key": "attachmentId", "value": "1"}]
+        }
+      }
+    }
+  ]
     }
   ],
   "variable": [
