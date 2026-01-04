@@ -29,6 +29,7 @@ const TasksPage = () => {
         story_points: '',
         due_date: '',
         project_id: '',
+        iteration_id: '',
         assignee_id: '',
         reporter_id: '',
     });
@@ -37,7 +38,9 @@ const TasksPage = () => {
     const [serverError, setServerError] = useState('');
 
     const [projects, setProjects] = useState([]);
+    const [iterations, setIterations] = useState([]);
     const [loadingProjects, setLoadingProjects] = useState(true);
+    const [loadingIterations, setLoadingIterations] = useState(false);
     const [projectMembers, setProjectMembers] = useState([]);
     const [loadingMembers, setLoadingMembers] = useState(false);
 
@@ -68,21 +71,24 @@ const TasksPage = () => {
     }, []);
 
     useEffect(() => {
-        dispatch(
-            fetchTasks({
-                page: currentPage,
-                limit,
-                sort: `${sortField}:${sortDirection}`,
-                projectId: filterProject || undefined,
-                status: filterStatus || undefined,
-            })
-        )
-            .unwrap()
-            .then((payload) => {
-                setTotalTasks(payload.total || 0);
-                setTotalPages(payload.pages || 1);
-            });
-    }, [dispatch, currentPage, sortField, sortDirection, filterProject, filterStatus]);
+        if (formData.project_id) {
+            const loadIterations = async () => {
+                setLoadingIterations(true);
+                try {
+                    const response = await api.get(`/iterations?project_id=${formData.project_id}`);
+                    setIterations(response.data.data || []);
+                } catch (err) {
+                    console.error('Ошибка загрузки итераций:', err);
+                    setIterations([]);
+                } finally {
+                    setLoadingIterations(false);
+                }
+            };
+            loadIterations();
+        } else {
+            setIterations([]);
+        }
+    }, [formData.project_id]);
 
     useEffect(() => {
         if (formData.project_id) {
@@ -104,9 +110,26 @@ const TasksPage = () => {
         }
     }, [formData.project_id]);
 
-    const openTaskModal = (task, edit = false) => {
+    useEffect(() => {
+        dispatch(
+            fetchTasks({
+                page: currentPage,
+                limit,
+                sort: `${sortField}:${sortDirection}`,
+                projectId: filterProject || undefined,
+                status: filterStatus || undefined,
+            })
+        )
+            .unwrap()
+            .then((payload) => {
+                setTotalTasks(payload.total || 0);
+                setTotalPages(payload.pages || 1);
+            });
+    }, [dispatch, currentPage, sortField, sortDirection, filterProject, filterStatus]);
+
+    const openTaskModal = (task = null, edit = false) => {
         setModalTask(task);
-        setIsEditMode(edit);
+        setIsEditMode(edit || !task);
         setFormData(task ? {
             title: task.title,
             description: task.description || '',
@@ -115,6 +138,7 @@ const TasksPage = () => {
             story_points: task.story_points?.toString() || '',
             due_date: task.due_date || '',
             project_id: task.project_id?.toString() || '',
+            iteration_id: task.iteration_id?.toString() || '',
             assignee_id: task.assignee_id?.toString() || '',
             reporter_id: task.reporter_id?.toString() || '',
         } : {
@@ -125,6 +149,7 @@ const TasksPage = () => {
             story_points: '',
             due_date: '',
             project_id: '',
+            iteration_id: '',
             assignee_id: '',
             reporter_id: '',
         });
@@ -136,6 +161,7 @@ const TasksPage = () => {
     const closeModal = () => {
         setModalTask(null);
         setIsEditMode(false);
+        setIterations([]);
         setProjectMembers([]);
     };
 
@@ -161,6 +187,7 @@ const TasksPage = () => {
         const taskData = {
             ...formData,
             story_points: formData.story_points ? parseInt(formData.story_points) : null,
+            iteration_id: formData.iteration_id ? parseInt(formData.iteration_id) : null,
             assignee_id: formData.assignee_id ? parseInt(formData.assignee_id) : null,
             reporter_id: formData.reporter_id ? parseInt(formData.reporter_id) : null,
         };
@@ -206,17 +233,38 @@ const TasksPage = () => {
         }
     };
 
-    const handlePageChange = (page) => setCurrentPage(page);
-    const handleSortFieldChange = (field) => { setSortField(field); setCurrentPage(1); };
-    const handleSortDirectionChange = (direction) => { setSortDirection(direction); setCurrentPage(1); };
-    const handleFilterProjectChange = (projectId) => { setFilterProject(projectId); setCurrentPage(1); };
-    const handleFilterStatusChange = (status) => { setFilterStatus(status); setCurrentPage(1); };
-    const resetFilters = () => { setFilterProject(''); setFilterStatus(''); setCurrentPage(1); };
+    // Обработчики сортировки и фильтров
+    const handleSortFieldChange = (field) => {
+        setSortField(field);
+        setCurrentPage(1);
+    };
+
+    const handleSortDirectionChange = (direction) => {
+        setSortDirection(direction);
+        setCurrentPage(1);
+    };
+
+    const handleFilterProjectChange = (projectId) => {
+        setFilterProject(projectId);
+        setCurrentPage(1);
+    };
+
+    const handleFilterStatusChange = (status) => {
+        setFilterStatus(status);
+        setCurrentPage(1);
+    };
+
+    const resetFilters = () => {
+        setFilterProject('');
+        setFilterStatus('');
+        setCurrentPage(1);
+    };
 
     const tableColumns = [
         { key: 'title', header: 'Название', render: (task) => <strong>{task.title}</strong> },
-        { key: 'assignee', header: 'Исполнитель', render: (task) => task.Assignee?.full_name || '—' },
-        { key: 'project', header: 'Проект', render: (task) => task.Project?.name || '—' },
+        { key: 'Iteration', header: 'Итерация', render: (task) => task.Iteration?.name || '—' },
+        { key: 'Assignee', header: 'Исполнитель', render: (task) => task.Assignee?.full_name || '—' },
+        { key: 'Project', header: 'Проект', render: (task) => task.Project?.name || '—' },
         { key: 'priority', header: 'Приоритет', render: (task) => task.priority },
         { key: 'status', header: 'Статус', render: (task) => task.status },
     ];
@@ -226,6 +274,7 @@ const TasksPage = () => {
         { key: 'title', label: 'По названию' },
         { key: 'priority', label: 'По приоритету' },
         { key: 'status', label: 'По статусу' },
+        { key: 'Iteration.name', label: 'По итерации' },
     ];
 
     const additionalControls = () => (
@@ -264,8 +313,20 @@ const TasksPage = () => {
     return (
         <div>
             <h2>Задачи</h2>
-            <button onClick={() => openTaskModal(null, true)}
-                style={{ padding: '10px 20px', background: '#27ae60', color: 'white', border: 'none', borderRadius: '4px', marginBottom: '20px' }}>
+            <button
+                type="button"
+                onClick={() => openTaskModal(null, true)}
+                style={{
+                    padding: '10px 20px',
+                    background: '#27ae60',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    marginBottom: '20px',
+                    cursor: 'pointer',
+                    fontSize: '16px'
+                }}
+            >
                 Добавить задачу
             </button>
 
@@ -294,14 +355,14 @@ const TasksPage = () => {
                 totalPages={totalPages}
                 totalCount={totalTasks}
                 pageSize={limit}
-                onPageChange={handlePageChange}
+                onPageChange={(page) => setCurrentPage(page)}
                 loading={tasksLoading}
             />
 
             <Modal
-                isOpen={!!modalTask}
+                isOpen={modalTask !== null || isEditMode}
                 onClose={closeModal}
-                title={isEditMode ? 'Редактировать задачу' : 'Просмотр задачи'}
+                title={isEditMode ? (modalTask ? 'Редактировать задачу' : 'Создать задачу') : 'Просмотр задачи'}
             >
                 <div style={{ overflowY: 'auto', maxHeight: '80vh' }}>
                     {isEditMode ? (
@@ -333,7 +394,7 @@ const TasksPage = () => {
                                 <label>Проект *</label>
                                 <select
                                     value={formData.project_id}
-                                    onChange={(e) => setFormData({ ...formData, project_id: e.target.value })}
+                                    onChange={(e) => setFormData({ ...formData, project_id: e.target.value, iteration_id: '' })}
                                     style={{ width: '100%', padding: '10px' }}
                                     disabled={loadingProjects}
                                 >
@@ -349,6 +410,26 @@ const TasksPage = () => {
                                 {formErrors.project_id && <p style={{ color: 'red' }}>{formErrors.project_id}</p>}
                             </div>
 
+                            <div style={{ marginBottom: '15px' }}>
+                                <label>Итерация (Спринт)</label>
+                                <select
+                                    value={formData.iteration_id}
+                                    onChange={(e) => setFormData({ ...formData, iteration_id: e.target.value })}
+                                    style={{ width: '100%', padding: '10px' }}
+                                    disabled={!formData.project_id || loadingIterations}
+                                    size={5}
+                                >
+                                    <option value="">— Без итерации —</option>
+                                    {loadingIterations ? (
+                                        <option disabled>Загрузка итераций...</option>
+                                    ) : iterations.map((iter) => (
+                                        <option key={iter.id} value={iter.id}>
+                                            {iter.name} ({iter.type})
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
                                 <div>
                                     <label>Исполнитель (Assignee)</label>
@@ -357,6 +438,7 @@ const TasksPage = () => {
                                         onChange={(e) => setFormData({ ...formData, assignee_id: e.target.value })}
                                         style={{ width: '100%', padding: '10px' }}
                                         disabled={!formData.project_id || loadingMembers}
+                                        size={5}
                                     >
                                         <option value="">— Не назначен —</option>
                                         {projectMembers.map((user) => (
@@ -365,10 +447,6 @@ const TasksPage = () => {
                                             </option>
                                         ))}
                                     </select>
-                                    {loadingMembers && <p style={{ fontSize: '12px', color: '#666' }}>Загрузка участников...</p>}
-                                    {!loadingMembers && projectMembers.length === 0 && formData.project_id && (
-                                        <p style={{ fontSize: '12px', color: '#e74c3c' }}>В проекте нет участников</p>
-                                    )}
                                 </div>
 
                                 <div>
@@ -378,6 +456,7 @@ const TasksPage = () => {
                                         onChange={(e) => setFormData({ ...formData, reporter_id: e.target.value })}
                                         style={{ width: '100%', padding: '10px' }}
                                         disabled={!formData.project_id || loadingMembers}
+                                        size={5}
                                     >
                                         <option value="">— Не назначен —</option>
                                         {projectMembers.map((user) => (
@@ -467,7 +546,7 @@ const TasksPage = () => {
                             </div>
 
                             <button type="submit" style={{ width: '100%', padding: '15px', background: '#3498db', color: 'white', border: 'none', borderRadius: '4px' }}>
-                                Сохранить изменения
+                                {isEditMode ? 'Сохранить изменения' : 'Создать задачу'}
                             </button>
                         </form>
                     ) : (
@@ -475,6 +554,7 @@ const TasksPage = () => {
                             <h3>{modalTask?.title}</h3>
                             <p><strong>Описание:</strong> {modalTask?.description || '—'}</p>
                             <p><strong>Проект:</strong> {modalTask?.Project?.name || '—'}</p>
+                            <p><strong>Итерация:</strong> {modalTask?.Iteration?.name || '—'}</p>
                             <p><strong>Приоритет:</strong> {modalTask?.priority}</p>
                             <p><strong>Статус:</strong> {modalTask?.status}</p>
                             <p><strong>Story Points:</strong> {modalTask?.story_points || '—'}</p>
