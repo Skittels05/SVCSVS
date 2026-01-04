@@ -32,6 +32,7 @@ exports.getAll = async (req, res) => {
         { model: Iteration, attributes: ['id', 'name'] },
         { model: User, as: 'Reporter', attributes: ['id', 'full_name'] },
         { model: User, as: 'Assignee', attributes: ['id', 'full_name'] },
+        { model: Attachment, attributes: ['id', 'file_name', 'file_url'] },
       ],
     });
     res.json({
