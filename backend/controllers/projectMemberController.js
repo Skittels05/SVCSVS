@@ -13,19 +13,39 @@ exports.create = async (req, res) => {
   }
 };
 
-exports.getAll = async (req, res) => {
+exports.getAll = async (req, res, next) => {
   try {
-    const { where, order, limit, offset } = parseQuery(req.query);
+    let { where, limit = 10, offset = 0 } = parseQuery(req.query);
+    let orderArray = [['id', 'ASC']];
+
+    if (req.query.sort) {
+      const sortString = req.query.sort;
+      const [fullField, direction = 'ASC'] = sortString.split(':');
+      const dir = direction.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
+
+      if (fullField === 'Project.name') {
+        orderArray = [[{ model: Project, as: 'Project' }, 'name', dir]];
+      } else if (fullField === 'User.full_name') {
+        orderArray = [[{ model: User, as: 'User' }, 'full_name', dir]];
+      } else if (fullField === 'role') {
+        orderArray = [[fullField, dir]];
+      } else if (fullField === 'id') {
+        orderArray = [[fullField, dir]];
+      }
+    }
+
     const { count, rows } = await ProjectMember.findAndCountAll({
       where,
-      order,
       limit,
       offset,
+      order: orderArray,
       include: [
         { model: Project, attributes: ['id', 'name'] },
         { model: User, attributes: ['id', 'full_name', 'email'] },
       ],
+      distinct: true,
     });
+
     res.json({
       total: count,
       pages: Math.ceil(count / limit),
@@ -33,7 +53,8 @@ exports.getAll = async (req, res) => {
       data: rows,
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Ошибка в getAll project-members:', err);
+    next(err);
   }
 };
 

@@ -10,6 +10,7 @@ const Header = () => {
           <Link to="/projects" style={{ color: 'white', margin: '0 15px', textDecoration: 'none' }}>Проекты</Link>
           <Link to="/tasks" style={{ color: 'white', margin: '0 15px', textDecoration: 'none' }}>Задачи</Link>
           <Link to="/users" style={{ color: 'white', margin: '0 15px', textDecoration: 'none' }}>Пользователи</Link>
+          <Link to="/project-members" style={{ color: 'white', margin: '0 15px', textDecoration: 'none' }}>Учсатники</Link>
         </nav>
       </div>
     </header>
