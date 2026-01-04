@@ -37,6 +37,34 @@ exports.getAll = async (req, res) => {
   }
 };
 
+exports.getMembersByProject = async (req, res) => {
+  try {
+    const { project_id } = req.params;
+
+    if (!project_id) {
+      return res.status(400).json({ error: 'project_id обязателен' });
+    }
+
+    const members = await ProjectMember.findAll({
+      where: { project_id: parseInt(project_id, 10) },
+      include: [
+        {
+          model: User,
+          attributes: ['id', 'full_name', 'email'],
+        },
+      ],
+      order: [[User, 'full_name', 'ASC']],
+    });
+
+    const users = members.map((pm) => pm.User);
+
+    res.json(users);
+  } catch (err) {
+    console.error('Ошибка получения участников проекта:', err);
+    res.status(500).json({ error: 'Ошибка загрузки участников проекта' });
+  }
+};
+
 exports.getById = async (req, res) => {
   try {
     const member = await ProjectMember.findByPk(req.params.id, {

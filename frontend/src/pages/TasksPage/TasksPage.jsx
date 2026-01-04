@@ -12,11 +12,12 @@ import Modal from '../../components/Modal/Modal';
 import DataTable from '../../components/DataTable/DataTable';
 import Pagination from '../../components/Pagination/Pagination';
 import SortingControls from '../../components/SortingControls/SortingControls';
+import api from '../../services/api';
 import { handleApiError } from '../../utils/handleApiError';
 
 const TasksPage = () => {
     const dispatch = useDispatch();
-    const { list: tasks, loading } = useSelector((state) => state.tasks);
+    const { list: tasks, loading: tasksLoading } = useSelector((state) => state.tasks);
 
     const [modalTask, setModalTask] = useState(null);
     const [isEditMode, setIsEditMode] = useState(false);
@@ -35,6 +36,11 @@ const TasksPage = () => {
     const [formErrors, setFormErrors] = useState({});
     const [serverError, setServerError] = useState('');
 
+    const [projects, setProjects] = useState([]);
+    const [loadingProjects, setLoadingProjects] = useState(true);
+    const [projectMembers, setProjectMembers] = useState([]);
+    const [loadingMembers, setLoadingMembers] = useState(false);
+
     const [currentPage, setCurrentPage] = useState(1);
     const limit = 10;
     const [sortField, setSortField] = useState('id');
@@ -44,6 +50,22 @@ const TasksPage = () => {
 
     const [totalTasks, setTotalTasks] = useState(0);
     const [totalPages, setTotalPages] = useState(1);
+
+    useEffect(() => {
+        const loadProjects = async () => {
+            setLoadingProjects(true);
+            try {
+                const response = await api.get('/projects');
+                setProjects(response.data.data || []);
+            } catch (err) {
+                console.error('Ошибка загрузки проектов:', err);
+                setProjects([]);
+            } finally {
+                setLoadingProjects(false);
+            }
+        };
+        loadProjects();
+    }, []);
 
     useEffect(() => {
         dispatch(
@@ -61,6 +83,26 @@ const TasksPage = () => {
                 setTotalPages(payload.pages || 1);
             });
     }, [dispatch, currentPage, sortField, sortDirection, filterProject, filterStatus]);
+
+    useEffect(() => {
+        if (formData.project_id) {
+            const loadMembers = async () => {
+                setLoadingMembers(true);
+                try {
+                    const response = await api.get(`/projects/${formData.project_id}/members`);
+                    setProjectMembers(response.data);
+                } catch (err) {
+                    console.error('Ошибка загрузки участников:', err);
+                    setProjectMembers([]);
+                } finally {
+                    setLoadingMembers(false);
+                }
+            };
+            loadMembers();
+        } else {
+            setProjectMembers([]);
+        }
+    }, [formData.project_id]);
 
     const openTaskModal = (task, edit = false) => {
         setModalTask(task);
@@ -94,6 +136,7 @@ const TasksPage = () => {
     const closeModal = () => {
         setModalTask(null);
         setIsEditMode(false);
+        setProjectMembers([]);
     };
 
     const handleFileChange = (e) => {
@@ -118,11 +161,11 @@ const TasksPage = () => {
         const taskData = {
             ...formData,
             story_points: formData.story_points ? parseInt(formData.story_points) : null,
+            assignee_id: formData.assignee_id ? parseInt(formData.assignee_id) : null,
+            reporter_id: formData.reporter_id ? parseInt(formData.reporter_id) : null,
         };
 
-        const action = modalTask
-            ? updateTask({ id: modalTask.id, taskData })
-            : createTask(taskData);
+        const action = modalTask ? updateTask({ id: modalTask.id, taskData }) : createTask(taskData);
 
         const resultAction = await dispatch(action);
 
@@ -135,7 +178,7 @@ const TasksPage = () => {
                 await dispatch(uploadAttachments({
                     taskId: newTask.id,
                     files: selectedFiles,
-                    userId: 1,
+                    userId: 1, // замените на текущего пользователя
                 }));
             }
 
@@ -163,151 +206,46 @@ const TasksPage = () => {
         }
     };
 
-    const handlePageChange = (page) => {
-        setCurrentPage(page);
-    };
-
-    const handleSortFieldChange = (field) => {
-        setSortField(field);
-        setCurrentPage(1);
-    };
-
-    const handleSortDirectionChange = (direction) => {
-        setSortDirection(direction);
-        setCurrentPage(1);
-    };
-
-    const handleFilterProjectChange = (projectId) => {
-        setFilterProject(projectId);
-        setCurrentPage(1);
-    };
-
-    const handleFilterStatusChange = (status) => {
-        setFilterStatus(status);
-        setCurrentPage(1);
-    };
-
-    const resetFilters = () => {
-        setFilterProject('');
-        setFilterStatus('');
-        setCurrentPage(1);
-    };
+    const handlePageChange = (page) => setCurrentPage(page);
+    const handleSortFieldChange = (field) => { setSortField(field); setCurrentPage(1); };
+    const handleSortDirectionChange = (direction) => { setSortDirection(direction); setCurrentPage(1); };
+    const handleFilterProjectChange = (projectId) => { setFilterProject(projectId); setCurrentPage(1); };
+    const handleFilterStatusChange = (status) => { setFilterStatus(status); setCurrentPage(1); };
+    const resetFilters = () => { setFilterProject(''); setFilterStatus(''); setCurrentPage(1); };
 
     const tableColumns = [
-        {
-            key: 'title',
-            header: 'Название',
-            render: (task) => (
-                <span style={{ fontWeight: '500', color: '#2c3e50' }}>
-                    {task.title}
-                </span>
-            )
-        },
-        {
-            key: 'assignee',
-            header: 'Исполнитель',
-            render: (task) => task.Assignee?.full_name || '—'
-        },
-        {
-            key: 'project',
-            header: 'Проект',
-            render: (task) => task.Project?.name || '—'
-        },
-        {
-            key: 'priority',
-            header: 'Приоритет',
-            render: (task) => {
-                const colors = {
-                    low: '#27ae60',
-                    medium: '#f39c12',
-                    high: '#e67e22',
-                    critical: '#e74c3c'
-                };
-                return (
-                    <span
-                        style={{
-                            color: colors[task.priority] || '#7f8c8d',
-                            fontWeight: '500'
-                        }}
-                    >
-                        {task.priority}
-                    </span>
-                );
-            }
-        },
-        {
-            key: 'status',
-            header: 'Статус',
-            render: (task) => {
-                const statusColors = {
-                    backlog: '#95a5a6',
-                    todo: '#3498db',
-                    'in_progress': '#f39c12',
-                    review: '#e67e22',
-                    done: '#27ae60'
-                };
-                return (
-                    <span
-                        style={{
-                            backgroundColor: statusColors[task.status] || '#ecf0f1',
-                            color: 'white',
-                            padding: '4px 8px',
-                            borderRadius: '12px',
-                            fontSize: '12px',
-                            fontWeight: 'bold'
-                        }}
-                    >
-                        {task.status.replace('_', ' ')}
-                    </span>
-                );
-            }
-        },
+        { key: 'title', header: 'Название', render: (task) => <strong>{task.title}</strong> },
+        { key: 'assignee', header: 'Исполнитель', render: (task) => task.Assignee?.full_name || '—' },
+        { key: 'project', header: 'Проект', render: (task) => task.Project?.name || '—' },
+        { key: 'priority', header: 'Приоритет', render: (task) => task.priority },
+        { key: 'status', header: 'Статус', render: (task) => task.status },
     ];
 
     const sortingFields = [
         { key: 'id', label: 'ID' },
         { key: 'title', label: 'По названию' },
-        { key: 'created_at', label: 'По дате создания' },
-        { key: 'due_date', label: 'По сроку' },
         { key: 'priority', label: 'По приоритету' },
         { key: 'status', label: 'По статусу' },
     ];
 
     const additionalControls = () => (
-        <div style={{ display: 'flex', gap: '15px', alignItems: 'center', marginTop: '10px' }}>
-            <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
-                <label style={{ fontWeight: '500', color: '#495057' }}>Проект:</label>
-                <select
-                    value={filterProject}
-                    onChange={(e) => handleFilterProjectChange(e.target.value)}
-                    style={{
-                        padding: '6px 10px',
-                        borderRadius: '4px',
-                        border: '1px solid #ced4da',
-                        background: 'white',
-                        minWidth: '180px'
-                    }}
-                >
+        <div style={{ display: 'flex', gap: '15px', marginTop: '10px', flexWrap: 'wrap' }}>
+            <div>
+                <label>Проект:</label>
+                <select value={filterProject} onChange={(e) => handleFilterProjectChange(e.target.value)}>
                     <option value="">Все проекты</option>
-                    <option value="1">Разработка CRM</option>
-                    <option value="2">Модернизация сайта</option>
-                    <option value="6">Система аналитики</option>
+                    {loadingProjects ? (
+                        <option disabled>Загрузка проектов...</option>
+                    ) : projects.map((proj) => (
+                        <option key={proj.id} value={proj.id}>
+                            {proj.name}
+                        </option>
+                    ))}
                 </select>
             </div>
-
-            <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
-                <label style={{ fontWeight: '500', color: '#495057' }}>Статус:</label>
-                <select
-                    value={filterStatus}
-                    onChange={(e) => handleFilterStatusChange(e.target.value)}
-                    style={{
-                        padding: '6px 10px',
-                        borderRadius: '4px',
-                        border: '1px solid #ced4da',
-                        background: 'white',
-                        minWidth: '150px'
-                    }}
-                >
+            <div>
+                <label>Статус:</label>
+                <select value={filterStatus} onChange={(e) => handleFilterStatusChange(e.target.value)}>
                     <option value="">Все статусы</option>
                     <option value="backlog">Бэклог</option>
                     <option value="todo">To Do</option>
@@ -319,24 +257,15 @@ const TasksPage = () => {
         </div>
     );
 
-    if (loading) return <p style={{ textAlign: 'center', marginTop: '50px' }}>Загрузка задач...</p>;
+    if (tasksLoading && currentPage === 1) {
+        return <p style={{ textAlign: 'center', marginTop: '50px' }}>Загрузка задач...</p>;
+    }
 
     return (
         <div>
             <h2>Задачи</h2>
-            <button
-                onClick={() => openTaskModal(null, true)}
-                style={{
-                    padding: '10px 20px',
-                    background: '#27ae60',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '16px',
-                    marginBottom: '20px'
-                }}
-            >
+            <button onClick={() => openTaskModal(null, true)}
+                style={{ padding: '10px 20px', background: '#27ae60', color: 'white', border: 'none', borderRadius: '4px', marginBottom: '20px' }}>
                 Добавить задачу
             </button>
 
@@ -358,7 +287,6 @@ const TasksPage = () => {
                 onView={(task) => openTaskModal(task, false)}
                 onEdit={(task) => openTaskModal(task, true)}
                 onDelete={handleDelete}
-                actionsLabel="Действия"
             />
 
             <Pagination
@@ -367,7 +295,7 @@ const TasksPage = () => {
                 totalCount={totalTasks}
                 pageSize={limit}
                 onPageChange={handlePageChange}
-                loading={loading}
+                loading={tasksLoading}
             />
 
             <Modal
@@ -407,37 +335,73 @@ const TasksPage = () => {
                                     value={formData.project_id}
                                     onChange={(e) => setFormData({ ...formData, project_id: e.target.value })}
                                     style={{ width: '100%', padding: '10px' }}
+                                    disabled={loadingProjects}
                                 >
                                     <option value="">Выберите проект</option>
-                                    <option value="1">Разработка CRM</option>
-                                    <option value="2">Модернизация сайта</option>
-                                    <option value="6">Система аналитики</option>
+                                    {loadingProjects ? (
+                                        <option disabled>Загрузка проектов...</option>
+                                    ) : projects.map((proj) => (
+                                        <option key={proj.id} value={proj.id}>
+                                            {proj.name}
+                                        </option>
+                                    ))}
                                 </select>
                                 {formErrors.project_id && <p style={{ color: 'red' }}>{formErrors.project_id}</p>}
                             </div>
 
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
                                 <div>
-                                    <label>Приоритет</label>
+                                    <label>Исполнитель (Assignee)</label>
                                     <select
-                                        value={formData.priority}
-                                        onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
+                                        value={formData.assignee_id}
+                                        onChange={(e) => setFormData({ ...formData, assignee_id: e.target.value })}
                                         style={{ width: '100%', padding: '10px' }}
+                                        disabled={!formData.project_id || loadingMembers}
                                     >
+                                        <option value="">— Не назначен —</option>
+                                        {projectMembers.map((user) => (
+                                            <option key={user.id} value={user.id}>
+                                                {user.full_name} ({user.email})
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {loadingMembers && <p style={{ fontSize: '12px', color: '#666' }}>Загрузка участников...</p>}
+                                    {!loadingMembers && projectMembers.length === 0 && formData.project_id && (
+                                        <p style={{ fontSize: '12px', color: '#e74c3c' }}>В проекте нет участников</p>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <label>Репортер (Reporter)</label>
+                                    <select
+                                        value={formData.reporter_id}
+                                        onChange={(e) => setFormData({ ...formData, reporter_id: e.target.value })}
+                                        style={{ width: '100%', padding: '10px' }}
+                                        disabled={!formData.project_id || loadingMembers}
+                                    >
+                                        <option value="">— Не назначен —</option>
+                                        {projectMembers.map((user) => (
+                                            <option key={user.id} value={user.id}>
+                                                {user.full_name} ({user.email})
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
+                                <div>
+                                    <label>Приоритет</label>
+                                    <select value={formData.priority} onChange={(e) => setFormData({ ...formData, priority: e.target.value })} style={{ width: '100%', padding: '10px' }}>
                                         <option value="low">Низкий</option>
                                         <option value="medium">Средний</option>
                                         <option value="high">Высокий</option>
                                         <option value="critical">Критический</option>
                                     </select>
                                 </div>
-
                                 <div>
                                     <label>Статус</label>
-                                    <select
-                                        value={formData.status}
-                                        onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                                        style={{ width: '100%', padding: '10px' }}
-                                    >
+                                    <select value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value })} style={{ width: '100%', padding: '10px' }}>
                                         <option value="backlog">Бэклог</option>
                                         <option value="todo">To Do</option>
                                         <option value="in_progress">В работе</option>
@@ -450,24 +414,11 @@ const TasksPage = () => {
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
                                 <div>
                                     <label>Story Points</label>
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        max="13"
-                                        value={formData.story_points}
-                                        onChange={(e) => setFormData({ ...formData, story_points: e.target.value })}
-                                        style={{ width: '100%', padding: '10px' }}
-                                    />
+                                    <input type="number" min="1" max="13" value={formData.story_points} onChange={(e) => setFormData({ ...formData, story_points: e.target.value })} style={{ width: '100%', padding: '10px' }} />
                                 </div>
-
                                 <div>
                                     <label>Срок</label>
-                                    <input
-                                        type="date"
-                                        value={formData.due_date}
-                                        onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
-                                        style={{ width: '100%', padding: '10px' }}
-                                    />
+                                    <input type="date" value={formData.due_date} onChange={(e) => setFormData({ ...formData, due_date: e.target.value })} style={{ width: '100%', padding: '10px' }} />
                                 </div>
                             </div>
 
@@ -477,7 +428,6 @@ const TasksPage = () => {
                                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px', marginTop: '10px' }}>
                                         {modalTask.Attachments.map((att) => {
                                             const fullImageUrl = `http://localhost:5000${att.file_url}`;
-
                                             return (
                                                 <div key={att.id} style={{ textAlign: 'center' }}>
                                                     <img
@@ -492,16 +442,14 @@ const TasksPage = () => {
                                                         }}
                                                         onError={(e) => {
                                                             e.target.src = 'https://via.placeholder.com/250?text=Ошибка+загрузки';
-                                                            e.target.alt = 'Не удалось загрузить изображение';
                                                         }}
                                                     />
                                                     <p style={{ marginTop: '5px', fontSize: '14px', wordBreak: 'break-all' }}>
                                                         {att.file_name}
                                                     </p>
                                                     <button
-                                                        className="danger"
                                                         onClick={() => handleDeleteAttachment(att.id)}
-                                                        style={{ marginTop: '5px', padding: '5px 10px', background: '#e74c3c', color: 'white' }}
+                                                        style={{ marginTop: '5px', padding: '5px 10px', background: '#e74c3c', color: 'white', border: 'none', borderRadius: '4px' }}
                                                     >
                                                         Удалить
                                                     </button>
@@ -514,19 +462,11 @@ const TasksPage = () => {
 
                             <div style={{ marginBottom: '20px' }}>
                                 <label>Добавить изображения (до 10)</label>
-                                <input
-                                    type="file"
-                                    multiple
-                                    accept="image/*"
-                                    onChange={handleFileChange}
-                                    style={{ width: '100%', padding: '10px' }}
-                                />
-                                {selectedFiles.length > 0 && (
-                                    <p>Выбрано файлов: {selectedFiles.length}</p>
-                                )}
+                                <input type="file" multiple accept="image/*" onChange={handleFileChange} style={{ width: '100%', padding: '10px' }} />
+                                {selectedFiles.length > 0 && <p>Выбрано файлов: {selectedFiles.length}</p>}
                             </div>
 
-                            <button type="submit" style={{ width: '100%', padding: '15px', background: '#3498db', color: 'white' }}>
+                            <button type="submit" style={{ width: '100%', padding: '15px', background: '#3498db', color: 'white', border: 'none', borderRadius: '4px' }}>
                                 Сохранить изменения
                             </button>
                         </form>
@@ -548,7 +488,6 @@ const TasksPage = () => {
                                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px', marginTop: '10px' }}>
                                         {modalTask.Attachments.map((att) => {
                                             const fullImageUrl = `http://localhost:5000${att.file_url}`;
-
                                             return (
                                                 <div key={att.id} style={{ textAlign: 'center' }}>
                                                     <img
@@ -563,7 +502,6 @@ const TasksPage = () => {
                                                         }}
                                                         onError={(e) => {
                                                             e.target.src = 'https://via.placeholder.com/250?text=Ошибка+загрузки';
-                                                            e.target.alt = 'Не удалось загрузить изображение';
                                                         }}
                                                     />
                                                     <p style={{ marginTop: '5px', fontSize: '14px', wordBreak: 'break-all' }}>
@@ -576,7 +514,7 @@ const TasksPage = () => {
                                 </div>
                             )}
 
-                            <button onClick={() => setIsEditMode(true)} style={{ marginTop: '20px', padding: '12px 20px' }}>
+                            <button onClick={() => setIsEditMode(true)} style={{ marginTop: '20px', padding: '12px 20px', background: '#3498db', color: 'white', border: 'none', borderRadius: '4px' }}>
                                 Редактировать задачу
                             </button>
                         </div>
