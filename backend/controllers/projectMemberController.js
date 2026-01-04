@@ -1,7 +1,7 @@
 const { ProjectMember, Project, User } = require('../models');
 const { parseQuery } = require('../helpers/queryParser');
 
-exports.create = async (req, res) => {
+exports.create = async (req, res, next) => {
   try {
     const member = await ProjectMember.create(req.body);
     const fullMember = await ProjectMember.findByPk(member.id, {
@@ -9,7 +9,7 @@ exports.create = async (req, res) => {
     });
     res.status(201).json(fullMember);
   } catch (err) {
-    res.status(400).json({ error: err.message || 'Ошибка валидации' });
+    next(err);
   }
 };
 
@@ -27,9 +27,7 @@ exports.getAll = async (req, res, next) => {
         orderArray = [[{ model: Project, as: 'Project' }, 'name', dir]];
       } else if (fullField === 'User.full_name') {
         orderArray = [[{ model: User, as: 'User' }, 'full_name', dir]];
-      } else if (fullField === 'role') {
-        orderArray = [[fullField, dir]];
-      } else if (fullField === 'id') {
+      } else {
         orderArray = [[fullField, dir]];
       }
     }
@@ -53,17 +51,18 @@ exports.getAll = async (req, res, next) => {
       data: rows,
     });
   } catch (err) {
-    console.error('Ошибка в getAll project-members:', err);
     next(err);
   }
 };
 
-exports.getMembersByProject = async (req, res) => {
+exports.getMembersByProject = async (req, res, next) => {
   try {
     const { project_id } = req.params;
 
     if (!project_id) {
-      return res.status(400).json({ error: 'project_id обязателен' });
+      const error = new Error('project_id обязателен');
+      error.status = 400;
+      throw error;
     }
 
     const members = await ProjectMember.findAll({
@@ -81,51 +80,62 @@ exports.getMembersByProject = async (req, res) => {
 
     res.json(users);
   } catch (err) {
-    console.error('Ошибка получения участников проекта:', err);
-    res.status(500).json({ error: 'Ошибка загрузки участников проекта' });
+    next(err);
   }
 };
 
-exports.getById = async (req, res) => {
+exports.getById = async (req, res, next) => {
   try {
     const member = await ProjectMember.findByPk(req.params.id, {
       include: [Project, User],
     });
-    if (!member) return res.status(404).json({ error: 'Участник проекта не найден' });
+    if (!member) {
+      const error = new Error('Участник проекта не найден');
+      error.status = 404;
+      throw error;
+    }
     res.json(member);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 
-exports.update = async (req, res) => {
+exports.update = async (req, res, next) => {
   try {
     const member = await ProjectMember.findByPk(req.params.id);
-    if (!member) return res.status(404).json({ error: 'Участник проекта не найден' });
+    if (!member) {
+      const error = new Error('Участник проекта не найден');
+      error.status = 404;
+      throw error;
+    }
     await member.update(req.body);
     const updated = await ProjectMember.findByPk(member.id, { include: [Project, User] });
     res.json(updated);
   } catch (err) {
-    res.status(400).json({ error: err.message || 'Ошибка валидации' });
+    next(err);
   }
 };
 
-exports.delete = async (req, res) => {
+exports.delete = async (req, res, next) => {
   try {
     const member = await ProjectMember.findByPk(req.params.id);
-    if (!member) return res.status(404).json({ error: 'Участник проекта не найден' });
+    if (!member) {
+      const error = new Error('Участник проекта не найден');
+      error.status = 404;
+      throw error;
+    }
     await member.destroy();
     res.status(204).send();
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 
-exports.checkExists = async (req, res) => {
+exports.checkExists = async (req, res, next) => {
   try {
     const member = await ProjectMember.findByPk(req.params.id);
     res.status(member ? 200 : 404).send();
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };

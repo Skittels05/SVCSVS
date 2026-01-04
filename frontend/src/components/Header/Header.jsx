@@ -12,6 +12,7 @@ const Header = () => {
           <Link to="/users" style={{ color: 'white', margin: '0 15px', textDecoration: 'none' }}>Пользователи</Link>
           <Link to="/project-members" style={{ color: 'white', margin: '0 15px', textDecoration: 'none' }}>Учсатники</Link>
           <Link to="/attachments" style={{ color: 'white', margin: '0 15px', textDecoration: 'none' }} > Вложения</Link>
+          <Link to="/iterations" style={{ color: 'white', margin: '0 15px', textDecoration: 'none' }} >Итерации</Link>
         </nav>
       </div>
     </header>

@@ -1,26 +1,32 @@
 const { Iteration, Project } = require('../models');
 const { parseQuery } = require('../helpers/queryParser');
 
-exports.create = async (req, res) => {
+exports.create = async (req, res, next) => {
   try {
     const iteration = await Iteration.create(req.body);
     const fullIteration = await Iteration.findByPk(iteration.id, { include: [Project] });
     res.status(201).json(fullIteration);
   } catch (err) {
-    res.status(400).json({ error: err.message || 'Ошибка валидации' });
+    next(err);
   }
 };
 
-exports.getAll = async (req, res) => {
+exports.getAll = async (req, res, next) => {
   try {
-    const { where, order, limit, offset } = parseQuery(req.query);
+    const { where, order, limit = 10, offset = 0 } = parseQuery(req.query);
+    if (req.query.type) {
+      where.type = req.query.type;
+    }
+
     const { count, rows } = await Iteration.findAndCountAll({
       where,
       order,
       limit,
       offset,
       include: [{ model: Project, attributes: ['id', 'name'] }],
+      distinct: true,
     });
+
     res.json({
       total: count,
       pages: Math.ceil(count / limit),
@@ -28,48 +34,60 @@ exports.getAll = async (req, res) => {
       data: rows,
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 
-exports.getById = async (req, res) => {
+exports.getById = async (req, res, next) => {
   try {
     const iteration = await Iteration.findByPk(req.params.id, { include: [Project] });
-    if (!iteration) return res.status(404).json({ error: 'Итерация не найдена' });
+    if (!iteration) {
+      const error = new Error('Итерация не найдена');
+      error.status = 404;
+      throw error;
+    }
     res.json(iteration);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 
-exports.update = async (req, res) => {
+exports.update = async (req, res, next) => {
   try {
     const iteration = await Iteration.findByPk(req.params.id);
-    if (!iteration) return res.status(404).json({ error: 'Итерация не найдена' });
+    if (!iteration) {
+      const error = new Error('Итерация не найдена');
+      error.status = 404;
+      throw error;
+    }
     await iteration.update(req.body);
     const updated = await Iteration.findByPk(iteration.id, { include: [Project] });
     res.json(updated);
   } catch (err) {
-    res.status(400).json({ error: err.message || 'Ошибка валидации' });
+    next(err);
   }
 };
 
-exports.delete = async (req, res) => {
+exports.delete = async (req, res, next) => {
   try {
     const iteration = await Iteration.findByPk(req.params.id);
-    if (!iteration) return res.status(404).json({ error: 'Итерация не найдена' });
+    if (!iteration) {
+      const error = new Error('Итерация не найдена');
+      error.status = 404;
+      throw error;
+    }
     await iteration.destroy();
     res.status(204).send();
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 
-exports.checkExists = async (req, res) => {
+exports.checkExists = async (req, res, next) => {
   try {
     const iteration = await Iteration.findByPk(req.params.id);
     res.status(iteration ? 200 : 404).send();
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };

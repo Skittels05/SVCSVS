@@ -6,6 +6,7 @@ import TasksPage from './pages/TasksPage/TasksPage';
 import UsersPage from './pages/UsersPage/UsersPage';
 import ProjectMembersPage from './pages/ProjectMembersPage/ProjectMembersPage';
 import AttachmentsPage from './pages/AttachmentsPage/AttachmentsPage';
+import IterationsPage from './pages/IterationsPage/IterationsPage';
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
           <Route path="/users" element={<UsersPage />} />
           <Route path='/project-members' element={<ProjectMembersPage/>} />
           <Route path='/attachments' element={<AttachmentsPage/>} />
+          <Route path='/iterations' element={<IterationsPage/>} />
         </Routes>
       </div>
     </div>
