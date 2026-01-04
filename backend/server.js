@@ -24,10 +24,7 @@ app.get('/', (req, res) => {
   res.json({ message: 'API системы управления проектами работает!' });
 });
 
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Внутренняя ошибка сервера' });
-});
+app.use(require('./middleware/errorHandler'));
 
 const PORT = process.env.PORT || 5000;
 

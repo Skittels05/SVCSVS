@@ -3,10 +3,20 @@ import api from '../../services/api';
 
 export const fetchUsers = createAsyncThunk(
   'users/fetchUsers',
-  async (_, { rejectWithValue }) => {
+  async ({ page = 1, limit = 10, sort } = {}, { rejectWithValue }) => {
     try {
-      const response = await api.get('/users');
-      return response.data.data;
+      let url = '/users';
+      const params = new URLSearchParams();
+      params.append('page', page);
+      params.append('limit', limit);
+      if (sort) params.append('sort', sort);
+
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+
+      const response = await api.get(url);
+      return response.data;
     } catch (err) {
       return rejectWithValue(err);
     }
@@ -24,6 +34,7 @@ export const createUser = createAsyncThunk(
     }
   }
 );
+
 
 export const updateUser = createAsyncThunk(
   'users/updateUser',
@@ -59,13 +70,14 @@ const usersSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
+
       .addCase(fetchUsers.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(fetchUsers.fulfilled, (state, action) => {
         state.loading = false;
-        state.list = action.payload;
+        state.list = action.payload.data;
       })
       .addCase(fetchUsers.rejected, (state, action) => {
         state.loading = false;
