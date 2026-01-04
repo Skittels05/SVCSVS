@@ -9,6 +9,9 @@ import {
     deleteAttachment,
 } from '../../store/slices/tasksSlice';
 import Modal from '../../components/Modal/Modal';
+import DataTable from '../../components/DataTable/DataTable';
+import Pagination from '../../components/Pagination/Pagination';
+import SortingControls from '../../components/SortingControls/SortingControls';
 import { handleApiError } from '../../utils/handleApiError';
 
 const TasksPage = () => {
@@ -31,6 +34,7 @@ const TasksPage = () => {
     const [selectedFiles, setSelectedFiles] = useState([]);
     const [formErrors, setFormErrors] = useState({});
     const [serverError, setServerError] = useState('');
+
     const [currentPage, setCurrentPage] = useState(1);
     const limit = 10;
     const [sortField, setSortField] = useState('id');
@@ -159,23 +163,151 @@ const TasksPage = () => {
         }
     };
 
-    if (loading) return <p style={{ textAlign: 'center', marginTop: '50px' }}>Загрузка задач...</p>;
+    const handlePageChange = (page) => {
+        setCurrentPage(page);
+    };
 
-    return (
-        <div>
-            <h2>Задачи</h2>
-            <button onClick={() => openTaskModal(null, true)}>Добавить задачу</button>
+    const handleSortFieldChange = (field) => {
+        setSortField(field);
+        setCurrentPage(1);
+    };
 
-            <div style={{ margin: '20px 0', padding: '15px', background: '#f8f9fa', borderRadius: '8px' }}>
-                <strong>Фильтры:</strong>
-                <select value={filterProject} onChange={(e) => { setFilterProject(e.target.value); setCurrentPage(1); }}>
+    const handleSortDirectionChange = (direction) => {
+        setSortDirection(direction);
+        setCurrentPage(1);
+    };
+
+    const handleFilterProjectChange = (projectId) => {
+        setFilterProject(projectId);
+        setCurrentPage(1);
+    };
+
+    const handleFilterStatusChange = (status) => {
+        setFilterStatus(status);
+        setCurrentPage(1);
+    };
+
+    const resetFilters = () => {
+        setFilterProject('');
+        setFilterStatus('');
+        setCurrentPage(1);
+    };
+
+    const tableColumns = [
+        {
+            key: 'title',
+            header: 'Название',
+            render: (task) => (
+                <span style={{ fontWeight: '500', color: '#2c3e50' }}>
+                    {task.title}
+                </span>
+            )
+        },
+        {
+            key: 'assignee',
+            header: 'Исполнитель',
+            render: (task) => task.Assignee?.full_name || '—'
+        },
+        {
+            key: 'project',
+            header: 'Проект',
+            render: (task) => task.Project?.name || '—'
+        },
+        {
+            key: 'priority',
+            header: 'Приоритет',
+            render: (task) => {
+                const colors = {
+                    low: '#27ae60',
+                    medium: '#f39c12',
+                    high: '#e67e22',
+                    critical: '#e74c3c'
+                };
+                return (
+                    <span
+                        style={{
+                            color: colors[task.priority] || '#7f8c8d',
+                            fontWeight: '500'
+                        }}
+                    >
+                        {task.priority}
+                    </span>
+                );
+            }
+        },
+        {
+            key: 'status',
+            header: 'Статус',
+            render: (task) => {
+                const statusColors = {
+                    backlog: '#95a5a6',
+                    todo: '#3498db',
+                    'in_progress': '#f39c12',
+                    review: '#e67e22',
+                    done: '#27ae60'
+                };
+                return (
+                    <span
+                        style={{
+                            backgroundColor: statusColors[task.status] || '#ecf0f1',
+                            color: 'white',
+                            padding: '4px 8px',
+                            borderRadius: '12px',
+                            fontSize: '12px',
+                            fontWeight: 'bold'
+                        }}
+                    >
+                        {task.status.replace('_', ' ')}
+                    </span>
+                );
+            }
+        },
+    ];
+
+    const sortingFields = [
+        { key: 'id', label: 'ID' },
+        { key: 'title', label: 'По названию' },
+        { key: 'created_at', label: 'По дате создания' },
+        { key: 'due_date', label: 'По сроку' },
+        { key: 'priority', label: 'По приоритету' },
+        { key: 'status', label: 'По статусу' },
+    ];
+
+    const additionalControls = () => (
+        <div style={{ display: 'flex', gap: '15px', alignItems: 'center', marginTop: '10px' }}>
+            <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+                <label style={{ fontWeight: '500', color: '#495057' }}>Проект:</label>
+                <select
+                    value={filterProject}
+                    onChange={(e) => handleFilterProjectChange(e.target.value)}
+                    style={{
+                        padding: '6px 10px',
+                        borderRadius: '4px',
+                        border: '1px solid #ced4da',
+                        background: 'white',
+                        minWidth: '180px'
+                    }}
+                >
                     <option value="">Все проекты</option>
                     <option value="1">Разработка CRM</option>
                     <option value="2">Модернизация сайта</option>
                     <option value="6">Система аналитики</option>
                 </select>
+            </div>
 
-                <select value={filterStatus} onChange={(e) => { setFilterStatus(e.target.value); setCurrentPage(1); }}>
+            <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+                <label style={{ fontWeight: '500', color: '#495057' }}>Статус:</label>
+                <select
+                    value={filterStatus}
+                    onChange={(e) => handleFilterStatusChange(e.target.value)}
+                    style={{
+                        padding: '6px 10px',
+                        borderRadius: '4px',
+                        border: '1px solid #ced4da',
+                        background: 'white',
+                        minWidth: '150px'
+                    }}
+                >
                     <option value="">Все статусы</option>
                     <option value="backlog">Бэклог</option>
                     <option value="todo">To Do</option>
@@ -184,65 +316,59 @@ const TasksPage = () => {
                     <option value="done">Готово</option>
                 </select>
             </div>
+        </div>
+    );
 
-            <table style={{ width: '100%', marginTop: '20px' }}>
-                <thead>
-                    <tr>
-                        <th>Название</th>
-                        <th>Исполнитель</th>
-                        <th>Проект</th>
-                        <th>Приоритет</th>
-                        <th>Статус</th>
-                        <th>Действия</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {tasks.length === 0 ? (
-                        <tr>
-                            <td colSpan="6" style={{ textAlign: 'center', padding: '30px' }}>
-                                Задач не найдено
-                            </td>
-                        </tr>
-                    ) : (
-                        tasks.map((task) => (
-                            <tr key={task.id}>
-                                <td>{task.title}</td>
-                                <td>{task.Assignee?.full_name || '—'}</td>
-                                <td>{task.Project?.name || '—'}</td>
-                                <td>{task.priority}</td>
-                                <td>{task.status}</td>
-                                <td>
-                                    <button onClick={() => openTaskModal(task, false)}>Просмотреть</button>
-                                    <button onClick={() => openTaskModal(task, true)} style={{ marginLeft: '10px' }}>
-                                        Редактировать
-                                    </button>
-                                    <button className="danger" onClick={() => handleDelete(task.id)} style={{ marginLeft: '10px' }}>
-                                        Удалить
-                                    </button>
-                                </td>
-                            </tr>
-                        ))
-                    )}
-                </tbody>
-            </table>
+    if (loading) return <p style={{ textAlign: 'center', marginTop: '50px' }}>Загрузка задач...</p>;
 
-            <div style={{ marginTop: '40px', textAlign: 'center' }}>
-                <button
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                    disabled={currentPage === 1}
-                >
-                    ← Назад
-                </button>
-                <span style={{ margin: '0 30px', fontSize: '18px' }}>
-                    Страница {currentPage} из {totalPages} (всего {totalTasks} задач)
-                </span>
-                <button
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                    disabled={currentPage === totalPages}
-                >
-                    Вперед →
-                </button>
-            </div>
+    return (
+        <div>
+            <h2>Задачи</h2>
+            <button
+                onClick={() => openTaskModal(null, true)}
+                style={{
+                    padding: '10px 20px',
+                    background: '#27ae60',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '16px',
+                    marginBottom: '20px'
+                }}
+            >
+                Добавить задачу
+            </button>
+
+            <SortingControls
+                sortField={sortField}
+                sortDirection={sortDirection}
+                onSortFieldChange={handleSortFieldChange}
+                onSortDirectionChange={handleSortDirectionChange}
+                availableFields={sortingFields}
+                onResetFilters={resetFilters}
+                additionalControls={additionalControls}
+                title="Фильтры и сортировка"
+            />
+
+            <DataTable
+                data={tasks}
+                columns={tableColumns}
+                emptyMessage="Задач не найдено"
+                onView={(task) => openTaskModal(task, false)}
+                onEdit={(task) => openTaskModal(task, true)}
+                onDelete={handleDelete}
+                actionsLabel="Действия"
+            />
+
+            <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalCount={totalTasks}
+                pageSize={limit}
+                onPageChange={handlePageChange}
+                loading={loading}
+            />
 
             <Modal
                 isOpen={!!modalTask}
@@ -351,8 +477,6 @@ const TasksPage = () => {
                                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px', marginTop: '10px' }}>
                                         {modalTask.Attachments.map((att) => {
                                             const fullImageUrl = `http://localhost:5000${att.file_url}`;
-                                            console.log('Пытаемся загрузить изображение по URL:', fullImageUrl);
-                                            console.log('Данные вложения:', att);
 
                                             return (
                                                 <div key={att.id} style={{ textAlign: 'center' }}>
@@ -367,12 +491,8 @@ const TasksPage = () => {
                                                             boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                                                         }}
                                                         onError={(e) => {
-                                                            console.error('ОШИБКА ЗАГРУЗКИ ИЗОБРАЖЕНИЯ:', fullImageUrl);
                                                             e.target.src = 'https://via.placeholder.com/250?text=Ошибка+загрузки';
                                                             e.target.alt = 'Не удалось загрузить изображение';
-                                                        }}
-                                                        onLoad={() => {
-                                                            console.log('УСПЕШНО ЗАГРУЖЕНО:', fullImageUrl);
                                                         }}
                                                     />
                                                     <p style={{ marginTop: '5px', fontSize: '14px', wordBreak: 'break-all' }}>
@@ -428,8 +548,6 @@ const TasksPage = () => {
                                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px', marginTop: '10px' }}>
                                         {modalTask.Attachments.map((att) => {
                                             const fullImageUrl = `http://localhost:5000${att.file_url}`;
-                                            console.log('Пытаемся загрузить изображение по URL:', fullImageUrl);
-                                            console.log('Данные вложения:', att);
 
                                             return (
                                                 <div key={att.id} style={{ textAlign: 'center' }}>
@@ -444,12 +562,8 @@ const TasksPage = () => {
                                                             boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                                                         }}
                                                         onError={(e) => {
-                                                            console.error('ОШИБКА ЗАГРУЗКИ ИЗОБРАЖЕНИЯ:', fullImageUrl);
                                                             e.target.src = 'https://via.placeholder.com/250?text=Ошибка+загрузки';
                                                             e.target.alt = 'Не удалось загрузить изображение';
-                                                        }}
-                                                        onLoad={() => {
-                                                            console.log('УСПЕШНО ЗАГРУЖЕНО:', fullImageUrl);
                                                         }}
                                                     />
                                                     <p style={{ marginTop: '5px', fontSize: '14px', wordBreak: 'break-all' }}>

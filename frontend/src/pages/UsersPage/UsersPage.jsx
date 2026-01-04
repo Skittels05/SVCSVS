@@ -7,6 +7,9 @@ import {
   deleteUser,
 } from '../../store/slices/usersSlice';
 import Modal from '../../components/Modal/Modal';
+import DataTable from '../../components/DataTable/DataTable';
+import Pagination from '../../components/Pagination/Pagination';
+import SortingControls from '../../components/SortingControls/SortingControls';
 import { handleApiError } from '../../utils/handleApiError';
 
 const UsersPage = () => {
@@ -21,7 +24,6 @@ const UsersPage = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const limit = 10;
-
   const [sortField, setSortField] = useState('id');
   const [sortDirection, setSortDirection] = useState('asc');
 
@@ -72,7 +74,6 @@ const UsersPage = () => {
       handleApiError(resultAction, setFormErrors, setServerError);
     } else {
       closeModal();
-
       dispatch(fetchUsers({ page: currentPage, limit, sort: `${sortField}:${sortDirection}` }));
     }
   };
@@ -100,10 +101,41 @@ const UsersPage = () => {
     if (window.confirm('Вы уверены, что хотите удалить пользователя?')) {
       const result = await dispatch(deleteUser(id));
       if (deleteUser.fulfilled.match(result)) {
-
         dispatch(fetchUsers({ page: currentPage, limit, sort: `${sortField}:${sortDirection}` }));
       }
     }
+  };
+
+  const tableColumns = [
+    { key: 'id', header: 'ID' },
+    { key: 'full_name', header: 'Полное имя' },
+    { key: 'email', header: 'Email' },
+    {
+      key: 'created_at',
+      header: 'Дата создания',
+      render: (user) => new Date(user.created_at).toLocaleDateString('ru-RU')
+    },
+  ];
+
+  const sortingFields = [
+    { key: 'id', label: 'ID' },
+    { key: 'full_name', label: 'По имени' },
+    { key: 'email', label: 'По email' },
+    { key: 'created_at', label: 'По дате создания' },
+  ];
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  const handleSortFieldChange = (field) => {
+    setSortField(field);
+    setCurrentPage(1);
+  };
+
+  const handleSortDirectionChange = (direction) => {
+    setSortDirection(direction);
+    setCurrentPage(1);
   };
 
   if (loading) return <p style={{ textAlign: 'center', marginTop: '50px' }}>Загрузка пользователей...</p>;
@@ -111,146 +143,99 @@ const UsersPage = () => {
   return (
     <div>
       <h2>Пользователи</h2>
-      <button onClick={() => openModal()}>Добавить пользователя</button>
+      <button 
+        onClick={() => openModal()} 
+        style={{
+          padding: '10px 20px',
+          background: '#27ae60',
+          color: 'white',
+          border: 'none',
+          borderRadius: '4px',
+          cursor: 'pointer',
+          fontSize: '16px',
+          marginBottom: '20px'
+        }}
+      >
+        Добавить пользователя
+      </button>
 
-      <div style={{ margin: '20px 0', padding: '15px', background: '#f8f9fa', borderRadius: '8px' }}>
-        <strong>Сортировка:</strong>
-        <select
-          value={sortField}
-          onChange={(e) => {
-            setSortField(e.target.value);
-            setCurrentPage(1);
-          }}
-          style={{ margin: '0 10px', padding: '8px', borderRadius: '4px' }}
-        >
-          <option value="id">ID</option>
-          <option value="full_name">По имени</option>
-          <option value="email">По email</option>
-          <option value="created_at">По дате создания</option>
-        </select>
+      <SortingControls
+        sortField={sortField}
+        sortDirection={sortDirection}
+        onSortFieldChange={handleSortFieldChange}
+        onSortDirectionChange={handleSortDirectionChange}
+        availableFields={sortingFields}
+      />
 
-        <select
-          value={sortDirection}
-          onChange={(e) => {
-            setSortDirection(e.target.value);
-            setCurrentPage(1);
-          }}
-          style={{ padding: '8px', borderRadius: '4px' }}
-        >
-          <option value="asc">По возрастанию ↑</option>
-          <option value="desc">По убыванию ↓</option>
-        </select>
-      </div>
+      <DataTable
+        data={users}
+        columns={tableColumns}
+        emptyMessage="Пользователей не найдено"
+        onEdit={openModal}
+        onDelete={handleDelete}
+      />
 
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Полное имя</th>
-            <th>Email</th>
-            <th>Дата создания</th>
-            <th>Действия</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.length === 0 ? (
-            <tr>
-              <td colSpan="5" style={{ textAlign: 'center', padding: '20px' }}>
-                Пользователей не найдено
-              </td>
-            </tr>
-          ) : (
-            users.map((user) => (
-              <tr key={user.id}>
-                <td>{user.id}</td>
-                <td>{user.full_name}</td>
-                <td>{user.email}</td>
-                <td>{new Date(user.created_at).toLocaleDateString('ru-RU')}</td>
-                <td>
-                  <button onClick={() => openModal(user)}>Редактировать</button>
-                  <button className="danger" onClick={() => handleDelete(user.id)}>
-                    Удалить
-                  </button>
-                </td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalCount={totalUsers}
+        pageSize={limit}
+        onPageChange={handlePageChange}
+        loading={loading}
+      />
 
-      <div style={{ marginTop: '30px', textAlign: 'center' }}>
-        <button
-          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-          disabled={currentPage === 1}
-          style={{ padding: '10px 20px', margin: '0 10px', fontSize: '16px' }}
-        >
-          ← Назад
-        </button>
-
-        <span style={{ fontSize: '18px', margin: '0 30px' }}>
-          Страница <strong>{currentPage}</strong> из <strong>{totalPages}</strong>
-          <br />
-          (всего <strong>{totalUsers}</strong> пользователей)
-        </span>
-
-        <button
-          onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-          disabled={currentPage === totalPages}
-          style={{ padding: '10px 20px', margin: '0 10px', fontSize: '16px' }}
-        >
-          Вперед →
-        </button>
-      </div>
       <Modal
         isOpen={isModalOpen}
         onClose={closeModal}
         title={currentUser ? 'Редактировать пользователя' : 'Добавить пользователя'}
       >
-        <form onSubmit={handleSubmit}>
-          {serverError && (
-            <p style={{ color: 'red', marginBottom: '15px', fontWeight: 'bold', textAlign: 'center' }}>
-              {serverError}
-            </p>
-          )}
+        <div style={{ overflowY: 'auto', maxHeight: '80vh' }}>
+          <form onSubmit={handleSubmit}>
+            {serverError && (
+              <p style={{ color: 'red', marginBottom: '15px', fontWeight: 'bold', textAlign: 'center' }}>
+                {serverError}
+              </p>
+            )}
 
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', marginBottom: '5px' }}>Полное имя</label>
-            <input
-              type="text"
-              value={formData.full_name}
-              onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-              style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
-            />
-            {formErrors.full_name && <p style={{ color: 'red', marginTop: '5px' }}>{formErrors.full_name}</p>}
-          </div>
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', marginBottom: '5px' }}>Полное имя</label>
+              <input
+                type="text"
+                value={formData.full_name}
+                onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
+              />
+              {formErrors.full_name && <p style={{ color: 'red', marginTop: '5px' }}>{formErrors.full_name}</p>}
+            </div>
 
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', marginBottom: '5px' }}>Email</label>
-            <input
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
-            />
-            {formErrors.email && <p style={{ color: 'red', marginTop: '5px' }}>{formErrors.email}</p>}
-          </div>
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', marginBottom: '5px' }}>Email</label>
+              <input
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
+              />
+              {formErrors.email && <p style={{ color: 'red', marginTop: '5px' }}>{formErrors.email}</p>}
+            </div>
 
-          <button
-            type="submit"
-            style={{
-              width: '100%',
-              padding: '12px',
-              background: '#3498db',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              fontSize: '16px',
-              cursor: 'pointer',
-            }}
-          >
-            {currentUser ? 'Сохранить изменения' : 'Добавить пользователя'}
-          </button>
-        </form>
+            <button
+              type="submit"
+              style={{
+                width: '100%',
+                padding: '12px',
+                background: '#3498db',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                fontSize: '16px',
+                cursor: 'pointer',
+              }}
+            >
+              {currentUser ? 'Сохранить изменения' : 'Добавить пользователя'}
+            </button>
+          </form>
+        </div>
       </Modal>
     </div>
   );
