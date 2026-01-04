@@ -3,6 +3,7 @@ import usersReducer from './slices/usersSlice';
 import tasksReducer from './slices/tasksSlice';
 import projectsReducer from './slices/projectsSlice';
 import projectMembersReducer from './slices/projectMembersSlice';
+import attachmentsReducer from './slices/attachmentsSlice';
 
 export const store = configureStore({
   reducer: {
@@ -10,5 +11,6 @@ export const store = configureStore({
     tasks: tasksReducer,
     projects: projectsReducer,
     projectMembers: projectMembersReducer,
+    attachments: attachmentsReducer,
   },
 });

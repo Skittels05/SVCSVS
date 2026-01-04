@@ -95,20 +95,32 @@ exports.create = (req, res, next) => {
 
 exports.getAll = async (req, res, next) => {
   try {
-    const { where, order, limit, offset, include } = parseQuery(req.query);
+    const { where, order, limit = 10, offset = 0 } = parseQuery(req.query);
 
-    const { count, rows } = await Task.findAndCountAll({
+    let orderArray = [['id', 'ASC']]; // по умолчанию
+    if (order && order.length > 0) {
+      const [field, dir = 'ASC'] = order[0][0].split(':');
+      const direction = dir.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
+
+      if (field === 'Task.title') {
+        orderArray = [[{ model: Task, as: 'Task' }, 'title', direction]];
+      } else if (field === 'Uploader.full_name') {
+        orderArray = [[{ model: User, as: 'Uploader' }, 'full_name', direction]];
+      } else {
+        orderArray = [[field, direction]];
+      }
+    }
+
+    const { count, rows } = await Attachment.findAndCountAll({
       where,
-      order,
       limit,
       offset,
+      order: orderArray,
       include: [
-        { model: Project, attributes: ['id', 'name'] },
-        { model: Iteration, attributes: ['id', 'name'] },
-        { model: User, as: 'Reporter', attributes: ['id', 'full_name'] },
-        { model: User, as: 'Assignee', attributes: ['id', 'full_name'] },
-        
+        { model: Task, attributes: ['id', 'title'] },
+        { model: User, as: 'Uploader', attributes: ['id', 'full_name', 'email'] },
       ],
+      distinct: true, // важно для правильного count при include
     });
 
     res.json({
@@ -118,6 +130,7 @@ exports.getAll = async (req, res, next) => {
       data: rows,
     });
   } catch (err) {
+    console.error('Ошибка в getAll attachments:', err);
     next(err);
   }
 };

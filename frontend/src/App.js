@@ -5,6 +5,7 @@ import ProjectsPage from './pages/ProjectsPage/ProjectsPage';
 import TasksPage from './pages/TasksPage/TasksPage';
 import UsersPage from './pages/UsersPage/UsersPage';
 import ProjectMembersPage from './pages/ProjectMembersPage/ProjectMembersPage';
+import AttachmentsPage from './pages/AttachmentsPage/AttachmentsPage';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
           <Route path="/tasks" element={<TasksPage />} />
           <Route path="/users" element={<UsersPage />} />
           <Route path='/project-members' element={<ProjectMembersPage/>} />
+          <Route path='/attachments' element={<AttachmentsPage/>} />
         </Routes>
       </div>
     </div>
