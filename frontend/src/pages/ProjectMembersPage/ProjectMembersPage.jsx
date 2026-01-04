@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
     fetchProjectMembers,
+    createProjectMember,
     updateProjectMember,
     deleteProjectMember,
 } from '../../store/slices/projectMembersSlice';
@@ -18,6 +19,7 @@ const ProjectMembersPage = () => {
 
     const [modalOpen, setModalOpen] = useState(false);
     const [currentMember, setCurrentMember] = useState(null);
+    const [isEditMode, setIsEditMode] = useState(false);
 
     const [formData, setFormData] = useState({
         project_id: '',
@@ -89,12 +91,17 @@ const ProjectMembersPage = () => {
             });
     }, [dispatch, currentPage, sortField, sortDirection, filterProject]);
 
-    const openModal = (member) => {
+    const openModal = (member = null) => {
         setCurrentMember(member);
-        setFormData({
+        setIsEditMode(!!member);
+        setFormData(member ? {
             project_id: member.project_id?.toString() || '',
             user_id: member.user_id?.toString() || '',
             role: member.role || '',
+        } : {
+            project_id: '',
+            user_id: '',
+            role: '',
         });
         setFormErrors({});
         setServerError('');
@@ -104,6 +111,7 @@ const ProjectMembersPage = () => {
     const closeModal = () => {
         setModalOpen(false);
         setCurrentMember(null);
+        setIsEditMode(false);
     };
 
     const validateForm = () => {
@@ -128,10 +136,11 @@ const ProjectMembersPage = () => {
             role: formData.role.trim(),
         };
 
-        const resultAction = await dispatch(updateProjectMember({
-            id: currentMember.id,
-            memberData,
-        }));
+        const action = isEditMode
+            ? updateProjectMember({ id: currentMember.id, memberData })
+            : createProjectMember(memberData);
+
+        const resultAction = await dispatch(action);
 
         if (resultAction.type.endsWith('/rejected')) {
             handleApiError(resultAction, setFormErrors, setServerError);
@@ -184,6 +193,21 @@ const ProjectMembersPage = () => {
     return (
         <div>
             <h2>Участники проектов</h2>
+            <button
+                onClick={() => openModal()}
+                style={{
+                    padding: '10px 20px',
+                    background: '#27ae60',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    marginBottom: '20px',
+                    fontSize: '16px',
+                    cursor: 'pointer'
+                }}
+            >
+                Добавить участника
+            </button>
 
             <SortingControls
                 sortField={sortField}
@@ -215,95 +239,93 @@ const ProjectMembersPage = () => {
             <Modal
                 isOpen={modalOpen}
                 onClose={closeModal}
-                title="Редактировать участника проекта"
+                title={isEditMode ? 'Редактировать участника' : 'Добавить участника в проект'}
             >
                 <div style={{ overflowY: 'auto', maxHeight: '80vh' }}>
-                    {currentMember && (
-                        <form onSubmit={handleSubmit}>
-                            {serverError && <p style={{ color: 'red', marginBottom: '15px' }}>{serverError}</p>}
+                    <form onSubmit={handleSubmit}>
+                        {serverError && <p style={{ color: 'red', marginBottom: '15px' }}>{serverError}</p>}
 
-                            <div style={{ marginBottom: '15px' }}>
-                                <label>Проект *</label>
-                                <select
-                                    value={formData.project_id}
-                                    onChange={(e) => setFormData({ ...formData, project_id: e.target.value })}
-                                    style={{
-                                        width: '100%',
-                                        padding: '10px',
-                                        borderRadius: '4px',
-                                        border: '1px solid #ccc',
-                                        backgroundColor: 'white',
-                                    }}
-                                    size={5}
-                                    disabled={loadingProjects}
-                                >
-                                    <option value="">Выберите проект</option>
-                                    {loadingProjects ? (
-                                        <option disabled>Загрузка проектов...</option>
-                                    ) : projects.map((proj) => (
-                                        <option key={proj.id} value={proj.id}>
-                                            {proj.name}
-                                        </option>
-                                    ))}
-                                </select>
-                                {formErrors.project_id && <p style={{ color: 'red', marginTop: '5px' }}>{formErrors.project_id}</p>}
-                            </div>
-
-                            <div style={{ marginBottom: '15px' }}>
-                                <label>Пользователь *</label>
-                                <select
-                                    value={formData.user_id}
-                                    onChange={(e) => setFormData({ ...formData, user_id: e.target.value })}
-                                    style={{
-                                        width: '100%',
-                                        padding: '10px',
-                                        borderRadius: '4px',
-                                        border: '1px solid #ccc',
-                                        backgroundColor: 'white',
-                                    }}
-                                    size={5}
-                                    disabled={loadingUsers}
-                                >
-                                    <option value="">Выберите пользователя</option>
-                                    {loadingUsers ? (
-                                        <option disabled>Загрузка пользователей...</option>
-                                    ) : users.map((user) => (
-                                        <option key={user.id} value={user.id}>
-                                            {user.full_name} ({user.email})
-                                        </option>
-                                    ))}
-                                </select>
-                                {formErrors.user_id && <p style={{ color: 'red', marginTop: '5px' }}>{formErrors.user_id}</p>}
-                            </div>
-
-                            <div style={{ marginBottom: '20px' }}>
-                                <label>Роль в проекте *</label>
-                                <input
-                                    type="text"
-                                    value={formData.role}
-                                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                                    style={{ width: '100%', padding: '10px' }}
-                                    placeholder="Например: Team Lead, Developer"
-                                />
-                                {formErrors.role && <p style={{ color: 'red', marginTop: '5px' }}>{formErrors.role}</p>}
-                            </div>
-
-                            <button
-                                type="submit"
+                        <div style={{ marginBottom: '15px' }}>
+                            <label>Проект *</label>
+                            <select
+                                value={formData.project_id}
+                                onChange={(e) => setFormData({ ...formData, project_id: e.target.value })}
                                 style={{
                                     width: '100%',
-                                    padding: '15px',
-                                    background: '#3498db',
-                                    color: 'white',
-                                    border: 'none',
+                                    padding: '10px',
                                     borderRadius: '4px',
-                                    fontSize: '16px',
+                                    border: '1px solid #ccc',
+                                    backgroundColor: 'white',
                                 }}
+                                size={5}
+                                disabled={loadingProjects}
                             >
-                                Сохранить изменения
-                            </button>
-                        </form>
-                    )}
+                                <option value="">Выберите проект</option>
+                                {loadingProjects ? (
+                                    <option disabled>Загрузка проектов...</option>
+                                ) : projects.map((proj) => (
+                                    <option key={proj.id} value={proj.id}>
+                                        {proj.name}
+                                    </option>
+                                ))}
+                            </select>
+                            {formErrors.project_id && <p style={{ color: 'red', marginTop: '5px' }}>{formErrors.project_id}</p>}
+                        </div>
+
+                        <div style={{ marginBottom: '15px' }}>
+                            <label>Пользователь *</label>
+                            <select
+                                value={formData.user_id}
+                                onChange={(e) => setFormData({ ...formData, user_id: e.target.value })}
+                                style={{
+                                    width: '100%',
+                                    padding: '10px',
+                                    borderRadius: '4px',
+                                    border: '1px solid #ccc',
+                                    backgroundColor: 'white',
+                                }}
+                                size={5}
+                                disabled={loadingUsers}
+                            >
+                                <option value="">Выберите пользователя</option>
+                                {loadingUsers ? (
+                                    <option disabled>Загрузка пользователей...</option>
+                                ) : users.map((user) => (
+                                    <option key={user.id} value={user.id}>
+                                        {user.full_name} ({user.email})
+                                    </option>
+                                ))}
+                            </select>
+                            {formErrors.user_id && <p style={{ color: 'red', marginTop: '5px' }}>{formErrors.user_id}</p>}
+                        </div>
+
+                        <div style={{ marginBottom: '20px' }}>
+                            <label>Роль в проекте *</label>
+                            <input
+                                type="text"
+                                value={formData.role}
+                                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                                style={{ width: '100%', padding: '10px' }}
+                                placeholder="Например: Team Lead, Developer"
+                            />
+                            {formErrors.role && <p style={{ color: 'red', marginTop: '5px' }}>{formErrors.role}</p>}
+                        </div>
+
+                        <button
+                            type="submit"
+                            style={{
+                                width: '100%',
+                                padding: '15px',
+                                background: '#3498db',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '4px',
+                                fontSize: '16px',
+                            }}
+                        >
+                            {isEditMode ? 'Сохранить изменения' : 'Добавить участника'}
+                        </button>
+                    </form>
                 </div>
             </Modal>
         </div>

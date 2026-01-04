@@ -45,6 +45,17 @@ export const deleteProjectMember = createAsyncThunk(
         }
     }
 );
+export const createProjectMember = createAsyncThunk(
+    'projectMembers/createProjectMember',
+    async (memberData, { rejectWithValue }) => {
+        try {
+            const response = await api.post('/project-members', memberData);
+            return response.data;
+        } catch (err) {
+            return rejectWithValue(err);
+        }
+    }
+);
 
 const projectMembersSlice = createSlice({
     name: 'projectMembers',
@@ -66,6 +77,9 @@ const projectMembersSlice = createSlice({
             .addCase(fetchProjectMembers.rejected, (state) => {
                 state.loading = false;
             })
+            .addCase(createProjectMember.fulfilled, (state, action) => {
+                state.list.unshift(action.payload);
+            })
             .addCase(updateProjectMember.fulfilled, (state, action) => {
                 const index = state.list.findIndex(m => m.id === action.payload.id);
                 if (index !== -1) state.list[index] = action.payload;
@@ -73,6 +87,7 @@ const projectMembersSlice = createSlice({
             .addCase(deleteProjectMember.fulfilled, (state, action) => {
                 state.list = state.list.filter(m => m.id !== action.payload);
             });
+
     },
 });
 
