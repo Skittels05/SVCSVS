@@ -178,7 +178,7 @@ const TasksPage = () => {
                 await dispatch(uploadAttachments({
                     taskId: newTask.id,
                     files: selectedFiles,
-                    userId: 1, // замените на текущего пользователя
+                    userId: 1,
                 }));
             }
 
