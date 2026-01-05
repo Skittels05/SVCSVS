@@ -11,6 +11,7 @@ import DataTable from '../../components/DataTable/DataTable';
 import Pagination from '../../components/Pagination/Pagination';
 import SortingControls from '../../components/SortingControls/SortingControls';
 import { handleApiError } from '../../utils/handleApiError';
+import './UsersPage.css';
 
 const UsersPage = () => {
   const dispatch = useDispatch();
@@ -64,17 +65,20 @@ const UsersPage = () => {
     setServerError('');
     setFormErrors({});
 
-    const action = currentUser
-      ? updateUser({ id: currentUser.id, userData: formData })
-      : createUser(formData);
+    const userData = {
+      full_name: formData.full_name.trim(),
+      email: formData.email.trim(),
+    };
 
-    const resultAction = await dispatch(action);
-
-    if (resultAction.type.endsWith('/rejected')) {
-      handleApiError(resultAction, setFormErrors, setServerError);
-    } else {
+    try {
+      if (currentUser) {
+        await dispatch(updateUser({ id: currentUser.id, userData })).unwrap();
+      } else {
+        await dispatch(createUser(userData)).unwrap();
+      }
       closeModal();
-      dispatch(fetchUsers({ page: currentPage, limit, sort: `${sortField}:${sortDirection}` }));
+    } catch (err) {
+      handleApiError(err, setFormErrors, setServerError);
     }
   };
 
@@ -82,7 +86,7 @@ const UsersPage = () => {
     setCurrentUser(user);
     setFormData(
       user
-        ? { full_name: user.full_name, email: user.email }
+        ? { full_name: user.full_name || '', email: user.email || '' }
         : { full_name: '', email: '' }
     );
     setFormErrors({});
@@ -93,78 +97,59 @@ const UsersPage = () => {
   const closeModal = () => {
     setIsModalOpen(false);
     setCurrentUser(null);
-    setFormErrors({});
-    setServerError('');
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Вы уверены, что хотите удалить пользователя?')) {
+    if (window.confirm('Удалить пользователя? Это может повлиять на связанные задачи и проекты.')) {
       const result = await dispatch(deleteUser(id));
       if (deleteUser.fulfilled.match(result)) {
-        dispatch(fetchUsers({ page: currentPage, limit, sort: `${sortField}:${sortDirection}` }));
+        dispatch(fetchUsers({ page: currentPage, limit }));
       }
     }
   };
 
   const tableColumns = [
     { key: 'id', header: 'ID' },
-    { key: 'full_name', header: 'Полное имя' },
-    { key: 'email', header: 'Email' },
+    { key: 'full_name', header: 'Полное имя', render: (u) => <strong>{u.full_name}</strong> },
+    { key: 'email', header: 'Email', render: (u) => <a href={`mailto:${u.email}`}>{u.email}</a> },
     {
       key: 'created_at',
-      header: 'Дата создания',
-      render: (user) => new Date(user.created_at).toLocaleDateString('ru-RU')
+      header: 'Дата регистрации',
+      render: (u) => new Date(u.created_at).toLocaleDateString('ru-RU', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      })
     },
   ];
 
   const sortingFields = [
     { key: 'id', label: 'ID' },
-    { key: 'full_name', label: 'По имени' },
-    { key: 'email', label: 'По email' },
-    { key: 'created_at', label: 'По дате создания' },
+    { key: 'full_name', label: 'Имя' },
+    { key: 'email', label: 'Email' },
+    { key: 'created_at', label: 'Дата создания' },
   ];
 
-  const handlePageChange = (page) => {
-    setCurrentPage(page);
-  };
-
-  const handleSortFieldChange = (field) => {
-    setSortField(field);
-    setCurrentPage(1);
-  };
-
-  const handleSortDirectionChange = (direction) => {
-    setSortDirection(direction);
-    setCurrentPage(1);
-  };
-
-  if (loading) return <p style={{ textAlign: 'center', marginTop: '50px' }}>Загрузка пользователей...</p>;
+  if (loading && currentPage === 1) {
+    return <div className="page-loading">Загрузка пользователей...</div>;
+  }
 
   return (
-    <div>
-      <h2>Пользователи</h2>
-      <button 
-        onClick={() => openModal()} 
-        style={{
-          padding: '10px 20px',
-          background: '#27ae60',
-          color: 'white',
-          border: 'none',
-          borderRadius: '4px',
-          cursor: 'pointer',
-          fontSize: '16px',
-          marginBottom: '20px'
-        }}
-      >
-        Добавить пользователя
-      </button>
+    <div className="users-page">
+      <div className="page-header">
+        <h2>Пользователи</h2>
+        <button onClick={() => openModal()} className="btn btn-success btn-add">
+          + Добавить пользователя
+        </button>
+      </div>
 
       <SortingControls
         sortField={sortField}
         sortDirection={sortDirection}
-        onSortFieldChange={handleSortFieldChange}
-        onSortDirectionChange={handleSortDirectionChange}
+        onSortFieldChange={(f) => { setSortField(f); setCurrentPage(1); }}
+        onSortDirectionChange={(d) => { setSortDirection(d); setCurrentPage(1); }}
         availableFields={sortingFields}
+        title="Сортировка"
       />
 
       <DataTable
@@ -180,7 +165,7 @@ const UsersPage = () => {
         totalPages={totalPages}
         totalCount={totalUsers}
         pageSize={limit}
-        onPageChange={handlePageChange}
+        onPageChange={setCurrentPage}
         loading={loading}
       />
 
@@ -189,53 +174,37 @@ const UsersPage = () => {
         onClose={closeModal}
         title={currentUser ? 'Редактировать пользователя' : 'Добавить пользователя'}
       >
-        <div style={{ overflowY: 'auto', maxHeight: '80vh' }}>
-          <form onSubmit={handleSubmit}>
-            {serverError && (
-              <p style={{ color: 'red', marginBottom: '15px', fontWeight: 'bold', textAlign: 'center' }}>
-                {serverError}
-              </p>
-            )}
+        <form onSubmit={handleSubmit} className="user-form">
+          {serverError && <div className="error-message">{serverError}</div>}
 
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', marginBottom: '5px' }}>Полное имя</label>
-              <input
-                type="text"
-                value={formData.full_name}
-                onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
-              />
-              {formErrors.full_name && <p style={{ color: 'red', marginTop: '5px' }}>{formErrors.full_name}</p>}
-            </div>
+          <div className="form-group">
+            <label>Полное имя *</label>
+            <input
+              type="text"
+              value={formData.full_name}
+              onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+              className="form-input"
+              placeholder="Иванов Иван Иванович"
+            />
+            {formErrors.full_name && <span className="error-text">{formErrors.full_name}</span>}
+          </div>
 
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', marginBottom: '5px' }}>Email</label>
-              <input
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
-              />
-              {formErrors.email && <p style={{ color: 'red', marginTop: '5px' }}>{formErrors.email}</p>}
-            </div>
+          <div className="form-group">
+            <label>Email *</label>
+            <input
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              className="form-input"
+              placeholder="user@example.com"
+            />
+            {formErrors.email && <span className="error-text">{formErrors.email}</span>}
+          </div>
 
-            <button
-              type="submit"
-              style={{
-                width: '100%',
-                padding: '12px',
-                background: '#3498db',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                fontSize: '16px',
-                cursor: 'pointer',
-              }}
-            >
-              {currentUser ? 'Сохранить изменения' : 'Добавить пользователя'}
-            </button>
-          </form>
-        </div>
+          <button type="submit" className="btn btn-primary btn-submit">
+            {currentUser ? 'Сохранить изменения' : 'Добавить пользователя'}
+          </button>
+        </form>
       </Modal>
     </div>
   );

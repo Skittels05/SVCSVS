@@ -1,44 +1,42 @@
-import { useState } from 'react';
+import './Pagination.css';
 
-const Pagination = ({ 
-  currentPage, 
-  totalPages, 
-  totalCount, 
-  onPageChange, 
+const Pagination = ({
+  currentPage,
+  totalPages,
+  totalCount,
+  onPageChange,
   pageSize = 10,
-  loading = false 
+  loading = false,
 }) => {
-  const [hoveredPage, setHoveredPage] = useState(null);
-
   if (totalPages <= 1) return null;
 
   const handlePageClick = (page) => {
-    if (page >= 1 && page <= totalPages && page !== currentPage) {
+    if (page >= 1 && page <= totalPages && page !== currentPage && !loading) {
       onPageChange(page);
     }
   };
 
   const renderPageNumbers = () => {
     const pages = [];
-    const maxVisiblePages = 5;
-    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-    
-    if (endPage - startPage < maxVisiblePages - 1) {
-      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    const maxVisible = 5;
+    let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+    let end = Math.min(totalPages, start + maxVisible - 1);
+
+    if (end - start < maxVisible - 1) {
+      start = Math.max(1, end - maxVisible + 1);
     }
 
-    if (startPage > 1) {
+    if (start > 1) {
       pages.push(1);
-      if (startPage > 2) pages.push('...');
+      if (start > 2) pages.push('...');
     }
 
-    for (let i = startPage; i <= endPage; i++) {
+    for (let i = start; i <= end; i++) {
       pages.push(i);
     }
 
-    if (endPage < totalPages) {
-      if (endPage < totalPages - 1) pages.push('...');
+    if (end < totalPages) {
+      if (end < totalPages - 1) pages.push('...');
       pages.push(totalPages);
     }
 
@@ -46,81 +44,51 @@ const Pagination = ({
       <button
         key={index}
         onClick={() => handlePageClick(page)}
-        style={{
-          padding: '10px 15px',
-          margin: '0 2px',
-          background: page === currentPage ? '#3498db' : 
-                     (page === hoveredPage || (typeof page === 'number' && page === hoveredPage)) ? '#ecf0f1' : 'white',
-          color: page === currentPage ? 'white' : '#2c3e50',
-          border: '1px solid #bdc3c7',
-          borderRadius: '4px',
-          cursor: loading ? 'not-allowed' : 'pointer',
-          opacity: loading ? 0.6 : 1,
-          fontSize: '14px',
-          fontWeight: page === currentPage ? 'bold' : 'normal'
-        }}
-        onMouseEnter={() => setHoveredPage(page)}
-        onMouseLeave={() => setHoveredPage(null)}
         disabled={loading || page === '...'}
+        className={`page-btn ${page === currentPage ? 'active' : ''} ${
+          page === '...' ? 'ellipsis' : ''
+        }`}
+        aria-label={page === '...' ? 'Больше страниц' : `Перейти на страницу ${page}`}
+        aria-current={page === currentPage ? 'page' : undefined}
       >
         {page}
       </button>
     ));
   };
 
+  const startRecord = (currentPage - 1) * pageSize + 1;
+  const endRecord = Math.min(currentPage * pageSize, totalCount);
+
   return (
-    <div style={{ 
-      marginTop: '30px', 
-      textAlign: 'center', 
-      padding: '20px 0',
-      borderTop: '1px solid #dee2e6'
-    }}>
-      <div style={{ marginBottom: '15px', fontSize: '16px', color: '#6c757d' }}>
-        Показаны записи {(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, totalCount)} 
-        из {totalCount}
+    <div className="pagination-container">
+      <div className="pagination-info">
+        Показаны записи <strong>{startRecord}</strong>–<strong>{endRecord}</strong> из{' '}
+        <strong>{totalCount}</strong>
       </div>
-      
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap', gap: '5px' }}>
+
+      <div className="pagination-controls">
         <button
           onClick={() => handlePageClick(currentPage - 1)}
           disabled={currentPage === 1 || loading}
-          style={{
-            padding: '10px 15px',
-            background: currentPage === 1 ? '#ecf0f1' : '#3498db',
-            color: currentPage === 1 ? '#6c757d' : 'white',
-            border: '1px solid #bdc3c7',
-            borderRadius: '4px',
-            cursor: loading ? 'not-allowed' : 'pointer',
-            opacity: loading ? 0.6 : 1,
-            fontSize: '16px',
-            marginRight: '10px'
-          }}
+          className="nav-btn prev-btn"
+          aria-label="Предыдущая страница"
         >
           ← Назад
         </button>
 
-        {renderPageNumbers()}
+        <div className="page-numbers">{renderPageNumbers()}</div>
 
         <button
           onClick={() => handlePageClick(currentPage + 1)}
           disabled={currentPage === totalPages || loading}
-          style={{
-            padding: '10px 15px',
-            background: currentPage === totalPages ? '#ecf0f1' : '#3498db',
-            color: currentPage === totalPages ? '#6c757d' : 'white',
-            border: '1px solid #bdc3c7',
-            borderRadius: '4px',
-            cursor: loading ? 'not-allowed' : 'pointer',
-            opacity: loading ? 0.6 : 1,
-            fontSize: '16px',
-            marginLeft: '10px'
-          }}
+          className="nav-btn next-btn"
+          aria-label="Следующая страница"
         >
           Вперед →
         </button>
       </div>
 
-      <div style={{ marginTop: '10px', fontSize: '14px', color: '#6c757d' }}>
+      <div className="pagination-summary">
         Страница <strong>{currentPage}</strong> из <strong>{totalPages}</strong>
       </div>
     </div>

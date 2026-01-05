@@ -97,7 +97,7 @@ exports.getAll = async (req, res, next) => {
   try {
     const { where, order, limit = 10, offset = 0 } = parseQuery(req.query);
 
-    let orderArray = [['id', 'ASC']]; // по умолчанию
+    let orderArray = [['id', 'ASC']]; 
     if (order && order.length > 0) {
       const [field, dir = 'ASC'] = order[0][0].split(':');
       const direction = dir.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
@@ -120,7 +120,7 @@ exports.getAll = async (req, res, next) => {
         { model: Task, attributes: ['id', 'title'] },
         { model: User, as: 'Uploader', attributes: ['id', 'full_name', 'email'] },
       ],
-      distinct: true, // важно для правильного count при include
+      distinct: true,
     });
 
     res.json({

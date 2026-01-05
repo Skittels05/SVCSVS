@@ -1,181 +1,126 @@
 import { useState } from 'react';
+import './DataTable.css';
 
-const DataTable = ({ 
-  data = [], 
-  columns = [], 
-  emptyMessage = "Данные не найдены", 
-  onEdit, 
-  onDelete, 
+const DataTable = ({
+  data = [],
+  columns = [],
+  emptyMessage = "Данные не найдены",
+  onEdit,
+  onDelete,
   onView,
-  actionsLabel = "Действия" 
+  actionsLabel = "Действия"
 }) => {
   const [hoverRow, setHoverRow] = useState(null);
 
+  const hasActions = onEdit || onDelete || onView;
+
   if (data.length === 0) {
     return (
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-        <thead>
-          <tr>
-            {columns.map((column, index) => (
-              <th 
-                key={index} 
-                style={{ 
-                  padding: '12px', 
-                  background: '#f8f9fa', 
-                  border: '1px solid #dee2e6', 
-                  textAlign: 'left' 
-                }}
-              >
-                {column.header}
-              </th>
-            ))}
-            {(onEdit || onDelete || onView) && (
-              <th 
-                style={{ 
-                  padding: '12px', 
-                  background: '#f8f9fa', 
-                  border: '1px solid #dee2e6', 
-                  textAlign: 'center',
-                  width: '250px'
-                }}
-              >
-                {actionsLabel}
-              </th>
-            )}
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td 
-              colSpan={columns.length + (onEdit || onDelete || onView ? 1 : 0)} 
-              style={{ 
-                textAlign: 'center', 
-                padding: '30px', 
-                color: '#6c757d' 
-              }}
-            >
-              {emptyMessage}
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div className="data-table-empty">
+        <table className="data-table">
+          <thead>
+            <tr>
+              {columns.map((column, index) => (
+                <th key={index}>{column.header}</th>
+              ))}
+              {hasActions && <th className="actions-header">{actionsLabel}</th>}
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td colSpan={columns.length + (hasActions ? 1 : 0)} className="empty-message">
+                {emptyMessage}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     );
   }
 
   return (
-    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-      <thead>
-        <tr>
-          {columns.map((column, index) => (
-            <th 
-              key={index} 
-              style={{ 
-                padding: '12px', 
-                background: '#f8f9fa', 
-                border: '1px solid #dee2e6', 
-                textAlign: 'left' 
-              }}
-            >
-              {column.header}
-            </th>
-          ))}
-          {(onEdit || onDelete || onView) && (
-            <th 
-              style={{ 
-                padding: '12px', 
-                background: '#f8f9fa', 
-                border: '1px solid #dee2e6', 
-                textAlign: 'center',
-                width: '250px'
-              }}
-            >
-              {actionsLabel}
-            </th>
-          )}
-        </tr>
-      </thead>
-      <tbody>
-        {data.map((item, rowIndex) => (
-          <tr 
-            key={item.id || rowIndex}
-            style={{ 
-              backgroundColor: hoverRow === item.id ? '#e3f2fd' : 'white' 
-            }}
-            onMouseEnter={() => setHoverRow(item.id)}
-            onMouseLeave={() => setHoverRow(null)}
-          >
-            {columns.map((column, colIndex) => (
-              <td 
-                key={colIndex} 
-                style={{ 
-                  padding: '12px', 
-                  border: '1px solid #dee2e6',
-                  verticalAlign: 'middle'
-                }}
-              >
-                {column.render ? column.render(item) : item[column.key]}
-              </td>
+    <div className="data-table-container">
+      {/* Десктопная таблица */}
+      <table className="data-table desktop-only">
+        <thead>
+          <tr>
+            {columns.map((column, index) => (
+              <th key={index}>{column.header}</th>
             ))}
-            {(onEdit || onDelete || onView) && (
-              <td style={{ padding: '12px', border: '1px solid #dee2e6', textAlign: 'center' }}>
+            {hasActions && <th className="actions-header">{actionsLabel}</th>}
+          </tr>
+        </thead>
+        <tbody>
+          {data.map((item) => (
+            <tr
+              key={item.id}
+              className={hoverRow === item.id ? 'hovered' : ''}
+              onMouseEnter={() => setHoverRow(item.id)}
+              onMouseLeave={() => setHoverRow(null)}
+            >
+              {columns.map((column, colIndex) => (
+                <td key={colIndex}>
+                  {column.render ? column.render(item) : item[column.key]}
+                </td>
+              ))}
+              {hasActions && (
+                <td className="actions-cell">
+                  {onView && (
+                    <button onClick={() => onView(item)} className="btn btn-info">
+                      Просмотреть
+                    </button>
+                  )}
+                  {onEdit && (
+                    <button onClick={() => onEdit(item)} className="btn btn-primary">
+                      Редактировать
+                    </button>
+                  )}
+                  {onDelete && (
+                    <button onClick={() => onDelete(item.id)} className="btn btn-danger">
+                      Удалить
+                    </button>
+                  )}
+                </td>
+              )}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <div className="mobile-cards mobile-only">
+        {data.map((item) => (
+          <div key={item.id} className="data-card">
+            <div className="card-body">
+              {columns.map((column, idx) => (
+                <div key={idx} className="card-row">
+                  <strong>{column.header}:</strong>
+                  <span>{column.render ? column.render(item) : item[column.key]}</span>
+                </div>
+              ))}
+            </div>
+            {hasActions && (
+              <div className="card-actions">
                 {onView && (
-                  <button
-                    onClick={() => onView(item)}
-                    style={{
-                      padding: '6px 12px',
-                      margin: '0 5px',
-                      background: '#17a2b8',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      fontSize: '14px'
-                    }}
-                  >
+                  <button onClick={() => onView(item)} className="btn btn-info">
                     Просмотреть
                   </button>
                 )}
                 {onEdit && (
-                  <button
-                    onClick={() => onEdit(item)}
-                    style={{
-                      padding: '6px 12px',
-                      margin: '0 5px',
-                      background: '#3498db',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      fontSize: '14px'
-                    }}
-                  >
+                  <button onClick={() => onEdit(item)} className="btn btn-primary">
                     Редактировать
                   </button>
                 )}
                 {onDelete && (
-                  <button
-                    className="danger"
-                    onClick={() => onDelete(item.id)}
-                    style={{
-                      padding: '6px 12px',
-                      margin: '0 5px',
-                      background: '#e74c3c',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      fontSize: '14px'
-                    }}
-                  >
+                  <button onClick={() => onDelete(item.id)} className="btn btn-danger">
                     Удалить
                   </button>
                 )}
-              </td>
+              </div>
             )}
-          </tr>
+          </div>
         ))}
-      </tbody>
-    </table>
+      </div>
+    </div>
   );
 };
 
