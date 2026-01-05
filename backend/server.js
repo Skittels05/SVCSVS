@@ -22,6 +22,7 @@ app.use('/api/project-members', require('./routes/projectMemberRoutes'));
 app.use('/api/iterations', require('./routes/iterationRoutes'));
 app.use('/api/tasks', require('./routes/taskRoutes'));
 app.use('/api/attachments', require('./routes/attachmentRoutes'));
+app.use('/api/auth', require('./routes/authRoutes'));
 
 app.get('/', (req, res) => {
   res.json({ message: 'API системы управления проектами работает!' });
