@@ -11,6 +11,9 @@ db.ProjectMember = require('./projectmember')(sequelize);
 db.Iteration = require('./iteration')(sequelize);
 db.Task = require('./task')(sequelize);
 db.Attachment = require('./attachments')(sequelize);
+db.UserPassword = require('./userpassword')(sequelize);
+db.RefreshToken = require('./refreshtoken')(sequelize);
+db.RecoveryToken = require('./recoverytoken')(sequelize);
 
 const {
   Project,
@@ -49,6 +52,15 @@ Attachment.belongsTo(Task, { foreignKey: 'task_id' });
 
 User.hasMany(Attachment, { foreignKey: 'user_id', onDelete: 'SET NULL' });
 Attachment.belongsTo(User, { as: 'Uploader', foreignKey: 'user_id' });
+
+User.hasOne(UserPassword, { foreignKey: 'user_id', onDelete: 'CASCADE' });
+UserPassword.belongsTo(User, { foreignKey: 'user_id' });
+
+User.hasMany(RefreshToken, { foreignKey: 'user_id', onDelete: 'CASCADE' });
+RefreshToken.belongsTo(User, { foreignKey: 'user_id' });
+
+User.hasMany(RecoveryToken, { foreignKey: 'user_id', onDelete: 'CASCADE' });
+RecoveryToken.belongsTo(User, { foreignKey: 'user_id' });
 
 db.Project.addHook('beforeUpdate', (instance) => {
   instance.updated_at = new Date();
