@@ -22,6 +22,9 @@ const {
   Iteration,
   Task,
   Attachment,
+  UserPassword,
+  RefreshToken,
+  RecoveryToken,
 } = db;
 
 Project.hasMany(ProjectMember, { foreignKey: 'project_id', onDelete: 'CASCADE' });
@@ -52,6 +55,9 @@ Attachment.belongsTo(Task, { foreignKey: 'task_id' });
 
 User.hasMany(Attachment, { foreignKey: 'user_id', onDelete: 'SET NULL' });
 Attachment.belongsTo(User, { as: 'Uploader', foreignKey: 'user_id' });
+
+Project.belongsTo(User, { as: 'Creator', foreignKey: 'creator_id' });
+User.hasMany(Project, { foreignKey: 'creator_id' });
 
 User.hasOne(UserPassword, { foreignKey: 'user_id', onDelete: 'CASCADE' });
 UserPassword.belongsTo(User, { foreignKey: 'user_id' });

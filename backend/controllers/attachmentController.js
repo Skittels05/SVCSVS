@@ -1,8 +1,14 @@
 const { Attachment, Task, User } = require('../models');
 const { parseQuery } = require('../helpers/queryParser');
+const { Op } = require('sequelize');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+
+const {
+  hasTaskAccess,
+  getAccessibleProjectIds,
+} = require('../utils/accessUtils');
 
 const uploadDir = path.join(__dirname, '../uploads');
 
@@ -55,6 +61,14 @@ exports.create = (req, res, next) => {
       return next(error);
     }
 
+    const hasAccess = await hasTaskAccess(taskId, req.user.id, req.user.rights);
+    if (!hasAccess) {
+      req.files.forEach((file) => {
+        if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+      });
+      return res.status(403).json({ message: 'Нет доступа к задаче для добавления вложений' });
+    }
+
     try {
       const createdAttachments = [];
 
@@ -63,7 +77,7 @@ exports.create = (req, res, next) => {
 
         const attachmentData = {
           task_id: taskId,
-          user_id: req.body.user_id ? parseInt(req.body.user_id, 10) : null,
+          user_id: req.user.id,
           file_name: file.originalname,
           file_url: fileUrl,
         };
@@ -73,7 +87,7 @@ exports.create = (req, res, next) => {
       }
 
       const fullAttachments = await Attachment.findAll({
-        where: { id: createdAttachments.map(a => a.id) },
+        where: { id: createdAttachments.map((a) => a.id) },
         include: [
           { model: Task, attributes: ['id', 'title'] },
           { model: User, as: 'Uploader', attributes: ['id', 'full_name'] },
@@ -83,10 +97,7 @@ exports.create = (req, res, next) => {
       res.status(201).json(fullAttachments);
     } catch (error) {
       req.files.forEach((file) => {
-        const filePath = file.path;
-        if (fs.existsSync(filePath)) {
-          fs.unlinkSync(filePath);
-        }
+        if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
       });
       next(error);
     }
@@ -96,8 +107,10 @@ exports.create = (req, res, next) => {
 exports.getAll = async (req, res, next) => {
   try {
     const { where, order, limit = 10, offset = 0 } = parseQuery(req.query);
+    const userId = req.user.id;
+    const userRights = req.user.rights;
 
-    let orderArray = [['id', 'ASC']]; 
+    let orderArray = [['id', 'ASC']];
     if (order && order.length > 0) {
       const [field, dir = 'ASC'] = order[0][0].split(':');
       const direction = dir.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
@@ -111,13 +124,31 @@ exports.getAll = async (req, res, next) => {
       }
     }
 
+    let attachmentWhere = { ...where };
+
+    if (userRights !== 'admin') {
+      const accessibleProjectIds = await getAccessibleProjectIds(userId, userRights);
+
+      if (!accessibleProjectIds || accessibleProjectIds.length === 0) {
+        return res.json({ total: 0, pages: 0, page: 1, data: [] });
+      }
+      attachmentWhere = {
+        ...attachmentWhere,
+        '$Task.project_id$': { [Op.in]: accessibleProjectIds },
+        [Op.or]: [
+          { '$Task.reporter_id$': userId },
+          { '$Task.assignee_id$': userId },
+        ],
+      };
+    }
+
     const { count, rows } = await Attachment.findAndCountAll({
-      where,
+      where: attachmentWhere,
       limit,
       offset,
       order: orderArray,
       include: [
-        { model: Task, attributes: ['id', 'title'] },
+        { model: Task, attributes: ['id', 'title'], required: true },
         { model: User, as: 'Uploader', attributes: ['id', 'full_name', 'email'] },
       ],
       distinct: true,
@@ -147,7 +178,12 @@ exports.getById = async (req, res, next) => {
     if (!attachment) {
       const error = new Error('Вложение не найдено');
       error.status = 404;
-      throw error;
+      return next(error);
+    }
+
+    const hasAccess = await hasTaskAccess(attachment.task_id, req.user.id, req.user.rights);
+    if (!hasAccess) {
+      return res.status(403).json({ message: 'Нет доступа к этому вложению' });
     }
 
     res.json(attachment);
@@ -159,10 +195,18 @@ exports.getById = async (req, res, next) => {
 exports.update = async (req, res, next) => {
   try {
     const attachment = await Attachment.findByPk(req.params.id);
+
     if (!attachment) {
       const error = new Error('Вложение не найдено');
       error.status = 404;
-      throw error;
+      return next(error);
+    }
+
+    const isUploader = attachment.user_id === req.user.id;
+    const isAdmin = req.user.rights === 'admin';
+
+    if (!isUploader && !isAdmin) {
+      return res.status(403).json({ message: 'Только загрузчик или администратор может изменять вложение' });
     }
 
     await attachment.update(req.body);
@@ -183,10 +227,18 @@ exports.update = async (req, res, next) => {
 exports.delete = async (req, res, next) => {
   try {
     const attachment = await Attachment.findByPk(req.params.id);
+
     if (!attachment) {
       const error = new Error('Вложение не найдено');
       error.status = 404;
-      throw error;
+      return next(error);
+    }
+
+    const isUploader = attachment.user_id === req.user.id;
+    const isAdmin = req.user.rights === 'admin';
+
+    if (!isUploader && !isAdmin) {
+      return res.status(403).json({ message: 'Только загрузчик или администратор может удалять вложение' });
     }
 
     const filePath = path.join(__dirname, '..', attachment.file_url);
@@ -204,7 +256,17 @@ exports.delete = async (req, res, next) => {
 exports.checkExists = async (req, res, next) => {
   try {
     const attachment = await Attachment.findByPk(req.params.id);
-    res.status(attachment ? 200 : 404).send();
+
+    if (!attachment) {
+      return res.status(404).send();
+    }
+
+    const hasAccess = await hasTaskAccess(attachment.task_id, req.user.id, req.user.rights);
+    if (!hasAccess) {
+      return res.status(404).send();
+    }
+
+    res.status(200).send();
   } catch (err) {
     next(err);
   }

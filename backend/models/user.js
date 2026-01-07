@@ -26,6 +26,18 @@ module.exports = (sequelize) => {
         len: { args: [1, 100], msg: 'Email должен быть до 100 символов' },
       },
     },
+    rights: {
+      type: DataTypes.ENUM('admin', 'user'),
+      defaultValue: 'user',
+      allowNull: false,
+      validate: {
+        notNull: { msg: 'Права пользователя обязательны' },
+        isIn: {
+          args: [['admin', 'user']],
+          msg: 'Права должны быть "admin" или "user"'
+        }
+      }
+    },
     created_at: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,

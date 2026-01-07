@@ -3,8 +3,16 @@ const { parseQuery } = require('../helpers/queryParser');
 
 exports.create = async (req, res, next) => {
   try {
+    // Регистрация должна идти через /auth/register (там хэшируется пароль)
+    // Здесь оставляем для возможного создания админом, но без пароля
     const user = await User.create(req.body);
-    res.status(201).json(user);
+    res.status(201).json({
+      id: user.id,
+      full_name: user.full_name,
+      email: user.email,
+      rights: user.rights,
+      created_at: user.created_at,
+    });
   } catch (err) {
     next(err);
   }
@@ -12,14 +20,19 @@ exports.create = async (req, res, next) => {
 
 exports.getAll = async (req, res, next) => {
   try {
-    const { where, order, limit, offset } = parseQuery(req.query);
+    if (req.user.rights !== 'admin') {
+      return res.status(403).json({ message: 'Доступ запрещён: только для администраторов' });
+    }
+
+    const { where, order, limit = 10, offset = 0 } = parseQuery(req.query);
     const { count, rows } = await User.findAndCountAll({
       where,
       order,
       limit,
       offset,
-      attributes: ['id', 'full_name', 'email', 'created_at'],
+      attributes: ['id', 'full_name', 'email', 'created_at', 'rights'],
     });
+
     res.json({
       total: count,
       pages: Math.ceil(count / limit),
@@ -33,14 +46,31 @@ exports.getAll = async (req, res, next) => {
 
 exports.getById = async (req, res, next) => {
   try {
-    const user = await User.findByPk(req.params.id, {
-      attributes: ['id', 'full_name', 'email', 'created_at'],
-    });
-    if (!user) {
-      const notFoundError = new Error('Пользователь не найден');
-      notFoundError.status = 404;
-      throw notFoundError;
+    const targetUserId = parseInt(req.params.id, 10);
+    const isAdmin = req.user.rights === 'admin';
+    const isOwnProfile = targetUserId === req.user.id;
+
+    if (!isAdmin && !isOwnProfile) {
+      return res.status(403).json({ message: 'Доступ запрещён: вы можете просматривать только свой профиль' });
     }
+
+    const user = await User.findByPk(targetUserId, {
+      attributes: [
+        'id',
+        'full_name',
+        'email',
+        'created_at',
+        // Админ видит права, обычный пользователь — нет
+        ...(isAdmin ? ['rights'] : []),
+      ],
+    });
+
+    if (!user) {
+      const error = new Error('Пользователь не найден');
+      error.status = 404;
+      return next(error);
+    }
+
     res.json(user);
   } catch (err) {
     next(err);
@@ -49,16 +79,38 @@ exports.getById = async (req, res, next) => {
 
 exports.update = async (req, res, next) => {
   try {
-    const user = await User.findByPk(req.params.id);
-    if (!user) {
-      const notFoundError = new Error('Пользователь не найден');
-      notFoundError.status = 404;
-      throw notFoundError;
+    const targetUserId = parseInt(req.params.id, 10);
+    const isAdmin = req.user.rights === 'admin';
+    const isOwnProfile = targetUserId === req.user.id;
+
+    if (!isAdmin && !isOwnProfile) {
+      return res.status(403).json({ message: 'Доступ запрещён: вы можете редактировать только свой профиль' });
     }
+
+    const user = await User.findByPk(targetUserId);
+    if (!user) {
+      const error = new Error('Пользователь не найден');
+      error.status = 404;
+      return next(error);
+    }
+
+    // Запрещаем менять rights обычному пользователю даже в своём профиле
+    if (!isAdmin && req.body.rights !== undefined) {
+      return res.status(403).json({ message: 'Изменение прав доступа запрещено' });
+    }
+
     await user.update(req.body);
-    const updatedUser = await User.findByPk(req.params.id, {
-      attributes: ['id', 'full_name', 'email', 'created_at'],
+
+    const updatedUser = await User.findByPk(targetUserId, {
+      attributes: [
+        'id',
+        'full_name',
+        'email',
+        'created_at',
+        ...(isAdmin ? ['rights'] : []),
+      ],
     });
+
     res.json(updatedUser);
   } catch (err) {
     next(err);
@@ -67,12 +119,23 @@ exports.update = async (req, res, next) => {
 
 exports.delete = async (req, res, next) => {
   try {
-    const user = await User.findByPk(req.params.id);
-    if (!user) {
-      const notFoundError = new Error('Пользователь не найден');
-      notFoundError.status = 404;
-      throw notFoundError;
+    const targetUserId = parseInt(req.params.id, 10);
+    const isAdmin = req.user.rights === 'admin';
+    const isOwnProfile = targetUserId === req.user.id;
+
+    if (!isAdmin && !isOwnProfile) {
+      return res.status(403).json({ message: 'Доступ запрещён: вы можете удалить только свой аккаунт' });
     }
+
+    const user = await User.findByPk(targetUserId);
+    if (!user) {
+      const error = new Error('Пользователь не найден');
+      error.status = 404;
+      return next(error);
+    }
+
+    // Опционально: запретить админу удалять себя (если он последний админ) — можно добавить проверку позже
+
     await user.destroy();
     res.status(204).send();
   } catch (err) {
@@ -82,7 +145,16 @@ exports.delete = async (req, res, next) => {
 
 exports.checkExists = async (req, res, next) => {
   try {
-    const user = await User.findByPk(req.params.id);
+    const targetUserId = parseInt(req.params.id, 10);
+    const isAdmin = req.user.rights === 'admin';
+    const isOwnProfile = targetUserId === req.user.id;
+
+    if (!isAdmin && !isOwnProfile) {
+      // Скрываем существование чужих пользователей
+      return res.status(404).send();
+    }
+
+    const user = await User.findByPk(targetUserId);
     res.status(user ? 200 : 404).send();
   } catch (err) {
     next(err);

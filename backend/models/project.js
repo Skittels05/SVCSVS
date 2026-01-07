@@ -36,6 +36,12 @@ module.exports = (sequelize) => {
         isIn: { args: [['planned', 'active', 'completed']], msg: 'Статус должен быть planned, active или completed' },
       },
     },
+    creator_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: { model: 'users', key: 'id' },
+      onDelete: 'SET NULL',
+    },
     created_at: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,
