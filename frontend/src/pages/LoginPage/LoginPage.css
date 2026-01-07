@@ -1,0 +1,143 @@
+.auth-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.auth-form-container {
+  background: white;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 480px;
+  text-align: center;
+}
+
+.auth-form-container h2 {
+  margin-bottom: 30px;
+  color: #2c3e50;
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.auth-form-container form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.form-group label {
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #34495e;
+  font-size: 15px;
+}
+
+.form-group input {
+  padding: 14px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 16px;
+  transition: border 0.3s ease;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+}
+
+.error-message {
+  background: #f8d7da;
+  color: #721c24;
+  padding: 14px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  font-size: 15px;
+}
+
+.error-text {
+  color: #e74c3c;
+  font-size: 14px;
+  margin-top: 6px;
+}
+
+.btn-primary {
+  background-color: #3498db;
+  color: white;
+  padding: 16px;
+  font-size: 17px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-top: 10px;
+}
+
+.btn-primary:hover {
+  background-color: #2980b9;
+}
+
+.btn-primary:disabled {
+  background-color: #95a5a6;
+  cursor: not-allowed;
+}
+
+.auth-link {
+  margin-top: 25px;
+  font-size: 15px;
+  color: #7f8c8d;
+}
+
+.auth-link a {
+  color: #3498db;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.auth-link a:hover {
+  text-decoration: underline;
+}
+
+/* Адаптивность */
+@media (max-width: 480px) {
+  .auth-form-container {
+    padding: 30px 20px;
+    margin: 10px;
+  }
+
+  .auth-form-container h2 {
+    font-size: 24px;
+  }
+
+  .form-group input {
+    padding: 12px;
+    font-size: 15px;
+  }
+
+  .btn-primary {
+    padding: 14px;
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 360px) {
+  .auth-form-container {
+    padding: 25px 15px;
+  }
+
+  .auth-form-container h2 {
+    font-size: 22px;
+  }
+}

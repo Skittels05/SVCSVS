@@ -146,3 +146,53 @@
     font-size: 20px;
   }
 }
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  font-size: 15px;
+  flex-wrap: wrap;
+}
+
+.user-info span {
+  white-space: nowrap;
+}
+
+.admin-badge {
+  background: #e74c3c;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.btn-logout {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.btn-logout:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: white;
+}
+
+@media (max-width: 768px) {
+  .user-info {
+    margin-top: 15px;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .btn-logout {
+    width: 100%;
+    text-align: center;
+  }
+}

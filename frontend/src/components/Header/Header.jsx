@@ -1,7 +1,18 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
+import { logout } from '../../store/slices/authSlice';
 import './Header.css';
 
 const Header = () => {
+  const { user } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await dispatch(logout());
+    navigate('/login');
+  };
+
   return (
     <header className="header">
       <div className="container">
@@ -27,6 +38,16 @@ const Header = () => {
           <Link to="/attachments" className="nav-link">Вложения</Link>
           <Link to="/iterations" className="nav-link">Итерации</Link>
         </nav>
+
+        {user && (
+          <div className="user-info">
+            <span>Привет, {user.full_name}</span>
+            {user.rights === 'admin' && <span className="admin-badge">Админ</span>}
+            <button onClick={handleLogout} className="btn btn-logout">
+              Выйти
+            </button>
+          </div>
+        )}
       </div>
     </header>
   );

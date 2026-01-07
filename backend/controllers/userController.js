@@ -3,8 +3,6 @@ const { parseQuery } = require('../helpers/queryParser');
 
 exports.create = async (req, res, next) => {
   try {
-    // Регистрация должна идти через /auth/register (там хэшируется пароль)
-    // Здесь оставляем для возможного создания админом, но без пароля
     const user = await User.create(req.body);
     res.status(201).json({
       id: user.id,
@@ -60,7 +58,6 @@ exports.getById = async (req, res, next) => {
         'full_name',
         'email',
         'created_at',
-        // Админ видит права, обычный пользователь — нет
         ...(isAdmin ? ['rights'] : []),
       ],
     });
@@ -94,7 +91,6 @@ exports.update = async (req, res, next) => {
       return next(error);
     }
 
-    // Запрещаем менять rights обычному пользователю даже в своём профиле
     if (!isAdmin && req.body.rights !== undefined) {
       return res.status(403).json({ message: 'Изменение прав доступа запрещено' });
     }
@@ -134,8 +130,6 @@ exports.delete = async (req, res, next) => {
       return next(error);
     }
 
-    // Опционально: запретить админу удалять себя (если он последний админ) — можно добавить проверку позже
-
     await user.destroy();
     res.status(204).send();
   } catch (err) {
@@ -150,7 +144,7 @@ exports.checkExists = async (req, res, next) => {
     const isOwnProfile = targetUserId === req.user.id;
 
     if (!isAdmin && !isOwnProfile) {
-      // Скрываем существование чужих пользователей
+
       return res.status(404).send();
     }
 

@@ -21,21 +21,9 @@ module.exports = (sequelize) => {
       type: DataTypes.STRING(255),
       allowNull: false,
     },
-    created_at: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-    },
-    updated_at: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-    },
   }, {
     tableName: 'user_passwords',
     timestamps: false,
-  });
-
-  UserPassword.addHook('beforeUpdate', (instance) => {
-    instance.updated_at = new Date();
   });
 
   return UserPassword;

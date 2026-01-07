@@ -1,5 +1,6 @@
-const errorHandler = (err, req, res, next) => {
+const multer = require('multer');
 
+const errorHandler = (err, req, res, next) => {
   let status = 500;
   let response = {
     status: 'error',
@@ -20,7 +21,7 @@ const errorHandler = (err, req, res, next) => {
     };
   }
 
-  else if (err instanceof require('multer').MulterError) {
+  else if (err instanceof multer.MulterError) {
     status = 400;
     response = {
       status: 'error',
@@ -35,6 +36,13 @@ const errorHandler = (err, req, res, next) => {
       message: err.message || 'Ошибка'
     };
   }
+
+  console.error('Ошибка обработана:', {
+    message: err.message,
+    stack: err.stack,
+    name: err.name,
+    status,
+  });
 
   res.status(status).json(response);
 };

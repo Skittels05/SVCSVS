@@ -1,6 +1,6 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const cryptoRandomString = require('crypto-random-string');
+const crypto = require('crypto');
 const { User, UserPassword, RefreshToken, RecoveryToken } = require('../models');
 const { Op } = require('sequelize');
 
@@ -16,7 +16,7 @@ const generateTokens = (user) => {
     { expiresIn: JWT_EXPIRES_IN }
   );
 
-  const refreshToken = cryptoRandomString({ length: 64 });
+  const refreshToken = crypto.randomBytes(32).toString('hex');
 
   return { accessToken, refreshToken };
 };
@@ -45,7 +45,10 @@ exports.register = async (req, res, next) => {
     });
 
     const passwordHash = await bcrypt.hash(password, 10);
-    await UserPassword.create({ user_id: user.id, password_hash });
+    await UserPassword.create({
+      user_id: user.id,
+      password_hash: passwordHash,
+    });
 
     res.status(201).json({
       message: 'Пользователь успешно зарегистрирован',
@@ -188,7 +191,7 @@ exports.forgotPassword = async (req, res, next) => {
         },
       });
 
-      const token = cryptoRandomString({ length: 64 });
+      const token = crypto.randomBytes(32).toString('hex');
       const expiresAt = new Date(Date.now() + RECOVERY_EXPIRES_IN_HOURS * 60 * 60 * 1000);
 
       await RecoveryToken.create({
@@ -197,7 +200,7 @@ exports.forgotPassword = async (req, res, next) => {
         expires_at: expiresAt,
       });
 
-      console.log(`[Восстановление] Ссылка: http://localhost:3000/recovery?token=${token}`);
+      console.log(`[Восстановление пароля] Ссылка: http://localhost:3000/recovery?token=${token}`);
     }
 
     res.json({
