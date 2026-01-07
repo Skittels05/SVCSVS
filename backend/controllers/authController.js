@@ -5,7 +5,7 @@ const { User, UserPassword, RefreshToken, RecoveryToken } = require('../models')
 const { Op } = require('sequelize');
 
 const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_EXPIRES_IN = '15m';
+const JWT_EXPIRES_IN = '1m';
 const REFRESH_EXPIRES_IN_DAYS = 7;
 const RECOVERY_EXPIRES_IN_HOURS = 1;
 
