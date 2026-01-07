@@ -183,3 +183,41 @@
     font-size: 13px;
   }
 }
+
+.btn[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.btn[disabled]:hover {
+  opacity: 0.5;
+  transform: none;
+}
+
+.btn[disabled] {
+  position: relative;
+}
+
+.btn[disabled]::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: white;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 13px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  margin-bottom: 8px;
+  z-index: 10;
+}
+
+.btn[disabled]:hover::after {
+  opacity: 1;
+}

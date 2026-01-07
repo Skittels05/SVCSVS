@@ -16,9 +16,10 @@ import './UsersPage.css';
 const UsersPage = () => {
   const dispatch = useDispatch();
   const { list: users, loading } = useSelector((state) => state.users);
+  const { user: currentUser } = useSelector((state) => state.auth);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [currentUser, setCurrentUser] = useState(null);
+  const [currentUserEdit, setCurrentUserEdit] = useState(null);
   const [formData, setFormData] = useState({ full_name: '', email: '' });
   const [formErrors, setFormErrors] = useState({});
   const [serverError, setServerError] = useState('');
@@ -49,6 +50,38 @@ const UsersPage = () => {
       });
   }, [dispatch, currentPage, sortField, sortDirection]);
 
+  const canManageUser = (user) => {
+    if (!currentUser) return false;
+    if (currentUser.rights === 'admin') return true;
+    return user.id === currentUser.id;
+  };
+
+  const canAddUser = () => {
+    if (!currentUser) return false;
+    return currentUser.rights === 'admin';
+  };
+
+  const openModal = (user = null) => {
+    if (user && !canManageUser(user)) {
+      alert('У вас нет прав на редактирование этого пользователя');
+      return;
+    }
+    setCurrentUserEdit(user);
+    setFormData(
+      user
+        ? { full_name: user.full_name || '', email: user.email || '' }
+        : { full_name: '', email: '' }
+    );
+    setFormErrors({});
+    setServerError('');
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setCurrentUserEdit(null);
+  };
+
   const validateForm = () => {
     const errors = {};
     if (!formData.full_name.trim()) errors.full_name = 'Полное имя обязательно';
@@ -71,9 +104,17 @@ const UsersPage = () => {
     };
 
     try {
-      if (currentUser) {
-        await dispatch(updateUser({ id: currentUser.id, userData })).unwrap();
+      if (currentUserEdit) {
+        if (!canManageUser(currentUserEdit)) {
+          setServerError('У вас нет прав на редактирование этого пользователя');
+          return;
+        }
+        await dispatch(updateUser({ id: currentUserEdit.id, userData })).unwrap();
       } else {
+        if (!canAddUser()) {
+          setServerError('Только администратор может добавлять пользователей');
+          return;
+        }
         await dispatch(createUser(userData)).unwrap();
       }
       closeModal();
@@ -82,29 +123,16 @@ const UsersPage = () => {
     }
   };
 
-  const openModal = (user = null) => {
-    setCurrentUser(user);
-    setFormData(
-      user
-        ? { full_name: user.full_name || '', email: user.email || '' }
-        : { full_name: '', email: '' }
-    );
-    setFormErrors({});
-    setServerError('');
-    setIsModalOpen(true);
-  };
-
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setCurrentUser(null);
-  };
-
-  const handleDelete = async (id) => {
+  const handleDelete = (id) => {
+    const userToDelete = users.find(u => u.id === id);
+    if (!canManageUser(userToDelete)) {
+      alert('У вас нет прав на удаление этого пользователя');
+      return;
+    }
     if (window.confirm('Удалить пользователя? Это может повлиять на связанные задачи и проекты.')) {
-      const result = await dispatch(deleteUser(id));
-      if (deleteUser.fulfilled.match(result)) {
+      dispatch(deleteUser(id)).unwrap().then(() => {
         dispatch(fetchUsers({ page: currentPage, limit }));
-      }
+      });
     }
   };
 
@@ -130,6 +158,32 @@ const UsersPage = () => {
     { key: 'created_at', label: 'Дата создания' },
   ];
 
+  const customActions = (user) => {
+    const canManage = canManageUser(user);
+
+    return (
+      <div className="table-actions">
+        <button
+          onClick={() => openModal(user)}
+          className="btn btn-primary btn-small"
+          disabled={!canManage}
+          title={!canManage ? 'Нет прав на редактирование' : ''}
+        >
+          Редактировать
+        </button>
+
+        <button
+          onClick={() => handleDelete(user.id)}
+          className="btn btn-danger btn-small"
+          disabled={!canManage}
+          title={!canManage ? 'Нет прав на удаление' : ''}
+        >
+          Удалить
+        </button>
+      </div>
+    );
+  };
+
   if (loading && currentPage === 1) {
     return <div className="page-loading">Загрузка пользователей...</div>;
   }
@@ -138,7 +192,12 @@ const UsersPage = () => {
     <div className="users-page">
       <div className="page-header">
         <h2>Пользователи</h2>
-        <button onClick={() => openModal()} className="btn btn-success btn-add">
+        <button
+          onClick={() => openModal()}
+          className="btn btn-success btn-add"
+          disabled={!canAddUser()}
+          title={!canAddUser() ? 'Только администратор может добавлять пользователей' : ''}
+        >
           + Добавить пользователя
         </button>
       </div>
@@ -156,8 +215,7 @@ const UsersPage = () => {
         data={users}
         columns={tableColumns}
         emptyMessage="Пользователей не найдено"
-        onEdit={openModal}
-        onDelete={handleDelete}
+        customActions={customActions}
       />
 
       <Pagination
@@ -172,7 +230,7 @@ const UsersPage = () => {
       <Modal
         isOpen={isModalOpen}
         onClose={closeModal}
-        title={currentUser ? 'Редактировать пользователя' : 'Добавить пользователя'}
+        title={currentUserEdit ? 'Редактировать пользователя' : 'Добавить пользователя'}
       >
         <form onSubmit={handleSubmit} className="user-form">
           {serverError && <div className="error-message">{serverError}</div>}
@@ -202,7 +260,7 @@ const UsersPage = () => {
           </div>
 
           <button type="submit" className="btn btn-primary btn-submit">
-            {currentUser ? 'Сохранить изменения' : 'Добавить пользователя'}
+            {currentUserEdit ? 'Сохранить изменения' : 'Добавить пользователя'}
           </button>
         </form>
       </Modal>

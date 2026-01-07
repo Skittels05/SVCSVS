@@ -17,6 +17,7 @@ import './IterationsPage.css';
 const IterationsPage = () => {
   const dispatch = useDispatch();
   const { list: iterations, loading } = useSelector((state) => state.iterations);
+  const { user: currentUser } = useSelector((state) => state.auth);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [currentIteration, setCurrentIteration] = useState(null);
@@ -78,7 +79,30 @@ const IterationsPage = () => {
       });
   }, [dispatch, currentPage, sortField, sortDirection, filterProject, filterType]);
 
+  const canEditOrDeleteIteration = (iteration) => {
+    if (!currentUser) return false;
+    if (currentUser.rights === 'admin') return true;
+
+    const project = iteration.Project;
+    if (!project) return false;
+
+    if (project.Creator?.id === currentUser.id) return true;
+
+    return false;
+  };
+
+  const canManageIteration = (iteration) => {
+    if (!currentUser) return false;
+    if (currentUser.rights === 'admin') return true;
+    if (iteration.Project?.Creator?.id === currentUser.id) return true;
+    return true;
+  };
+
   const openModal = (iteration = null) => {
+    if (iteration && !canManageIteration(iteration)) {
+      alert('У вас нет прав на редактирование этой итерации');
+      return;
+    }
     setCurrentIteration(iteration);
     setIsEditMode(!!iteration);
     setFormData(iteration ? {
@@ -147,6 +171,11 @@ const IterationsPage = () => {
   };
 
   const handleDelete = (id) => {
+    const iteration = iterations.find(i => i.id === id);
+    if (!canManageIteration(iteration)) {
+      alert('У вас нет прав на удаление этой итерации');
+      return;
+    }
     if (window.confirm('Удалить итерацию? Это может повлиять на связанные задачи.')) {
       dispatch(deleteIteration(id));
     }
@@ -226,6 +255,32 @@ const IterationsPage = () => {
     </div>
   );
 
+  const customActions = (iteration) => {
+    const canManage = canManageIteration(iteration);
+
+    return (
+      <div className="table-actions">
+        <button
+          onClick={() => openModal(iteration)}
+          className="btn btn-primary btn-small"
+          disabled={!canManage}
+          title={!canManage ? 'Нет прав на редактирование' : ''}
+        >
+          Редактировать
+        </button>
+
+        <button
+          onClick={() => handleDelete(iteration.id)}
+          className="btn btn-danger btn-small"
+          disabled={!canManage}
+          title={!canManage ? 'Нет прав на удаление' : ''}
+        >
+          Удалить
+        </button>
+      </div>
+    );
+  };
+
   if (loading && currentPage === 1) {
     return <div className="page-loading">Загрузка итераций...</div>;
   }
@@ -253,8 +308,7 @@ const IterationsPage = () => {
         data={iterations}
         columns={tableColumns}
         emptyMessage="Итераций не найдено"
-        onEdit={openModal}
-        onDelete={handleDelete}
+        customActions={customActions}
       />
 
       <Pagination

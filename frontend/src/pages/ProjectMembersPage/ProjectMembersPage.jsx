@@ -17,6 +17,7 @@ import './ProjectMembersPage.css';
 const ProjectMembersPage = () => {
   const dispatch = useDispatch();
   const { list: members, loading } = useSelector((state) => state.projectMembers);
+  const { user: currentUser } = useSelector((state) => state.auth);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [currentMember, setCurrentMember] = useState(null);
@@ -90,7 +91,26 @@ const ProjectMembersPage = () => {
       });
   }, [dispatch, currentPage, sortField, sortDirection, filterProject]);
 
+  const canManageMember = (member) => {
+    if (!currentUser) return false;
+    if (currentUser.rights === 'admin') return true;
+
+    const project = member.Project;
+    if (!project) return false;
+    return project.Creator?.id === currentUser.id;
+  };
+
+  const canAddMember = () => {
+    if (!currentUser) return false;
+    if (currentUser.rights === 'admin') return true;
+    return projects.some(p => p.Creator?.id === currentUser.id);
+  };
+
   const openModal = (member = null) => {
+    if (member && !canManageMember(member)) {
+      alert('У вас нет прав на редактирование этого участника');
+      return;
+    }
     setCurrentMember(member);
     setIsEditMode(!!member);
     setFormData(member ? {
@@ -135,6 +155,12 @@ const ProjectMembersPage = () => {
       role: formData.role.trim(),
     };
 
+    const project = projects.find(p => p.id === memberData.project_id);
+    if (project && !currentUser.rights === 'admin' && project.Creator?.id !== currentUser.id) {
+      setServerError('У вас нет прав на управление участниками этого проекта');
+      return;
+    }
+
     try {
       if (isEditMode) {
         await dispatch(updateProjectMember({ id: currentMember.id, memberData })).unwrap();
@@ -148,6 +174,11 @@ const ProjectMembersPage = () => {
   };
 
   const handleDelete = (id) => {
+    const member = members.find(m => m.id === id);
+    if (!canManageMember(member)) {
+      alert('У вас нет прав на удаление этого участника');
+      return;
+    }
     if (window.confirm('Удалить участника из проекта?')) {
       dispatch(deleteProjectMember(id));
     }
@@ -198,6 +229,32 @@ const ProjectMembersPage = () => {
     </div>
   );
 
+  const customActions = (member) => {
+    const canManage = canManageMember(member);
+
+    return (
+      <div className="table-actions">
+        <button
+          onClick={() => openModal(member)}
+          className="btn btn-primary btn-small"
+          disabled={!canManage}
+          title={!canManage ? 'Нет прав на редактирование' : ''}
+        >
+          Редактировать
+        </button>
+
+        <button
+          onClick={() => handleDelete(member.id)}
+          className="btn btn-danger btn-small"
+          disabled={!canManage}
+          title={!canManage ? 'Нет прав на удаление' : ''}
+        >
+          Удалить
+        </button>
+      </div>
+    );
+  };
+
   if (loading && currentPage === 1) {
     return <div className="page-loading">Загрузка участников проектов...</div>;
   }
@@ -206,7 +263,12 @@ const ProjectMembersPage = () => {
     <div className="project-members-page">
       <div className="page-header">
         <h2>Участники проектов</h2>
-        <button onClick={() => openModal()} className="btn btn-success btn-add">
+        <button
+          onClick={() => openModal()}
+          className="btn btn-success btn-add"
+          disabled={!canAddMember()}
+          title={!canAddMember() ? 'У вас нет прав на добавление участников (только создатели проектов или админ)' : ''}
+        >
           + Добавить участника
         </button>
       </div>
@@ -225,8 +287,7 @@ const ProjectMembersPage = () => {
         data={members}
         columns={tableColumns}
         emptyMessage="Участников проектов не найдено"
-        onEdit={openModal}
-        onDelete={handleDelete}
+        customActions={customActions}
       />
 
       <Pagination
@@ -255,9 +316,11 @@ const ProjectMembersPage = () => {
               disabled={loadingProjects}
             >
               <option value="">Выберите проект</option>
-              {projects.map((proj) => (
-                <option key={proj.id} value={proj.id}>{proj.name}</option>
-              ))}
+              {projects
+                .filter(p => currentUser.rights === 'admin' || p.Creator?.id === currentUser.id)
+                .map((proj) => (
+                  <option key={proj.id} value={proj.id}>{proj.name}</option>
+                ))}
             </select>
             {formErrors.project_id && <span className="error-text">{formErrors.project_id}</span>}
           </div>

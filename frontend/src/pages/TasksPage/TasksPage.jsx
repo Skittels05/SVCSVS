@@ -19,6 +19,7 @@ import './TasksPage.css';
 const TasksPage = () => {
   const dispatch = useDispatch();
   const { list: tasks, loading: tasksLoading } = useSelector((state) => state.tasks);
+  const { user: currentUser } = useSelector((state) => state.auth);
 
   const [modalTask, setModalTask] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -55,7 +56,6 @@ const TasksPage = () => {
   const [totalTasks, setTotalTasks] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Загрузка проектов
   useEffect(() => {
     const loadProjects = async () => {
       setLoadingProjects(true);
@@ -71,7 +71,6 @@ const TasksPage = () => {
     loadProjects();
   }, []);
 
-  // Загрузка итераций при выборе проекта
   useEffect(() => {
     if (formData.project_id) {
       const loadIterations = async () => {
@@ -92,7 +91,6 @@ const TasksPage = () => {
     }
   }, [formData.project_id]);
 
-  // Загрузка участников проекта
   useEffect(() => {
     if (formData.project_id) {
       const loadMembers = async () => {
@@ -113,7 +111,6 @@ const TasksPage = () => {
     }
   }, [formData.project_id]);
 
-  // Загрузка задач
   useEffect(() => {
     const params = {
       page: currentPage,
@@ -131,7 +128,28 @@ const TasksPage = () => {
       });
   }, [dispatch, currentPage, sortField, sortDirection, filterProject, filterStatus]);
 
+  const canEditOrDeleteTask = (task) => {
+    if (!currentUser) return false;
+    if (currentUser.rights === 'admin') return true;
+
+    if (task.Reporter?.id === currentUser.id) return true;
+    if (task.Assignee?.id === currentUser.id) return true;
+    if (task.Project?.Creator?.id === currentUser.id) return true;
+
+    return false;
+  };
+
+  const canDeleteAttachment = (attachment) => {
+    if (!currentUser) return false;
+    if (currentUser.rights === 'admin') return true;
+    return attachment.Uploader?.id === currentUser.id;
+  };
+
   const openTaskModal = (task = null, edit = false) => {
+    if (task && edit && !canEditOrDeleteTask(task)) {
+      alert('У вас нет прав на редактирование этой задачи');
+      return;
+    }
     setModalTask(task);
     setIsEditMode(edit || !task);
     setFormData(task ? {
@@ -209,6 +227,10 @@ const TasksPage = () => {
     try {
       let newTask;
       if (modalTask) {
+        if (!canEditOrDeleteTask(modalTask)) {
+          setServerError('У вас нет прав на редактирование этой задачи');
+          return;
+        }
         await dispatch(updateTask({ id: modalTask.id, taskData })).unwrap();
         newTask = { ...modalTask, ...taskData };
       } else {
@@ -220,7 +242,7 @@ const TasksPage = () => {
         await dispatch(uploadAttachments({
           taskId: newTask.id,
           files: selectedFiles,
-          userId: 1,
+          userId: currentUser.id,
         }));
       }
 
@@ -231,20 +253,28 @@ const TasksPage = () => {
   };
 
   const handleDelete = (id) => {
+    const task = tasks.find(t => t.id === id);
+    if (!canEditOrDeleteTask(task)) {
+      alert('У вас нет прав на удаление этой задачи');
+      return;
+    }
     if (window.confirm('Удалить задачу? Все вложения будут удалены безвозвратно.')) {
       dispatch(deleteTask(id));
     }
   };
 
-  const handleDeleteAttachment = async (attachmentId) => {
+  const handleDeleteAttachment = (attachmentId) => {
+    const attachment = modalTask.Attachments.find(a => a.id === attachmentId);
+    if (!canDeleteAttachment(attachment)) {
+      alert('У вас нет прав на удаление этого вложения');
+      return;
+    }
     if (window.confirm('Удалить изображение?')) {
-      const result = await dispatch(deleteAttachment({ attachmentId, taskId: modalTask.id }));
-      if (!result.type.endsWith('/rejected')) {
-        setModalTask(prev => ({
-          ...prev,
-          Attachments: prev.Attachments.filter(att => att.id !== attachmentId),
-        }));
-      }
+      dispatch(deleteAttachment({ attachmentId, taskId: modalTask.id }));
+      setModalTask(prev => ({
+        ...prev,
+        Attachments: prev.Attachments.filter(a => a.id !== attachmentId),
+      }));
     }
   };
 
@@ -303,6 +333,39 @@ const TasksPage = () => {
     setCurrentPage(1);
   };
 
+  const customActions = (task) => {
+    const canManage = canEditOrDeleteTask(task);
+
+    return (
+      <div className="table-actions">
+        <button
+          onClick={() => openTaskModal(task, false)}
+          className="btn btn-info btn-small"
+        >
+          Просмотр
+        </button>
+
+        <button
+          onClick={() => openTaskModal(task, true)}
+          className="btn btn-primary btn-small"
+          disabled={!canManage}
+          title={!canManage ? 'Нет прав на редактирование' : ''}
+        >
+          Редактировать
+        </button>
+
+        <button
+          onClick={() => handleDelete(task.id)}
+          className="btn btn-danger btn-small"
+          disabled={!canManage}
+          title={!canManage ? 'Нет прав на удаление' : ''}
+        >
+          Удалить
+        </button>
+      </div>
+    );
+  };
+
   if (tasksLoading && currentPage === 1) {
     return <div className="page-loading">Загрузка задач...</div>;
   }
@@ -331,9 +394,7 @@ const TasksPage = () => {
         data={tasks}
         columns={tableColumns}
         emptyMessage="Задач не найдено"
-        onView={(task) => openTaskModal(task, false)}
-        onEdit={(task) => openTaskModal(task, true)}
-        onDelete={handleDelete}
+        customActions={customActions}
       />
 
       <Pagination
@@ -494,7 +555,12 @@ const TasksPage = () => {
                       <div key={att.id} className="attachment-item">
                         <img src={`http://localhost:5000${att.file_url}`} alt={att.file_name} />
                         <p>{att.file_name}</p>
-                        <button onClick={() => handleDeleteAttachment(att.id)} className="btn btn-danger btn-small">
+                        <button
+                          onClick={() => handleDeleteAttachment(att.id)}
+                          className="btn btn-danger btn-small"
+                          disabled={!canDeleteAttachment(att)}
+                          title={!canDeleteAttachment(att) ? 'Нет прав на удаление' : ''}
+                        >
                           Удалить
                         </button>
                       </div>
@@ -542,7 +608,12 @@ const TasksPage = () => {
                 </div>
               )}
 
-              <button onClick={() => setIsEditMode(true)} className="btn btn-primary">
+              <button
+                onClick={() => setIsEditMode(true)}
+                className="btn btn-primary"
+                disabled={!canEditOrDeleteTask(modalTask)}
+                title={!canEditOrDeleteTask(modalTask) ? 'Нет прав на редактирование' : ''}
+              >
                 Редактировать задачу
               </button>
             </div>

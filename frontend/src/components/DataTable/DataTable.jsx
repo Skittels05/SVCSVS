@@ -4,7 +4,8 @@ import './DataTable.css';
 const DataTable = ({
   data = [],
   columns = [],
-  emptyMessage = "Данные не найдены",
+  emptyMessage = "Данные не найдено",
+  customActions,
   onEdit,
   onDelete,
   onView,
@@ -12,7 +13,7 @@ const DataTable = ({
 }) => {
   const [hoverRow, setHoverRow] = useState(null);
 
-  const hasActions = onEdit || onDelete || onView;
+  const hasActions = customActions || onEdit || onDelete || onView;
 
   if (data.length === 0) {
     return (
@@ -65,20 +66,26 @@ const DataTable = ({
               ))}
               {hasActions && (
                 <td className="actions-cell">
-                  {onView && (
-                    <button onClick={() => onView(item)} className="btn btn-info">
-                      Просмотреть
-                    </button>
-                  )}
-                  {onEdit && (
-                    <button onClick={() => onEdit(item)} className="btn btn-primary">
-                      Редактировать
-                    </button>
-                  )}
-                  {onDelete && (
-                    <button onClick={() => onDelete(item.id)} className="btn btn-danger">
-                      Удалить
-                    </button>
+                  {customActions ? (
+                    customActions(item)
+                  ) : (
+                    <>
+                      {onView && (
+                        <button onClick={() => onView(item)} className="btn btn-info btn-small">
+                          Просмотреть
+                        </button>
+                      )}
+                      {onEdit && (
+                        <button onClick={() => onEdit(item)} className="btn btn-primary btn-small">
+                          Редактировать
+                        </button>
+                      )}
+                      {onDelete && (
+                        <button onClick={() => onDelete(item.id)} className="btn btn-danger btn-small">
+                          Удалить
+                        </button>
+                      )}
+                    </>
                   )}
                 </td>
               )}
@@ -87,6 +94,7 @@ const DataTable = ({
         </tbody>
       </table>
 
+      {/* Мобильная версия — карточки */}
       <div className="mobile-cards mobile-only">
         {data.map((item) => (
           <div key={item.id} className="data-card">
@@ -100,20 +108,26 @@ const DataTable = ({
             </div>
             {hasActions && (
               <div className="card-actions">
-                {onView && (
-                  <button onClick={() => onView(item)} className="btn btn-info">
-                    Просмотреть
-                  </button>
-                )}
-                {onEdit && (
-                  <button onClick={() => onEdit(item)} className="btn btn-primary">
-                    Редактировать
-                  </button>
-                )}
-                {onDelete && (
-                  <button onClick={() => onDelete(item.id)} className="btn btn-danger">
-                    Удалить
-                  </button>
+                {customActions ? (
+                  customActions(item)
+                ) : (
+                  <>
+                    {onView && (
+                      <button onClick={() => onView(item)} className="btn btn-info">
+                        Просмотреть
+                      </button>
+                    )}
+                    {onEdit && (
+                      <button onClick={() => onEdit(item)} className="btn btn-primary">
+                        Редактировать
+                      </button>
+                    )}
+                    {onDelete && (
+                      <button onClick={() => onDelete(item.id)} className="btn btn-danger">
+                        Удалить
+                      </button>
+                    )}
+                  </>
                 )}
               </div>
             )}

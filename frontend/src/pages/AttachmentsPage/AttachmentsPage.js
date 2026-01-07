@@ -17,6 +17,7 @@ import './AttachmentsPage.css';
 const AttachmentsPage = () => {
   const dispatch = useDispatch();
   const { list: attachments, loading } = useSelector((state) => state.attachments);
+  const { user: currentUser } = useSelector((state) => state.auth); // Текущий пользователь
 
   const [modalOpen, setModalOpen] = useState(false);
   const [currentAttachment, setCurrentAttachment] = useState(null);
@@ -89,7 +90,18 @@ const AttachmentsPage = () => {
       });
   }, [dispatch, currentPage, sortField, sortDirection, filterTask, filterUser]);
 
+  // Проверка прав на редактирование/удаление вложения
+  const canEditOrDelete = (attachment) => {
+    if (!currentUser) return false;
+    if (currentUser.rights === 'admin') return true;
+    return attachment.Uploader?.id === currentUser.id;
+  };
+
   const openModal = (attachment = null) => {
+    if (attachment && !canEditOrDelete(attachment)) {
+      alert('У вас нет прав на редактирование этого вложения');
+      return;
+    }
     setCurrentAttachment(attachment);
     setIsEditMode(!!attachment);
     setFormData({
@@ -145,7 +157,7 @@ const AttachmentsPage = () => {
         const form = new FormData();
         selectedFiles.forEach((file) => form.append('files', file));
         form.append('task_id', formData.task_id);
-        form.append('user_id', 1);
+        form.append('user_id', currentUser.id); // Автоматически текущий пользователь
 
         await dispatch(createAttachments(form)).unwrap();
       }
@@ -156,6 +168,11 @@ const AttachmentsPage = () => {
   };
 
   const handleDelete = (id) => {
+    const attachment = attachments.find(a => a.id === id);
+    if (!canEditOrDelete(attachment)) {
+      alert('У вас нет прав на удаление этого вложения');
+      return;
+    }
     if (window.confirm('Удалить изображение? Файл будет безвозвратно удалён.')) {
       dispatch(deleteAttachment(id));
     }
@@ -213,6 +230,40 @@ const AttachmentsPage = () => {
     </div>
   );
 
+  // Кастомные действия для таблицы
+  const customActions = (attachment) => {
+    const canEditDelete = canEditOrDelete(attachment);
+
+    return (
+      <div className="table-actions">
+        <button
+          onClick={() => window.open(`http://localhost:5000${attachment.file_url}`, '_blank')}
+          className="btn btn-info btn-small"
+        >
+          Просмотр
+        </button>
+
+        <button
+          onClick={() => openModal(attachment)}
+          className="btn btn-primary btn-small"
+          disabled={!canEditDelete}
+          title={!canEditDelete ? 'Нет прав на редактирование' : ''}
+        >
+          Редактировать
+        </button>
+
+        <button
+          onClick={() => handleDelete(attachment.id)}
+          className="btn btn-danger btn-small"
+          disabled={!canEditDelete}
+          title={!canEditDelete ? 'Нет прав на удаление' : ''}
+        >
+          Удалить
+        </button>
+      </div>
+    );
+  };
+
   if (loading && currentPage === 1) {
     return <div className="page-loading">Загрузка вложений...</div>;
   }
@@ -240,9 +291,7 @@ const AttachmentsPage = () => {
         data={attachments}
         columns={tableColumns}
         emptyMessage="Вложений не найдено"
-        onEdit={openModal}
-        onDelete={handleDelete}
-        onView={(att) => window.open(`http://localhost:5000${att.file_url}`, '_blank')}
+        customActions={customActions}
       />
 
       <Pagination
