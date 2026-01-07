@@ -41,8 +41,10 @@ const Header = () => {
 
         {user && (
           <div className="user-info">
-            <span>Привет, {user.full_name}</span>
-            {user.rights === 'admin' && <span className="admin-badge">Админ</span>}
+            <div className="user-greeting">
+              <span className="user-name">Привет, {user.full_name}</span>
+              {user.rights === 'admin' && <span className="admin-badge">Админ</span>}
+            </div>
             <button onClick={handleLogout} className="btn btn-logout">
               Выйти
             </button>

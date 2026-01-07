@@ -132,17 +132,21 @@ const TasksPage = () => {
     if (!currentUser) return false;
     if (currentUser.rights === 'admin') return true;
 
-    if (task.Reporter?.id === currentUser.id) return true;
-    if (task.Assignee?.id === currentUser.id) return true;
-    if (task.Project?.Creator?.id === currentUser.id) return true;
+    const reporterId = task?.Reporter?.id ?? null;
+    const assigneeId = task?.Assignee?.id ?? null;
+    const projectCreatorId = task?.Project?.Creator?.id ?? null;
 
-    return false;
+    return (
+      reporterId === currentUser.id ||
+      assigneeId === currentUser.id ||
+      projectCreatorId === currentUser.id
+    );
   };
 
   const canDeleteAttachment = (attachment) => {
     if (!currentUser) return false;
     if (currentUser.rights === 'admin') return true;
-    return attachment.Uploader?.id === currentUser.id;
+    return attachment?.Uploader?.id === currentUser.id;
   };
 
   const openTaskModal = (task = null, edit = false) => {
@@ -264,7 +268,7 @@ const TasksPage = () => {
   };
 
   const handleDeleteAttachment = (attachmentId) => {
-    const attachment = modalTask.Attachments.find(a => a.id === attachmentId);
+    const attachment = modalTask?.Attachments?.find(a => a.id === attachmentId);
     if (!canDeleteAttachment(attachment)) {
       alert('У вас нет прав на удаление этого вложения');
       return;

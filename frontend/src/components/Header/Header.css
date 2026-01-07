@@ -16,11 +16,14 @@
   justify-content: space-between;
   align-items: center;
   position: relative;
+  flex-wrap: wrap; /* Важно: перенос на новую строку при нехватке места */
+  gap: 15px;
 }
 
 .header-title {
   margin: 0;
   font-size: 24px;
+  flex-shrink: 0;
 }
 
 .header-logo {
@@ -37,6 +40,7 @@
 .header-nav {
   display: flex;
   gap: 30px;
+  flex-shrink: 0;
 }
 
 .nav-link {
@@ -47,6 +51,7 @@
   padding: 8px 0;
   position: relative;
   transition: color 0.2s;
+  white-space: nowrap;
 }
 
 .nav-link:hover {
@@ -90,6 +95,59 @@
   transition: all 0.3s ease;
 }
 
+/* Блок с пользователем */
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.user-greeting {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.user-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px; /* Ограничиваем ширину имени */
+}
+
+.admin-badge {
+  background: #e74c3c;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.btn-logout {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.btn-logout:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: white;
+}
+
+/* Мобильная версия */
 @media (max-width: 992px) {
   .header-nav {
     gap: 20px;
@@ -101,6 +159,11 @@
 }
 
 @media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
   .header-nav {
     position: absolute;
     top: 100%;
@@ -126,6 +189,10 @@
 
   .nav-toggle-label {
     display: flex;
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
   }
 
   .nav-toggle:checked + .nav-toggle-label span:nth-child(1) {
@@ -139,60 +206,40 @@
   .nav-toggle:checked + .nav-toggle-label span:nth-child(3) {
     transform: rotate(-45deg) translate(7px, -6px);
   }
+
+  .user-info {
+    width: 100%;
+    justify-content: space-between;
+    margin-top: 10px;
+    padding: 0 20px;
+  }
+
+  .user-greeting {
+    justify-content: flex-start;
+  }
+
+  .user-name {
+    max-width: 150px;
+  }
+
+  .btn-logout {
+    padding: 8px 14px;
+    font-size: 14px;
+  }
 }
 
 @media (max-width: 480px) {
   .header-title {
     font-size: 20px;
   }
-}
 
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  font-size: 15px;
-  flex-wrap: wrap;
-}
-
-.user-info span {
-  white-space: nowrap;
-}
-
-.admin-badge {
-  background: #e74c3c;
-  color: white;
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.btn-logout {
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  color: white;
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-size: 14px;
-  transition: all 0.3s ease;
-}
-
-.btn-logout:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: white;
-}
-
-@media (max-width: 768px) {
-  .user-info {
-    margin-top: 15px;
-    justify-content: center;
-    width: 100%;
+  .user-name {
+    max-width: 120px;
+    font-size: 14px;
   }
 
   .btn-logout {
-    width: 100%;
-    text-align: center;
+    padding: 6px 12px;
+    font-size: 13px;
   }
 }
