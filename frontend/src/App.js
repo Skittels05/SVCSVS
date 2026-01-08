@@ -12,6 +12,7 @@ import LoginPage from './pages/LoginPage/LoginPage';
 import RegisterPage from './pages/RegisterPage/RegisterPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage/ResetPasswordPage';
+import AnalyticsPage from './pages/AnalyticsPage/AnalyticsPage';
 
 function App() {
   return (
@@ -34,6 +35,7 @@ function App() {
                 <Route path="/project-members" element={<ProjectMembersPage />} />
                 <Route path="/attachments" element={<AttachmentsPage />} />
                 <Route path="/iterations" element={<IterationsPage />} />
+                <Route path="/analytics" element={<AnalyticsPage />} />
               </Routes>
             </div>
           </PrivateRoute>

@@ -37,6 +37,7 @@ const Header = () => {
           <Link to="/project-members" className="nav-link">Участники</Link>
           <Link to="/attachments" className="nav-link">Вложения</Link>
           <Link to="/iterations" className="nav-link">Итерации</Link>
+          <Link to="/analytics" className="nav-link">Аналитика</Link>
         </nav>
 
         {user && (
