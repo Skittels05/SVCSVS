@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@hookform/resolvers": "^5.2.2",
     "@reduxjs/toolkit": "^2.11.2",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
@@ -10,17 +11,24 @@
     "@testing-library/user-event": "^13.5.0",
     "axios": "^1.13.2",
     "chart.js": "^4.5.1",
+    "date-fns": "^4.1.0",
+    "formik": "^2.4.9",
     "jspdf": "^4.0.0",
     "jspdf-autotable": "^5.0.7",
     "pdfmake": "^0.3.1",
     "react": "^19.2.3",
     "react-chartjs-2": "^5.3.1",
+    "react-datepicker": "^9.1.0",
     "react-dom": "^19.2.3",
+    "react-hook-form": "^7.70.0",
     "react-redux": "^9.2.0",
     "react-router-dom": "^6.30.2",
     "react-scripts": "5.0.1",
+    "react-select": "^5.10.2",
     "web-vitals": "^2.1.4",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "yup": "^1.7.1",
+    "zod": "^4.3.5"
   },
   "scripts": {
     "start": "react-scripts start",

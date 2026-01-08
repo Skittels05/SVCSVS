@@ -18,8 +18,28 @@ import pdfMake from 'pdfmake/build/pdfmake';
 import pdfFonts from 'pdfmake/build/vfs_fonts.js';
 import * as XLSX from 'xlsx';
 import './TasksPage.css';
+import { useForm, Controller, useWatch } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 
-pdfMake.vfs = pdfFonts;
+const taskSchema = z.object({
+  title: z.string().trim().min(1, 'Заголовок обязателен'),
+  description: z.string().trim().optional(),
+  priority: z.enum(['low', 'medium', 'high', 'critical']),
+  status: z.enum(['backlog', 'todo', 'in_progress', 'review', 'done']),
+  story_points: z
+    .number({ invalid_type_error: 'Должно быть числом' })
+    .int()
+    .min(1, 'Story points должно быть не менее 1')
+    .max(21, 'Story points не более 21')
+    .optional()
+    .nullable(),
+  due_date: z.string().optional().nullable(),
+  project_id: z.number().int().min(1, 'Выберите проект'),
+  iteration_id: z.number().int().optional().nullable(),
+  assignee_id: z.number().int().optional().nullable(),
+  reporter_id: z.number().int().optional().nullable(),
+});
 
 const TasksPage = () => {
   const dispatch = useDispatch();
@@ -28,20 +48,7 @@ const TasksPage = () => {
 
   const [modalTask, setModalTask] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    priority: 'medium',
-    status: 'todo',
-    story_points: '',
-    due_date: '',
-    project_id: '',
-    iteration_id: '',
-    assignee_id: '',
-    reporter_id: '',
-  });
   const [selectedFiles, setSelectedFiles] = useState([]);
-  const [formErrors, setFormErrors] = useState({});
   const [serverError, setServerError] = useState('');
 
   const [projects, setProjects] = useState([]);
@@ -61,7 +68,31 @@ const TasksPage = () => {
   const [totalTasks, setTotalTasks] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Загрузка проектов
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+    reset,
+    setValue,
+    setError,
+  } = useForm({
+    resolver: zodResolver(taskSchema),
+    defaultValues: {
+      title: '',
+      description: '',
+      priority: 'medium',
+      status: 'todo',
+      story_points: null,
+      due_date: '',
+      project_id: null,
+      iteration_id: null,
+      assignee_id: null,
+      reporter_id: null,
+    },
+  });
+
+  const watchedProjectId = useWatch({ control, name: 'project_id' });
+
   useEffect(() => {
     const loadProjects = async () => {
       setLoadingProjects(true);
@@ -77,13 +108,12 @@ const TasksPage = () => {
     loadProjects();
   }, []);
 
-  // Загрузка итераций при выборе проекта в форме
   useEffect(() => {
-    if (formData.project_id) {
+    if (watchedProjectId) {
       const loadIterations = async () => {
         setLoadingIterations(true);
         try {
-          const response = await api.get(`/iterations?project_id=${formData.project_id}&limit=100`);
+          const response = await api.get(`/iterations?project_id=${watchedProjectId}&limit=100`);
           setIterations(response.data.data || []);
         } catch (err) {
           console.error('Ошибка загрузки итераций:', err);
@@ -93,18 +123,11 @@ const TasksPage = () => {
         }
       };
       loadIterations();
-    } else {
-      setIterations([]);
-    }
-  }, [formData.project_id]);
 
-  // Загрузка участников проекта в форме
-  useEffect(() => {
-    if (formData.project_id) {
       const loadMembers = async () => {
         setLoadingMembers(true);
         try {
-          const response = await api.get(`/projects/${formData.project_id}/members`);
+          const response = await api.get(`/projects/${watchedProjectId}/members`);
           setProjectMembers(response.data || []);
         } catch (err) {
           console.error('Ошибка загрузки участников:', err);
@@ -115,11 +138,11 @@ const TasksPage = () => {
       };
       loadMembers();
     } else {
+      setIterations([]);
       setProjectMembers([]);
     }
-  }, [formData.project_id]);
+  }, [watchedProjectId]);
 
-  // Загрузка задач с пагинацией (для отображения в таблице)
   useEffect(() => {
     const params = {
       page: currentPage,
@@ -137,7 +160,6 @@ const TasksPage = () => {
       });
   }, [dispatch, currentPage, sortField, sortDirection, filterProject, filterStatus]);
 
-  // Права доступа
   const canEditOrDeleteTask = (task) => {
     if (!currentUser) return false;
     if (currentUser.rights === 'admin') return true;
@@ -159,7 +181,6 @@ const TasksPage = () => {
     return attachment?.Uploader?.id === currentUser.id;
   };
 
-  // Модальное окно
   const openTaskModal = (task = null, edit = false) => {
     if (task && edit && !canEditOrDeleteTask(task)) {
       alert('У вас нет прав на редактирование этой задачи');
@@ -167,32 +188,34 @@ const TasksPage = () => {
     }
     setModalTask(task);
     setIsEditMode(edit || !task);
-    setFormData(task ? {
-      title: task.title || '',
-      description: task.description || '',
-      priority: task.priority || 'medium',
-      status: task.status || 'todo',
-      story_points: task.story_points?.toString() || '',
-      due_date: task.due_date || '',
-      project_id: task.project_id?.toString() || '',
-      iteration_id: task.iteration_id?.toString() || '',
-      assignee_id: task.assignee_id?.toString() || '',
-      reporter_id: task.reporter_id?.toString() || '',
-    } : {
-      title: '',
-      description: '',
-      priority: 'medium',
-      status: 'todo',
-      story_points: '',
-      due_date: '',
-      project_id: '',
-      iteration_id: '',
-      assignee_id: '',
-      reporter_id: '',
-    });
     setSelectedFiles([]);
-    setFormErrors({});
     setServerError('');
+
+    reset(task
+      ? {
+          title: task.title || '',
+          description: task.description || '',
+          priority: task.priority || 'medium',
+          status: task.status || 'todo',
+          story_points: task.story_points || null,
+          due_date: task.due_date || '',
+          project_id: task.project_id || null,
+          iteration_id: task.iteration_id || null,
+          assignee_id: task.assignee_id || null,
+          reporter_id: task.reporter_id || null,
+        }
+      : {
+          title: '',
+          description: '',
+          priority: 'medium',
+          status: 'todo',
+          story_points: null,
+          due_date: '',
+          project_id: null,
+          iteration_id: null,
+          assignee_id: null,
+          reporter_id: null,
+        });
   };
 
   const closeModal = () => {
@@ -200,6 +223,7 @@ const TasksPage = () => {
     setIsEditMode(false);
     setIterations([]);
     setProjectMembers([]);
+    reset();
   };
 
   const handleFileChange = (e) => {
@@ -211,32 +235,16 @@ const TasksPage = () => {
     setSelectedFiles(files);
   };
 
-  const validateForm = () => {
-    const errors = {};
-    if (!formData.title.trim()) errors.title = 'Заголовок обязателен';
-    if (!formData.project_id) errors.project_id = 'Выберите проект';
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validateForm()) return;
-
+  const onSubmit = async (data) => {
     setServerError('');
-    setFormErrors({});
 
     const taskData = {
-      title: formData.title.trim(),
-      description: formData.description.trim(),
-      priority: formData.priority,
-      status: formData.status,
-      story_points: formData.story_points ? parseInt(formData.story_points) : null,
-      due_date: formData.due_date || null,
-      project_id: parseInt(formData.project_id),
-      iteration_id: formData.iteration_id ? parseInt(formData.iteration_id) : null,
-      assignee_id: formData.assignee_id ? parseInt(formData.assignee_id) : null,
-      reporter_id: formData.reporter_id ? parseInt(formData.reporter_id) : null,
+      ...data,
+      story_points: data.story_points || null,
+      due_date: data.due_date || null,
+      iteration_id: data.iteration_id || null,
+      assignee_id: data.assignee_id || null,
+      reporter_id: data.reporter_id || null,
     };
 
     try {
@@ -259,12 +267,16 @@ const TasksPage = () => {
 
       closeModal();
     } catch (err) {
-      handleApiError(err, setFormErrors, setServerError);
+      handleApiError(err, (fieldErrors) => {
+        Object.entries(fieldErrors).forEach(([field, message]) => {
+          setError(field, { type: 'server', message });
+        });
+      }, setServerError);
     }
   };
 
   const handleDelete = (id) => {
-    const task = tasks.find(t => t.id === id);
+    const task = tasks.find((t) => t.id === id);
     if (!canEditOrDeleteTask(task)) {
       alert('У вас нет прав на удаление этой задачи');
       return;
@@ -275,25 +287,24 @@ const TasksPage = () => {
   };
 
   const handleDeleteAttachment = (attachmentId) => {
-    const attachment = modalTask?.Attachments?.find(a => a.id === attachmentId);
+    const attachment = modalTask?.Attachments?.find((a) => a.id === attachmentId);
     if (!canDeleteAttachment(attachment)) {
       alert('У вас нет прав на удаление этого вложения');
       return;
     }
     if (window.confirm('Удалить изображение?')) {
       dispatch(deleteAttachment({ attachmentId, taskId: modalTask.id }));
-      setModalTask(prev => ({
+      setModalTask((prev) => ({
         ...prev,
-        Attachments: prev.Attachments.filter(a => a.id !== attachmentId),
+        Attachments: prev.Attachments.filter((a) => a.id !== attachmentId),
       }));
     }
   };
 
-  // Экспорт в PDF — все задачи (запрос при клике)
   const handleExportPDF = async () => {
     const params = {
       page: 1,
-      limit: 10000, // большой лимит, чтобы получить все
+      limit: 10000,
       sort: `${sortField}:${sortDirection}`,
     };
     if (filterProject) params.projectId = filterProject;
@@ -326,7 +337,7 @@ const TasksPage = () => {
       ];
 
       if (filterProject) {
-        const projectName = projects.find(p => p.id === parseInt(filterProject))?.name || `ID ${filterProject}`;
+        const projectName = projects.find((p) => p.id === parseInt(filterProject))?.name || `ID ${filterProject}`;
         content.push({ text: `Фильтр по проекту: ${projectName}`, margin: [0, 0, 0, 8] });
       }
       if (filterStatus) {
@@ -347,14 +358,14 @@ const TasksPage = () => {
             ['ID', 'Название', 'Проект', 'Приоритет', 'Story Points', 'Исполнитель'],
           ];
 
-          groupTasks.forEach(task => {
+          groupTasks.forEach((task) => {
             tableBody.push([
               task.id.toString(),
               task.title || '—',
               task.Project?.name || '—',
               task.priority || '—',
               task.story_points?.toString() || '—',
-              task.Assignee?.full_name || '—'
+              task.Assignee?.full_name || '—',
             ]);
           });
 
@@ -364,12 +375,12 @@ const TasksPage = () => {
               table: {
                 headerRows: 1,
                 widths: ['auto', '*', 'auto', 'auto', 'auto', 'auto'],
-                body: tableBody
+                body: tableBody,
               },
               layout: 'lightHorizontalLines',
-              margin: [0, 10, 0, 10]
+              margin: [0, 10, 0, 10],
             },
-            { text: `Итого story points: ${totalPoints}`, style: 'total', margin: [0, 0, 0, 20] }
+            { text: `Итого story points: ${totalPoints}`, style: 'total', margin: [0, 0, 0, 20] },
           );
         });
 
@@ -378,12 +389,12 @@ const TasksPage = () => {
         styles: {
           header: { fontSize: 18, bold: true, color: '#2c3e50' },
           subheader: { fontSize: 14, bold: true, margin: [0, 10, 0, 5] },
-          total: { fontSize: 12, bold: true, color: '#27ae60' }
+          total: { fontSize: 12, bold: true, color: '#27ae60' },
         },
         defaultStyle: {
           fontSize: 11,
-          color: '#34495e'
-        }
+          color: '#34495e',
+        },
       };
 
       pdfMake.createPdf(docDefinition).download('otchet_po_zadacham.pdf');
@@ -393,7 +404,6 @@ const TasksPage = () => {
     }
   };
 
-  // Экспорт в Excel — все задачи (запрос при клике)
   const handleExportExcel = async () => {
     const params = {
       page: 1,
@@ -409,34 +419,34 @@ const TasksPage = () => {
 
       const wb = XLSX.utils.book_new();
 
-      const title = [["Отчет по задачам"]];
+      const title = [['Отчет по задачам']];
       const info = [
-        ["Дата отчета:", new Date().toLocaleDateString('ru-RU')],
-        ["Пользователь:", currentUser?.full_name || 'Неизвестно'],
-        ["Всего задач в отчете:", dataToExport.length],
+        ['Дата отчета:', new Date().toLocaleDateString('ru-RU')],
+        ['Пользователь:', currentUser?.full_name || 'Неизвестно'],
+        ['Всего задач в отчете:', dataToExport.length],
       ];
       if (filterProject) {
-        const projectName = projects.find(p => p.id === parseInt(filterProject))?.name || `ID ${filterProject}`;
-        info.push(["Фильтр по проекту:", projectName]);
+        const projectName = projects.find((p) => p.id === parseInt(filterProject))?.name || `ID ${filterProject}`;
+        info.push(['Фильтр по проекту:', projectName]);
       }
       if (filterStatus) {
         const statusName = {
-          backlog: "Бэклог",
-          todo: "To Do",
-          in_progress: "В работе",
-          review: "На проверке",
-          done: "Готово",
+          backlog: 'Бэклог',
+          todo: 'To Do',
+          in_progress: 'В работе',
+          review: 'На проверке',
+          done: 'Готово',
         }[filterStatus] || filterStatus;
-        info.push(["Фильтр по статусу:", statusName]);
+        info.push(['Фильтр по статусу:', statusName]);
       }
       info.push([]);
 
       const statusMap = {
-        backlog: "Бэклог",
-        todo: "To Do",
-        in_progress: "В работе",
-        review: "На проверке",
-        done: "Готово",
+        backlog: 'Бэклог',
+        todo: 'To Do',
+        in_progress: 'В работе',
+        review: 'На проверке',
+        done: 'Готово',
       };
 
       const groupedTasks = dataToExport.reduce((acc, task) => {
@@ -458,9 +468,9 @@ const TasksPage = () => {
           let totalPoints = 0;
 
           allRows.push([`Группа: ${statusName} (Задач: ${groupTasks.length})`]);
-          allRows.push(["ID", "Название", "Проект", "Приоритет", "Story Points", "Исполнитель"]);
+          allRows.push(['ID', 'Название', 'Проект', 'Приоритет', 'Story Points', 'Исполнитель']);
 
-          groupTasks.forEach(task => {
+          groupTasks.forEach((task) => {
             totalPoints += task.story_points || 0;
             allRows.push([
               task.id,
@@ -468,11 +478,11 @@ const TasksPage = () => {
               task.Project?.name || '—',
               task.priority || '—',
               task.story_points || '—',
-              task.Assignee?.full_name || '—'
+              task.Assignee?.full_name || '—',
             ]);
           });
 
-          allRows.push(["Итого story points:", totalPoints]);
+          allRows.push(['Итого story points:', totalPoints]);
           allRows.push([]);
         });
 
@@ -487,8 +497,8 @@ const TasksPage = () => {
         { wch: 25 },
       ];
 
-      XLSX.utils.book_append_sheet(wb, ws, "Задачи");
-      XLSX.writeFile(wb, "otchet_po_zadacham.xlsx");
+      XLSX.utils.book_append_sheet(wb, ws, 'Задачи');
+      XLSX.writeFile(wb, 'otchet_po_zadacham.xlsx');
     } catch (err) {
       console.error('Ошибка экспорта Excel:', err);
       alert('Не удалось загрузить данные для экспорта.');
@@ -502,12 +512,12 @@ const TasksPage = () => {
     {
       key: 'priority',
       header: 'Приоритет',
-      render: (t) => <span className={`priority-tag priority-${t.priority}`}>{t.priority}</span>
+      render: (t) => <span className={`priority-tag priority-${t.priority}`}>{t.priority}</span>,
     },
     {
       key: 'status',
       header: 'Статус',
-      render: (t) => <span className={`status-tag status-${t.status}`}>{t.status}</span>
+      render: (t) => <span className={`status-tag status-${t.status}`}>{t.status}</span>,
     },
     { key: 'Assignee', header: 'Исполнитель', render: (t) => t.Assignee?.full_name || '—' },
   ];
@@ -527,7 +537,11 @@ const TasksPage = () => {
         <label>Проект:</label>
         <select value={filterProject} onChange={(e) => { setFilterProject(e.target.value); setCurrentPage(1); }}>
           <option value="">Все проекты</option>
-          {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+          {projects.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
+          ))}
         </select>
       </div>
       <div className="filter-item">
@@ -633,136 +647,211 @@ const TasksPage = () => {
       >
         <div className="task-modal-content">
           {isEditMode ? (
-            <form onSubmit={handleSubmit} className="task-form">
+            <form onSubmit={handleSubmit(onSubmit)} className="task-form">
               {serverError && <div className="error-message">{serverError}</div>}
 
               <div className="form-group">
                 <label>Заголовок *</label>
-                <input
-                  type="text"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="form-input"
-                  placeholder="Краткое название задачи"
+                <Controller
+                  name="title"
+                  control={control}
+                  render={({ field }) => (
+                    <input
+                      type="text"
+                      {...field}
+                      className="form-input"
+                      placeholder="Краткое название задачи"
+                    />
+                  )}
                 />
-                {formErrors.title && <span className="error-text">{formErrors.title}</span>}
+                {errors.title && <span className="error-text">{errors.title.message}</span>}
               </div>
 
               <div className="form-group">
                 <label>Описание</label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="form-textarea"
-                  rows="5"
-                  placeholder="Подробное описание"
+                <Controller
+                  name="description"
+                  control={control}
+                  render={({ field }) => (
+                    <textarea
+                      {...field}
+                      className="form-textarea"
+                      rows="5"
+                      placeholder="Подробное описание"
+                    />
+                  )}
                 />
               </div>
 
               <div className="form-group">
                 <label>Проект *</label>
-                <select
-                  value={formData.project_id}
-                  onChange={(e) => setFormData({ ...formData, project_id: e.target.value, iteration_id: '', assignee_id: '', reporter_id: '' })}
-                  className="form-select"
-                  disabled={loadingProjects}
-                >
-                  <option value="">Выберите проект</option>
-                  {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                </select>
-                {formErrors.project_id && <span className="error-text">{formErrors.project_id}</span>}
+                <Controller
+                  name="project_id"
+                  control={control}
+                  render={({ field }) => (
+                    <select
+                      {...field}
+                      value={field.value || ''}
+                      onChange={(e) => {
+                        const val = e.target.value ? parseInt(e.target.value) : null;
+                        field.onChange(val);
+                        setValue('iteration_id', null);
+                        setValue('assignee_id', null);
+                        setValue('reporter_id', null);
+                      }}
+                      className="form-select"
+                      disabled={loadingProjects}
+                    >
+                      <option value="">Выберите проект</option>
+                      {projects.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                />
+                {errors.project_id && <span className="error-text">{errors.project_id.message}</span>}
               </div>
 
               <div className="form-group">
                 <label>Итерация</label>
-                <select
-                  value={formData.iteration_id}
-                  onChange={(e) => setFormData({ ...formData, iteration_id: e.target.value })}
-                  className="form-select large-select"
-                  disabled={!formData.project_id}
-                >
-                  <option value="">— Без итерации —</option>
-                  {iterations.map(i => (
-                    <option key={i.id} value={i.id}>{i.name} ({i.type})</option>
-                  ))}
-                </select>
+                <Controller
+                  name="iteration_id"
+                  control={control}
+                  render={({ field }) => (
+                    <select
+                      {...field}
+                      value={field.value || ''}
+                      onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
+                      className="form-select large-select"
+                      disabled={!watchedProjectId || loadingIterations}
+                    >
+                      <option value="">— Без итерации —</option>
+                      {iterations.map((i) => (
+                        <option key={i.id} value={i.id}>
+                          {i.name} ({i.type})
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                />
               </div>
 
               <div className="form-grid">
                 <div className="form-group">
                   <label>Исполнитель</label>
-                  <select
-                    value={formData.assignee_id}
-                    onChange={(e) => setFormData({ ...formData, assignee_id: e.target.value })}
-                    className="form-select large-select"
-                    disabled={!formData.project_id}
-                  >
-                    <option value="">— Не назначен —</option>
-                    {projectMembers.map(u => (
-                      <option key={u.id} value={u.id}>{u.full_name}</option>
-                    ))}
-                  </select>
+                  <Controller
+                    name="assignee_id"
+                    control={control}
+                    render={({ field }) => (
+                      <select
+                        {...field}
+                        value={field.value || ''}
+                        onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
+                        className="form-select large-select"
+                        disabled={!watchedProjectId || loadingMembers}
+                      >
+                        <option value="">— Не назначен —</option>
+                        {projectMembers.map((u) => (
+                          <option key={u.id} value={u.id}>
+                            {u.full_name}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  />
                 </div>
 
                 <div className="form-group">
                   <label>Репортер</label>
-                  <select
-                    value={formData.reporter_id}
-                    onChange={(e) => setFormData({ ...formData, reporter_id: e.target.value })}
-                    className="form-select large-select"
-                    disabled={!formData.project_id}
-                  >
-                    <option value="">— Не назначен —</option>
-                    {projectMembers.map(u => (
-                      <option key={u.id} value={u.id}>{u.full_name}</option>
-                    ))}
-                  </select>
+                  <Controller
+                    name="reporter_id"
+                    control={control}
+                    render={({ field }) => (
+                      <select
+                        {...field}
+                        value={field.value || ''}
+                        onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
+                        className="form-select large-select"
+                        disabled={!watchedProjectId || loadingMembers}
+                      >
+                        <option value="">— Не назначен —</option>
+                        {projectMembers.map((u) => (
+                          <option key={u.id} value={u.id}>
+                            {u.full_name}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  />
                 </div>
               </div>
 
               <div className="form-grid">
                 <div className="form-group">
                   <label>Приоритет</label>
-                  <select value={formData.priority} onChange={(e) => setFormData({ ...formData, priority: e.target.value })} className="form-select">
-                    <option value="low">Низкий</option>
-                    <option value="medium">Средний</option>
-                    <option value="high">Высокий</option>
-                    <option value="critical">Критический</option>
-                  </select>
+                  <Controller
+                    name="priority"
+                    control={control}
+                    render={({ field }) => (
+                      <select {...field} className="form-select">
+                        <option value="low">Низкий</option>
+                        <option value="medium">Средний</option>
+                        <option value="high">Высокий</option>
+                        <option value="critical">Критический</option>
+                      </select>
+                    )}
+                  />
                 </div>
 
                 <div className="form-group">
                   <label>Статус</label>
-                  <select value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value })} className="form-select">
-                    <option value="backlog">Бэклог</option>
-                    <option value="todo">To Do</option>
-                    <option value="in_progress">В работе</option>
-                    <option value="review">На проверке</option>
-                    <option value="done">Готово</option>
-                  </select>
+                  <Controller
+                    name="status"
+                    control={control}
+                    render={({ field }) => (
+                      <select {...field} className="form-select">
+                        <option value="backlog">Бэклог</option>
+                        <option value="todo">To Do</option>
+                        <option value="in_progress">В работе</option>
+                        <option value="review">На проверке</option>
+                        <option value="done">Готово</option>
+                      </select>
+                    )}
+                  />
                 </div>
               </div>
 
               <div className="form-grid">
                 <div className="form-group">
                   <label>Story Points</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="21"
-                    value={formData.story_points}
-                    onChange={(e) => setFormData({ ...formData, story_points: e.target.value })}
-                    className="form-input"
+                  <Controller
+                    name="story_points"
+                    control={control}
+                    render={({ field }) => (
+                      <input
+                        type="number"
+                        min="1"
+                        max="21"
+                        {...field}
+                        value={field.value ?? ''}
+                        onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
+                        className="form-input"
+                      />
+                    )}
                   />
+                  {errors.story_points && <span className="error-text">{errors.story_points.message}</span>}
                 </div>
 
                 <div className="form-group">
                   <label>Срок выполнения</label>
-                  <input
-                    type="date"
-                    value={formData.due_date}
-                    onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
-                    className="form-input"
+                  <Controller
+                    name="due_date"
+                    control={control}
+                    render={({ field }) => (
+                      <input type="date" {...field} value={field.value || ''} className="form-input" />
+                    )}
                   />
                 </div>
               </div>
@@ -771,7 +860,7 @@ const TasksPage = () => {
                 <div className="attachments-section">
                   <h4>Текущие вложения ({modalTask.Attachments.length})</h4>
                   <div className="attachments-grid">
-                    {modalTask.Attachments.map(att => (
+                    {modalTask.Attachments.map((att) => (
                       <div key={att.id} className="attachment-item">
                         <img src={`http://localhost:5000${att.file_url}`} alt={att.file_name} />
                         <p>{att.file_name}</p>
@@ -791,7 +880,13 @@ const TasksPage = () => {
 
               <div className="form-group">
                 <label>Добавить изображения (до 10)</label>
-                <input type="file" multiple accept="image/*" onChange={handleFileChange} className="form-file-input" />
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="form-file-input"
+                />
                 {selectedFiles.length > 0 && <p className="file-info">Выбрано: {selectedFiles.length} файлов</p>}
               </div>
 
@@ -818,7 +913,7 @@ const TasksPage = () => {
                 <div className="attachments-section view-mode">
                   <h4>Вложения ({modalTask.Attachments.length})</h4>
                   <div className="attachments-grid">
-                    {modalTask.Attachments.map(att => (
+                    {modalTask.Attachments.map((att) => (
                       <div key={att.id} className="attachment-item view">
                         <img src={`http://localhost:5000${att.file_url}`} alt={att.file_name} />
                         <p>{att.file_name}</p>
