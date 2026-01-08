@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import './ResetPasswordPage.css';
+import { Link } from 'react-router-dom';
 
 const ResetPasswordPage = () => {
   const [searchParams] = useSearchParams();
