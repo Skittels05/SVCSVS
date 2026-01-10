@@ -1,13 +1,16 @@
-const { Sequelize } = require('sequelize');
+// config/database.js
+const mongoose = require('mongoose');
 require('dotenv').config();
 
-const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASSWORD, {
-  host: process.env.DB_HOST,
-  dialect: 'postgres',
-  logging: false,
-  define: {
-    timestamps: false,
-  },
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log('MongoDB успешно подключена'))
+  .catch(err => console.error('Ошибка подключения к MongoDB:', err));
+
+// Опционально: обработка событий подключения
+mongoose.connection.on('connected', () => {
+  console.log('Mongoose успешно подключён к БД');
 });
 
-module.exports = sequelize;
+mongoose.connection.on('error', (err) => {
+  console.error('Ошибка Mongoose соединения:', err);
+});

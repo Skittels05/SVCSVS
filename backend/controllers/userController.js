@@ -4,7 +4,12 @@ const { parseQuery } = require('../helpers/queryParser');
 exports.create = async (req, res, next) => {
   try {
     const user = await User.create(req.body);
-    res.status(201).json(user);
+
+    // Форматируем ответ
+    const formatted = user.toObject();
+    formatted.id = formatted._id;
+
+    res.status(201).json(formatted);
   } catch (err) {
     next(err);
   }
@@ -12,36 +17,50 @@ exports.create = async (req, res, next) => {
 
 exports.getAll = async (req, res, next) => {
   try {
-    const { where, order, limit, offset } = parseQuery(req.query);
-    const { count, rows } = await User.findAndCountAll({
-      where,
-      order,
-      limit,
-      offset,
-      attributes: ['id', 'full_name', 'email', 'created_at'],
+    const { where, sort, limit, skip } = parseQuery(req.query);
+
+    const count = await User.countDocuments(where);
+    const rows = await User.find(where)
+      .sort(sort)
+      .limit(limit)
+      .skip(skip)
+      .select('full_name email created_at'); // выбираем только нужные поля
+
+    // Форматируем каждый документ
+    const formattedRows = rows.map(user => {
+      const obj = user.toObject();
+      obj.id = obj._id;
+      return obj;
     });
+
     res.json({
       total: count,
       pages: Math.ceil(count / limit),
       page: parseInt(req.query.page || 1),
-      data: rows,
+      data: formattedRows,
     });
   } catch (err) {
+    console.error('Ошибка в user.getAll:', err);
     next(err);
   }
 };
 
 exports.getById = async (req, res, next) => {
   try {
-    const user = await User.findByPk(req.params.id, {
-      attributes: ['id', 'full_name', 'email', 'created_at'],
-    });
+    const user = await User.findById(req.params.id)
+      .select('full_name email created_at');
+
     if (!user) {
-      const notFoundError = new Error('Пользователь не найден');
-      notFoundError.status = 404;
-      throw notFoundError;
+      const error = new Error('Пользователь не найден');
+      error.status = 404;
+      throw error;
     }
-    res.json(user);
+
+    // Форматируем
+    const formatted = user.toObject();
+    formatted.id = formatted._id;
+
+    res.json(formatted);
   } catch (err) {
     next(err);
   }
@@ -49,17 +68,23 @@ exports.getById = async (req, res, next) => {
 
 exports.update = async (req, res, next) => {
   try {
-    const user = await User.findByPk(req.params.id);
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
+    ).select('full_name email created_at');
+
     if (!user) {
-      const notFoundError = new Error('Пользователь не найден');
-      notFoundError.status = 404;
-      throw notFoundError;
+      const error = new Error('Пользователь не найден');
+      error.status = 404;
+      throw error;
     }
-    await user.update(req.body);
-    const updatedUser = await User.findByPk(req.params.id, {
-      attributes: ['id', 'full_name', 'email', 'created_at'],
-    });
-    res.json(updatedUser);
+
+    // Форматируем
+    const formatted = user.toObject();
+    formatted.id = formatted._id;
+
+    res.json(formatted);
   } catch (err) {
     next(err);
   }
@@ -67,13 +92,14 @@ exports.update = async (req, res, next) => {
 
 exports.delete = async (req, res, next) => {
   try {
-    const user = await User.findByPk(req.params.id);
+    const user = await User.findByIdAndDelete(req.params.id);
+
     if (!user) {
-      const notFoundError = new Error('Пользователь не найден');
-      notFoundError.status = 404;
-      throw notFoundError;
+      const error = new Error('Пользователь не найден');
+      error.status = 404;
+      throw error;
     }
-    await user.destroy();
+
     res.status(204).send();
   } catch (err) {
     next(err);
@@ -82,7 +108,7 @@ exports.delete = async (req, res, next) => {
 
 exports.checkExists = async (req, res, next) => {
   try {
-    const user = await User.findByPk(req.params.id);
+    const user = await User.findById(req.params.id);
     res.status(user ? 200 : 404).send();
   } catch (err) {
     next(err);

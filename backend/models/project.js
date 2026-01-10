@@ -1,59 +1,54 @@
-const { DataTypes } = require('sequelize');
+const { Schema, model } = require('mongoose');
 
-module.exports = (sequelize) => {
-  const Project = sequelize.define('Project', {
-    id: {
-      type: DataTypes.INTEGER,
-      autoIncrement: true,
-      primaryKey: true,
-    },
-    name: {
-      type: DataTypes.STRING(100),
-      allowNull: false,
-      validate: {
-        notNull: { msg: 'Название проекта обязательно' },
-        notEmpty: { msg: 'Название проекта не может быть пустым' },
-        len: { args: [1, 100], msg: 'Название должно быть от 1 до 100 символов' },
-      },
-    },
-    description: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
-    project_type: {
-      type: DataTypes.STRING(10),
-      allowNull: false,
-      validate: {
-        notNull: { msg: 'Тип проекта обязателен' },
-        isIn: { args: [['scrum', 'waterfall']], msg: 'Тип проекта должен быть scrum или waterfall' },
-      },
-    },
-    status: {
-      type: DataTypes.STRING(10),
-      allowNull: false,
-      validate: {
-        notNull: { msg: 'Статус проекта обязателен' },
-        isIn: { args: [['planned', 'active', 'completed']], msg: 'Статус должен быть planned, active или completed' },
-      },
-    },
-    created_at: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-      allowNull: false,
-    },
-    updated_at: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-      allowNull: false,
-    },
-  }, {
-    tableName: 'projects',
-    timestamps: false,
-  });
+const projectSchema = new Schema({
+  _id: {
+    type: Number,
+    required: true
+  },
+  name: {
+    type: String,
+    required: [true, 'Название проекта обязательно'],
+    minlength: [1, 'Название должно быть от 1 до 100 символов'],
+    maxlength: [100, 'Название должно быть от 1 до 100 символов'],
+  },
+  description: {
+    type: String,
+  },
+  project_type: {
+    type: String,
+    required: [true, 'Тип проекта обязателен'],
+    enum: { values: ['scrum', 'waterfall'], message: 'Тип проекта должен быть scrum или waterfall' },
+  },
+  status: {
+    type: String,
+    required: [true, 'Статус проекта обязателен'],
+    enum: { values: ['planned', 'active', 'completed'], message: 'Статус должен быть planned, active или completed' },
+  },
+  created_at: {
+    type: Date,
+    default: Date.now,
+  },
+  updated_at: {
+    type: Date,
+    default: Date.now,
+  },
+}, { _id: false });
 
-  Project.addHook('beforeUpdate', (instance) => {
-    instance.updated_at = new Date();
-  });
+// Виртуальное поле для участников проекта
+projectSchema.virtual('projectMembers', {
+  ref: 'ProjectMember',
+  localField: '_id',
+  foreignField: 'project_id',
+});
 
-  return Project;
-};
+projectSchema.set('toJSON', { virtuals: true });
+projectSchema.set('toObject', { virtuals: true });
+
+projectSchema.pre('save', function (next) {
+  if (this.isModified()) {
+    this.updated_at = Date.now();
+  }
+  next();
+});
+
+module.exports = model('Project', projectSchema);

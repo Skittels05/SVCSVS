@@ -1,0 +1,14 @@
+[
+  {"_id": 1, "name": "Sprint 1", "type": "sprint", "start_date": {"$date": "2025-03-03"}, "end_date": {"$date": "2025-03-16"}, "status": "completed", "project_id": 1},
+  {"_id": 2, "name": "Sprint 2", "type": "sprint", "start_date": {"$date": "2025-03-17"}, "end_date": {"$date": "2025-03-30"}, "status": "completed", "project_id": 1},
+  {"_id": 3, "name": "Sprint 3", "type": "sprint", "start_date": {"$date": "2025-03-31"}, "end_date": {"$date": "2025-04-13"}, "status": "completed", "project_id": 1},
+  {"_id": 4, "name": "Sprint 4", "type": "sprint", "start_date": {"$date": "2025-04-14"}, "end_date": {"$date": "2025-04-27"}, "status": "active", "project_id": 1},
+  {"_id": 5, "name": "Phase 1 - Анализ", "type": "phase", "start_date": {"$date": "2025-05-20"}, "end_date": {"$date": "2025-07-15"}, "status": "completed", "project_id": 2},
+  {"_id": 6, "name": "Phase 2 - Разработка", "type": "phase", "start_date": {"$date": "2025-07-16"}, "end_date": {"$date": "2025-11-30"}, "status": "active", "project_id": 2},
+  {"_id": 7, "name": "Sprint 12", "type": "sprint", "start_date": {"$date": "2025-10-06"}, "end_date": {"$date": "2025-10-19"}, "status": "completed", "project_id": 3},
+  {"_id": 8, "name": "Sprint 13", "type": "sprint", "start_date": {"$date": "2025-10-20"}, "end_date": {"$date": "2025-11-02"}, "status": "completed", "project_id": 3},
+  {"_id": 9, "name": "Sprint 14", "type": "sprint", "start_date": {"$date": "2025-11-03"}, "end_date": {"$date": "2025-11-16"}, "status": "active", "project_id": 3},
+  {"_id": 10, "name": "Sprint 1 - Подготовка", "type": "sprint", "start_date": {"$date": "2025-09-08"}, "end_date": {"$date": "2025-09-21"}, "status": "completed", "project_id": 4},
+  {"_id": 11, "name": "Sprint 2 - Первые сервисы", "type": "sprint", "start_date": {"$date": "2025-09-22"}, "end_date": {"$date": "2025-10-05"}, "status": "completed", "project_id": 4},
+  {"_id": 12, "name": "Sprint 3 - Интеграции", "type": "sprint", "start_date": {"$date": "2025-10-06"}, "end_date": {"$date": "2025-10-19"}, "status": "active", "project_id": 4}
+]

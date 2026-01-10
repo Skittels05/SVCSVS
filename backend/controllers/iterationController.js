@@ -4,8 +4,14 @@ const { parseQuery } = require('../helpers/queryParser');
 exports.create = async (req, res, next) => {
   try {
     const iteration = await Iteration.create(req.body);
-    const fullIteration = await Iteration.findByPk(iteration.id, { include: [Project] });
-    res.status(201).json(fullIteration);
+    const fullIteration = await Iteration.findById(iteration._id)
+      .populate('project_id', 'name');
+
+    const formatted = fullIteration.toObject();
+    formatted.Project = formatted.project_id;
+    formatted.id = formatted._id;
+
+    res.status(201).json(formatted);
   } catch (err) {
     next(err);
   }
@@ -13,25 +19,28 @@ exports.create = async (req, res, next) => {
 
 exports.getAll = async (req, res, next) => {
   try {
-    const { where, order, limit = 10, offset = 0 } = parseQuery(req.query);
-    if (req.query.type) {
-      where.type = req.query.type;
-    }
+    let { where, sort, limit, skip } = parseQuery(req.query);
+    if (req.query.type) where.type = req.query.type;
 
-    const { count, rows } = await Iteration.findAndCountAll({
-      where,
-      order,
-      limit,
-      offset,
-      include: [{ model: Project, attributes: ['id', 'name'] }],
-      distinct: true,
+    const count = await Iteration.countDocuments(where);
+    const rows = await Iteration.find(where)
+      .sort(sort)
+      .limit(limit)
+      .skip(skip)
+      .populate({ path: 'project_id', select: 'name' });
+
+    const formattedRows = rows.map(iter => {
+      const obj = iter.toObject();
+      obj.Project = obj.project_id;
+      obj.id = obj._id;
+      return obj;
     });
 
     res.json({
       total: count,
       pages: Math.ceil(count / limit),
       page: parseInt(req.query.page || 1),
-      data: rows,
+      data: formattedRows,
     });
   } catch (err) {
     next(err);
@@ -40,13 +49,20 @@ exports.getAll = async (req, res, next) => {
 
 exports.getById = async (req, res, next) => {
   try {
-    const iteration = await Iteration.findByPk(req.params.id, { include: [Project] });
+    const iteration = await Iteration.findById(req.params.id)
+      .populate('project_id', 'name');
+
     if (!iteration) {
       const error = new Error('Итерация не найдена');
       error.status = 404;
       throw error;
     }
-    res.json(iteration);
+
+    const formatted = iteration.toObject();
+    formatted.Project = formatted.project_id;
+    formatted.id = formatted._id;
+
+    res.json(formatted);
   } catch (err) {
     next(err);
   }
@@ -54,15 +70,20 @@ exports.getById = async (req, res, next) => {
 
 exports.update = async (req, res, next) => {
   try {
-    const iteration = await Iteration.findByPk(req.params.id);
+    const iteration = await Iteration.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true })
+      .populate('project_id', 'name');
+
     if (!iteration) {
       const error = new Error('Итерация не найдена');
       error.status = 404;
       throw error;
     }
-    await iteration.update(req.body);
-    const updated = await Iteration.findByPk(iteration.id, { include: [Project] });
-    res.json(updated);
+
+    const formatted = iteration.toObject();
+    formatted.Project = formatted.project_id;
+    formatted.id = formatted._id;
+
+    res.json(formatted);
   } catch (err) {
     next(err);
   }
@@ -70,13 +91,12 @@ exports.update = async (req, res, next) => {
 
 exports.delete = async (req, res, next) => {
   try {
-    const iteration = await Iteration.findByPk(req.params.id);
+    const iteration = await Iteration.findByIdAndDelete(req.params.id);
     if (!iteration) {
       const error = new Error('Итерация не найдена');
       error.status = 404;
       throw error;
     }
-    await iteration.destroy();
     res.status(204).send();
   } catch (err) {
     next(err);
@@ -85,7 +105,7 @@ exports.delete = async (req, res, next) => {
 
 exports.checkExists = async (req, res, next) => {
   try {
-    const iteration = await Iteration.findByPk(req.params.id);
+    const iteration = await Iteration.findById(req.params.id);
     res.status(iteration ? 200 : 404).send();
   } catch (err) {
     next(err);

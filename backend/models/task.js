@@ -1,80 +1,99 @@
-const { DataTypes } = require('sequelize');
+const { Schema, model } = require('mongoose');
 
-module.exports = (sequelize) => {
-  const Task = sequelize.define('Task', {
-    id: {
-      type: DataTypes.INTEGER,
-      autoIncrement: true,
-      primaryKey: true,
+const taskSchema = new Schema({
+  _id: {
+    type: Number,
+    required: true
+  },
+  backlog_order: { type: Number },
+  is_ready: {
+    type: Boolean,
+    default: false,
+  },
+  title: {
+    type: String,
+    required: [true, 'Заголовок задачи обязателен'],
+    minlength: [1, 'Заголовок должен быть от 1 до 200 символов'],
+    maxlength: [200, 'Заголовок должен быть от 1 до 200 символов'],
+  },
+  description: { type: String },
+  priority: {
+    type: String,
+    required: [true, 'Приоритет обязателен'],
+    enum: ['low', 'medium', 'high', 'critical'],
+  },
+  status: {
+    type: String,
+    required: [true, 'Статус задачи обязателен'],
+    enum: ['backlog', 'todo', 'in_progress', 'review', 'done'],
+  },
+  story_points: {
+    type: Number,
+    validate: {
+      validator: v => Number.isInteger(v) && v >= 1 && v <= 13,
+      message: 'Story points должны быть целым числом от 1 до 13',
     },
-    backlog_order: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-    },
-    is_ready: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false,
-    },
-    title: {
-      type: DataTypes.STRING(200),
-      allowNull: false,
-      validate: {
-        notNull: { msg: 'Заголовок задачи обязателен' },
-        notEmpty: { msg: 'Заголовок не может быть пустым' },
-        len: { args: [1, 200], msg: 'Заголовок должен быть от 1 до 200 символов' },
-      },
-    },
-    description: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
-    priority: {
-      type: DataTypes.STRING(10),
-      allowNull: false,
-      validate: {
-        notNull: { msg: 'Приоритет обязателен' },
-        isIn: { args: [['low', 'medium', 'high', 'critical']], msg: 'Приоритет должен быть low, medium, high или critical' },
-      },
-    },
-    status: {
-      type: DataTypes.STRING(20),
-      allowNull: false,
-      validate: {
-        notNull: { msg: 'Статус задачи обязателен' },
-        isIn: { args: [['backlog', 'todo', 'in_progress', 'review', 'done']], msg: 'Недопустимый статус задачи' },
-      },
-    },
-    story_points: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      validate: {
-        isInt: { msg: 'Оценка должна быть целым числом' },
-        min: { args: [1], msg: 'Минимальная оценка — 1' },
-        max: { args: [13], msg: 'Максимальная оценка — 13' },
-      },
-    },
-    due_date: {
-      type: DataTypes.DATEONLY,
-      allowNull: true,
-    },
-    created_at: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-      allowNull: false,
-    },
-    updated_at: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-      allowNull: false,
-    },
-  }, {
-    tableName: 'tasks',
-    timestamps: false,
-  });
+  },
+  due_date: { type: Date },
+  created_at: { type: Date, default: Date.now },
+  updated_at: { type: Date, default: Date.now },
 
-  Task.addHook('beforeUpdate', (instance) => {
-    instance.updated_at = new Date();
-  });
+  project_id: {
+    type: Number,
+    ref: 'Project',
+    required: [true, 'project_id обязателен'],
+  },
+  iteration_id: {
+    type: Number,
+    ref: 'Iteration',
+  },
+  parent_task_id: {
+    type: Number,
+    ref: 'Task',
+  },
+  reporter_id: {
+    type: Number,
+    ref: 'User',
+  },
+  assignee_id: {
+    type: Number,
+    ref: 'User',
+  },
+  attachments: [{
+    type: Number,
+    ref: 'Attachment'
+  }],
+}, { _id: false });
 
-  return Task;
-};
+// Виртуальные поля
+taskSchema.virtual('Project').get(function () {
+  return this.project_id;
+});
+taskSchema.virtual('Iteration').get(function () {
+  return this.iteration_id;
+});
+taskSchema.virtual('Reporter').get(function () {
+  return this.reporter_id;
+});
+taskSchema.virtual('Assignee').get(function () {
+  return this.assignee_id;
+});
+taskSchema.virtual('subTasks', {
+  ref: 'Task',
+  localField: '_id',
+  foreignField: 'parent_task_id',
+});
+
+// Важно: отключаем строгую проверку populate для виртуальных полей
+taskSchema.set('strictPopulate', false);
+
+taskSchema.set('toJSON', { virtuals: true });
+taskSchema.set('toObject', { virtuals: true });
+
+taskSchema.pre('save', function () {  // ← без next
+  if (this.isModified()) {
+    this.updated_at = Date.now();
+  }
+});
+
+module.exports = model('Task', taskSchema);

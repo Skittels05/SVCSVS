@@ -4,10 +4,17 @@ const { parseQuery } = require('../helpers/queryParser');
 exports.create = async (req, res, next) => {
   try {
     const member = await ProjectMember.create(req.body);
-    const fullMember = await ProjectMember.findByPk(member.id, {
-      include: [Project, User],
-    });
-    res.status(201).json(fullMember);
+    const fullMember = await ProjectMember.findById(member._id).populate([
+      { path: 'project_id', select: 'name' },
+      { path: 'user_id', select: 'full_name email' },
+    ]);
+
+    const formatted = fullMember.toObject();
+    formatted.Project = formatted.project_id;
+    formatted.User = formatted.user_id;
+    formatted.id = formatted._id;
+
+    res.status(201).json(formatted);
   } catch (err) {
     next(err);
   }
@@ -15,46 +22,99 @@ exports.create = async (req, res, next) => {
 
 exports.getAll = async (req, res, next) => {
   try {
-    let { where, limit = 10, offset = 0 } = parseQuery(req.query);
-    let orderArray = [['id', 'ASC']];
+    const { where, sort, limit, skip } = parseQuery(req.query);
 
-    if (req.query.sort) {
-      const sortString = req.query.sort;
-      const [fullField, direction = 'ASC'] = sortString.split(':');
-      const dir = direction.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
+    const count = await ProjectMember.countDocuments(where);
+    const rows = await ProjectMember.find(where)
+      .sort(sort)
+      .limit(limit)
+      .skip(skip)
+      .populate([
+        { path: 'project_id', select: 'name' },
+        { path: 'user_id', select: 'full_name email' },
+      ]);
 
-      if (fullField === 'Project.name') {
-        orderArray = [[{ model: Project, as: 'Project' }, 'name', dir]];
-      } else if (fullField === 'User.full_name') {
-        orderArray = [[{ model: User, as: 'User' }, 'full_name', dir]];
-      } else {
-        orderArray = [[fullField, dir]];
-      }
-    }
-
-    const { count, rows } = await ProjectMember.findAndCountAll({
-      where,
-      limit,
-      offset,
-      order: orderArray,
-      include: [
-        { model: Project, attributes: ['id', 'name'] },
-        { model: User, attributes: ['id', 'full_name', 'email'] },
-      ],
-      distinct: true,
+    const formattedRows = rows.map(member => {
+      const obj = member.toObject();
+      obj.Project = obj.project_id;
+      obj.User = obj.user_id;
+      obj.id = obj._id;
+      return obj;
     });
 
     res.json({
       total: count,
       pages: Math.ceil(count / limit),
       page: parseInt(req.query.page || 1),
-      data: rows,
+      data: formattedRows,
     });
   } catch (err) {
     next(err);
   }
 };
 
+exports.getById = async (req, res, next) => {
+  try {
+    const member = await ProjectMember.findById(req.params.id).populate([
+      { path: 'project_id', select: 'name' },
+      { path: 'user_id', select: 'full_name email' },
+    ]);
+
+    if (!member) {
+      const error = new Error('Участник проекта не найден');
+      error.status = 404;
+      throw error;
+    }
+
+    const formatted = member.toObject();
+    formatted.Project = formatted.project_id;
+    formatted.User = formatted.user_id;
+    formatted.id = formatted._id;
+
+    res.json(formatted);
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.update = async (req, res, next) => {
+  try {
+    const member = await ProjectMember.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true })
+      .populate([
+        { path: 'project_id', select: 'name' },
+        { path: 'user_id', select: 'full_name email' },
+      ]);
+
+    if (!member) {
+      const error = new Error('Участник проекта не найден');
+      error.status = 404;
+      throw error;
+    }
+
+    const formatted = member.toObject();
+    formatted.Project = formatted.project_id;
+    formatted.User = formatted.user_id;
+    formatted.id = formatted._id;
+
+    res.json(formatted);
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.delete = async (req, res, next) => {
+  try {
+    const member = await ProjectMember.findByIdAndDelete(req.params.id);
+    if (!member) {
+      const error = new Error('Участник проекта не найден');
+      error.status = 404;
+      throw error;
+    }
+    res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+};
 exports.getMembersByProject = async (req, res, next) => {
   try {
     const { project_id } = req.params;
@@ -65,18 +125,12 @@ exports.getMembersByProject = async (req, res, next) => {
       throw error;
     }
 
-    const members = await ProjectMember.findAll({
-      where: { project_id: parseInt(project_id, 10) },
-      include: [
-        {
-          model: User,
-          attributes: ['id', 'full_name', 'email'],
-        },
-      ],
-      order: [[User, 'full_name', 'ASC']],
-    });
+    const members = await ProjectMember.find({ project_id })
+      .populate({ path: 'user_id', select: 'full_name email' })
+      .sort({ 'user_id.full_name': 1 });
 
-    const users = members.map((pm) => pm.User);
+    // Возвращаем только пользователей (как раньше)
+    const users = members.map(pm => pm.user_id);
 
     res.json(users);
   } catch (err) {
@@ -84,56 +138,9 @@ exports.getMembersByProject = async (req, res, next) => {
   }
 };
 
-exports.getById = async (req, res, next) => {
-  try {
-    const member = await ProjectMember.findByPk(req.params.id, {
-      include: [Project, User],
-    });
-    if (!member) {
-      const error = new Error('Участник проекта не найден');
-      error.status = 404;
-      throw error;
-    }
-    res.json(member);
-  } catch (err) {
-    next(err);
-  }
-};
-
-exports.update = async (req, res, next) => {
-  try {
-    const member = await ProjectMember.findByPk(req.params.id);
-    if (!member) {
-      const error = new Error('Участник проекта не найден');
-      error.status = 404;
-      throw error;
-    }
-    await member.update(req.body);
-    const updated = await ProjectMember.findByPk(member.id, { include: [Project, User] });
-    res.json(updated);
-  } catch (err) {
-    next(err);
-  }
-};
-
-exports.delete = async (req, res, next) => {
-  try {
-    const member = await ProjectMember.findByPk(req.params.id);
-    if (!member) {
-      const error = new Error('Участник проекта не найден');
-      error.status = 404;
-      throw error;
-    }
-    await member.destroy();
-    res.status(204).send();
-  } catch (err) {
-    next(err);
-  }
-};
-
 exports.checkExists = async (req, res, next) => {
   try {
-    const member = await ProjectMember.findByPk(req.params.id);
+    const member = await ProjectMember.findById(req.params.id);
     res.status(member ? 200 : 404).send();
   } catch (err) {
     next(err);

@@ -71,13 +71,14 @@ const TasksPage = () => {
     loadProjects();
   }, []);
 
-  // Загрузка итераций при выборе проекта
+  // Загрузка итераций
   useEffect(() => {
-    if (formData.project_id) {
+    if (formData.project_id && !isNaN(Number(formData.project_id))) {
       const loadIterations = async () => {
         setLoadingIterations(true);
         try {
-          const response = await api.get(`/iterations?project_id=${formData.project_id}&limit=100`);
+          const projectId = Number(formData.project_id);
+          const response = await api.get(`/iterations?project_id=${projectId}&limit=100`);
           setIterations(response.data.data || []);
         } catch (err) {
           console.error('Ошибка загрузки итераций:', err);
@@ -94,11 +95,12 @@ const TasksPage = () => {
 
   // Загрузка участников проекта
   useEffect(() => {
-    if (formData.project_id) {
+    if (formData.project_id && !isNaN(Number(formData.project_id))) {
       const loadMembers = async () => {
         setLoadingMembers(true);
         try {
-          const response = await api.get(`/projects/${formData.project_id}/members`);
+          const projectId = Number(formData.project_id);
+          const response = await api.get(`/projects/${projectId}/members`);
           setProjectMembers(response.data || []);
         } catch (err) {
           console.error('Ошибка загрузки участников:', err);
@@ -120,7 +122,7 @@ const TasksPage = () => {
       limit,
       sort: `${sortField}:${sortDirection}`,
     };
-    if (filterProject) params.projectId = filterProject;
+    if (filterProject) params.project_id = filterProject;
     if (filterStatus) params.status = filterStatus;
 
     dispatch(fetchTasks(params))
@@ -133,18 +135,21 @@ const TasksPage = () => {
 
   const openTaskModal = (task = null, edit = false) => {
     setModalTask(task);
-    setIsEditMode(edit || !task);
+    setIsEditMode(edit || !!task);
+
+    console.log('[OPEN MODAL] Полная задача:', task);
+
     setFormData(task ? {
       title: task.title || '',
       description: task.description || '',
       priority: task.priority || 'medium',
       status: task.status || 'todo',
       story_points: task.story_points?.toString() || '',
-      due_date: task.due_date || '',
-      project_id: task.project_id?.toString() || '',
-      iteration_id: task.iteration_id?.toString() || '',
-      assignee_id: task.assignee_id?.toString() || '',
-      reporter_id: task.reporter_id?.toString() || '',
+      due_date: task.due_date ? new Date(task.due_date).toISOString().split('T')[0] : '',
+      project_id: task.Project?._id ? String(task.Project._id) : (task.project_id ? String(task.project_id) : ''),
+      iteration_id: task.Iteration?._id ? String(task.Iteration._id) : (task.iteration_id ? String(task.iteration_id) : ''),
+      assignee_id: task.Assignee?._id ? String(task.Assignee._id) : (task.assignee_id ? String(task.assignee_id) : ''),
+      reporter_id: task.Reporter?._id ? String(task.Reporter._id) : (task.reporter_id ? String(task.reporter_id) : ''),
     } : {
       title: '',
       description: '',
@@ -157,6 +162,7 @@ const TasksPage = () => {
       assignee_id: '',
       reporter_id: '',
     });
+
     setSelectedFiles([]);
     setFormErrors({});
     setServerError('');
@@ -193,6 +199,8 @@ const TasksPage = () => {
     setServerError('');
     setFormErrors({});
 
+    console.log('[SUBMIT] formData перед отправкой:', formData);
+
     const taskData = {
       title: formData.title.trim(),
       description: formData.description.trim(),
@@ -200,11 +208,13 @@ const TasksPage = () => {
       status: formData.status,
       story_points: formData.story_points ? parseInt(formData.story_points) : null,
       due_date: formData.due_date || null,
-      project_id: parseInt(formData.project_id),
+      project_id: formData.project_id ? parseInt(formData.project_id) : null,
       iteration_id: formData.iteration_id ? parseInt(formData.iteration_id) : null,
-      assignee_id: formData.assignee_id ? parseInt(formData.assignee_id) : null,
-      reporter_id: formData.reporter_id ? parseInt(formData.reporter_id) : null,
+      assignee_id: formData.assignee_id && !isNaN(Number(formData.assignee_id)) ? parseInt(formData.assignee_id) : null,
+      reporter_id: formData.reporter_id && !isNaN(Number(formData.reporter_id)) ? parseInt(formData.reporter_id) : null,
     };
+
+    console.log('[SUBMIT] taskData для отправки:', taskData);
 
     try {
       let newTask;
@@ -311,7 +321,10 @@ const TasksPage = () => {
     <div className="tasks-page">
       <div className="page-header">
         <h2>Задачи</h2>
-        <button onClick={() => openTaskModal()} className="btn btn-success btn-add">
+        <button 
+          onClick={() => openTaskModal(null, true)} 
+          className="btn btn-success btn-add"
+        >
           + Добавить задачу
         </button>
       </div>
@@ -346,7 +359,7 @@ const TasksPage = () => {
       />
 
       <Modal
-        isOpen={modalTask !== null}
+        isOpen={modalTask !== null || isEditMode} // ← Открывается всегда, если isEditMode = true (для создания)
         onClose={closeModal}
         title={isEditMode ? (modalTask ? 'Редактировать задачу' : 'Создать задачу') : 'Просмотр задачи'}
       >
@@ -418,7 +431,7 @@ const TasksPage = () => {
                   >
                     <option value="">— Не назначен —</option>
                     {projectMembers.map(u => (
-                      <option key={u.id} value={u.id}>{u.full_name}</option>
+                      <option key={u._id} value={u._id}>{u.full_name}</option>
                     ))}
                   </select>
                 </div>
@@ -433,7 +446,7 @@ const TasksPage = () => {
                   >
                     <option value="">— Не назначен —</option>
                     {projectMembers.map(u => (
-                      <option key={u.id} value={u.id}>{u.full_name}</option>
+                      <option key={u._id} value={u._id}>{u.full_name}</option>
                     ))}
                   </select>
                 </div>

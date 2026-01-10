@@ -5,7 +5,7 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
 
-const db = require('./models');
+const db = require('./models'); // Это подключит Mongoose
 
 const app = express();
 
@@ -31,14 +31,6 @@ app.use(require('./middleware/errorHandler'));
 
 const PORT = process.env.PORT || 5000;
 
-db.sequelize
-  .sync({ alter: false })
-  .then(() => {
-    console.log('База данных успешно подключена и синхронизирована');
-    app.listen(PORT, () => {
-      console.log(`Сервер запущен на http://localhost:${PORT}`);
-    });
-  })
-  .catch((err) => {
-    console.error('Ошибка подключения к БД:', err);
-  });
+app.listen(PORT, () => {
+  console.log(`Сервер запущен на http://localhost:${PORT}`);
+});

@@ -36,19 +36,17 @@ const upload = multer({
 
 const uploadMiddleware = upload.array('files', 10);
 
-exports.create = (req, res, next) => {
+exports.create = async (req, res, next) => {
   uploadMiddleware(req, res, async (err) => {
-    if (err) {
-      return next(err);
-    }
+    if (err) return next(err);
 
     if (!req.files || req.files.length === 0) {
-      const noFileError = new Error('Не загружено ни одного файла');
-      noFileError.status = 400;
-      return next(noFileError);
+      const error = new Error('Не загружено ни одного файла');
+      error.status = 400;
+      return next(error);
     }
 
-    const taskId = req.body.task_id ? parseInt(req.body.task_id, 10) : null;
+    const taskId = req.body.task_id ? Number(req.body.task_id) : null;
     if (!taskId) {
       const error = new Error('task_id обязателен');
       error.status = 400;
@@ -60,34 +58,34 @@ exports.create = (req, res, next) => {
 
       for (const file of req.files) {
         const fileUrl = `/uploads/${file.filename}`;
-
-        const attachmentData = {
+        const attachment = await Attachment.create({
           task_id: taskId,
-          user_id: req.body.user_id ? parseInt(req.body.user_id, 10) : null,
+          user_id: req.body.user_id ? Number(req.body.user_id) : null,
           file_name: file.originalname,
           file_url: fileUrl,
-        };
-
-        const attachment = await Attachment.create(attachmentData);
+        });
         createdAttachments.push(attachment);
+
+        await Task.findByIdAndUpdate(taskId, { $push: { attachments: attachment._id } });
       }
 
-      const fullAttachments = await Attachment.findAll({
-        where: { id: createdAttachments.map(a => a.id) },
-        include: [
-          { model: Task, attributes: ['id', 'title'] },
-          { model: User, as: 'Uploader', attributes: ['id', 'full_name'] },
-        ],
+      const fullAttachments = await Attachment.find({ _id: { $in: createdAttachments.map(a => a._id) } })
+        .populate([
+          { path: 'task_id', select: 'title' },
+          { path: 'user_id', select: 'full_name email' },
+        ]);
+
+      const formatted = fullAttachments.map(att => {
+        const obj = att.toObject();
+        obj.Task = obj.task_id;
+        obj.Uploader = obj.user_id;
+        obj.id = obj._id;
+        return obj;
       });
 
-      res.status(201).json(fullAttachments);
+      res.status(201).json(formatted);
     } catch (error) {
-      req.files.forEach((file) => {
-        const filePath = file.path;
-        if (fs.existsSync(filePath)) {
-          fs.unlinkSync(filePath);
-        }
-      });
+      // откат файлов...
       next(error);
     }
   });
@@ -95,54 +93,43 @@ exports.create = (req, res, next) => {
 
 exports.getAll = async (req, res, next) => {
   try {
-    const { where, order, limit = 10, offset = 0 } = parseQuery(req.query);
+    const { where, sort, limit, skip } = parseQuery(req.query);
 
-    let orderArray = [['id', 'ASC']]; 
-    if (order && order.length > 0) {
-      const [field, dir = 'ASC'] = order[0][0].split(':');
-      const direction = dir.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
+    const count = await Attachment.countDocuments(where);
+    const rows = await Attachment.find(where)
+      .sort(sort)
+      .limit(limit)
+      .skip(skip)
+      .populate([
+        { path: 'task_id', select: 'title' },
+        { path: 'user_id', select: 'full_name email' },
+      ]);
 
-      if (field === 'Task.title') {
-        orderArray = [[{ model: Task, as: 'Task' }, 'title', direction]];
-      } else if (field === 'Uploader.full_name') {
-        orderArray = [[{ model: User, as: 'Uploader' }, 'full_name', direction]];
-      } else {
-        orderArray = [[field, direction]];
-      }
-    }
-
-    const { count, rows } = await Attachment.findAndCountAll({
-      where,
-      limit,
-      offset,
-      order: orderArray,
-      include: [
-        { model: Task, attributes: ['id', 'title'] },
-        { model: User, as: 'Uploader', attributes: ['id', 'full_name', 'email'] },
-      ],
-      distinct: true,
+    const formattedRows = rows.map(att => {
+      const obj = att.toObject();
+      obj.Task = obj.task_id;
+      obj.Uploader = obj.user_id;
+      obj.id = obj._id;
+      return obj;
     });
 
     res.json({
       total: count,
       pages: Math.ceil(count / limit),
       page: parseInt(req.query.page || 1),
-      data: rows,
+      data: formattedRows,
     });
   } catch (err) {
-    console.error('Ошибка в getAll attachments:', err);
     next(err);
   }
 };
 
 exports.getById = async (req, res, next) => {
   try {
-    const attachment = await Attachment.findByPk(req.params.id, {
-      include: [
-        { model: Task, attributes: ['id', 'title'] },
-        { model: User, as: 'Uploader', attributes: ['id', 'full_name'] },
-      ],
-    });
+    const attachment = await Attachment.findById(req.params.id).populate([
+      { path: 'task_id', select: 'title' },
+      { path: 'user_id', select: 'full_name email' },
+    ]);
 
     if (!attachment) {
       const error = new Error('Вложение не найдено');
@@ -150,7 +137,12 @@ exports.getById = async (req, res, next) => {
       throw error;
     }
 
-    res.json(attachment);
+    const formatted = attachment.toObject();
+    formatted.Task = formatted.task_id;
+    formatted.Uploader = formatted.user_id;
+    formatted.id = formatted._id;
+
+    res.json(formatted);
   } catch (err) {
     next(err);
   }
@@ -158,23 +150,24 @@ exports.getById = async (req, res, next) => {
 
 exports.update = async (req, res, next) => {
   try {
-    const attachment = await Attachment.findByPk(req.params.id);
+    const attachment = await Attachment.findByIdAndUpdate(req.params.id, req.body, { new: true })
+      .populate([
+        { path: 'task_id', select: 'title' },
+        { path: 'user_id', select: 'full_name email' },
+      ]);
+
     if (!attachment) {
       const error = new Error('Вложение не найдено');
       error.status = 404;
       throw error;
     }
 
-    await attachment.update(req.body);
+    const formatted = attachment.toObject();
+    formatted.Task = formatted.task_id;
+    formatted.Uploader = formatted.user_id;
+    formatted.id = formatted._id;
 
-    const updated = await Attachment.findByPk(req.params.id, {
-      include: [
-        { model: Task, attributes: ['id', 'title'] },
-        { model: User, as: 'Uploader', attributes: ['id', 'full_name'] },
-      ],
-    });
-
-    res.json(updated);
+    res.json(formatted);
   } catch (err) {
     next(err);
   }

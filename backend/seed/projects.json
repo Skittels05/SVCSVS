@@ -1,0 +1,10 @@
+[
+  {"_id": 1, "name": "Мобильное приложение Банка А", "description": "Разработка нового мобильного приложения", "project_type": "scrum", "status": "active", "created_at": {"$date": "2025-03-01T00:00:00.000Z"}, "updated_at": {"$date": "2026-01-05T00:00:00.000Z"}},
+  {"_id": 2, "name": "CRM-система для ритейла", "description": "Внедрение и кастомизация крупной CRM", "project_type": "waterfall", "status": "active", "created_at": {"$date": "2025-05-15T00:00:00.000Z"}, "updated_at": {"$date": "2025-12-20T00:00:00.000Z"}},
+  {"_id": 3, "name": "Корпоративный портал 2.0", "project_type": "scrum", "status": "active", "created_at": {"$date": "2025-08-10T00:00:00.000Z"}, "updated_at": {"$date": "2026-01-10T00:00:00.000Z"}},
+  {"_id": 4, "name": "Миграция на микросервисы", "description": "Перевод монолита в микросервисную архитектуру", "project_type": "scrum", "status": "in_progress", "created_at": {"$date": "2025-09-01T00:00:00.000Z"}, "updated_at": {"$date": "2026-01-08T00:00:00.000Z"}},
+  {"_id": 5, "name": "E-commerce платформа B2B", "project_type": "waterfall", "status": "planned", "created_at": {"$date": "2025-11-20T00:00:00.000Z"}, "updated_at": {"$date": "2025-11-20T00:00:00.000Z"}},
+  {"_id": 6, "name": "Система аналитики продаж", "description": "BI + ML предсказание спроса", "project_type": "scrum", "status": "active", "created_at": {"$date": "2025-06-15T00:00:00.000Z"}, "updated_at": {"$date": "2025-12-28T00:00:00.000Z"}},
+  {"_id": 7, "name": "Редизайн личного кабинета", "project_type": "scrum", "status": "completed", "created_at": {"$date": "2024-11-01T00:00:00.000Z"}, "updated_at": {"$date": "2025-04-30T00:00:00.000Z"}},
+  {"_id": 8, "name": "Интеграция с маркетплейсами", "project_type": "waterfall", "status": "planned", "created_at": {"$date": "2026-01-05T00:00:00.000Z"}, "updated_at": {"$date": "2026-01-05T00:00:00.000Z"}}
+]

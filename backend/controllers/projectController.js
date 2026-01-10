@@ -1,13 +1,19 @@
-const { Project, ProjectMember, User } = require('../models');
+const { Project } = require('../models');
 const { parseQuery } = require('../helpers/queryParser');
 
 exports.create = async (req, res, next) => {
   try {
     const project = await Project.create(req.body);
-    const fullProject = await Project.findByPk(project.id, {
-      include: [{ model: ProjectMember, include: [{ model: User, attributes: ['id', 'full_name', 'email'] }] }],
+    // populate виртуального поля projectMembers
+    const fullProject = await Project.findById(project._id).populate({
+      path: 'projectMembers',
+      populate: { path: 'user_id', select: 'full_name email' }
     });
-    res.status(201).json(fullProject);
+
+    const formatted = fullProject.toObject();
+    formatted.id = formatted._id;
+
+    res.status(201).json(formatted);
   } catch (err) {
     next(err);
   }
@@ -15,22 +21,25 @@ exports.create = async (req, res, next) => {
 
 exports.getAll = async (req, res, next) => {
   try {
-    const { where, order, limit = 10, offset = 0 } = parseQuery(req.query);
-    const total = await Project.count({ where });
-    const rows = await Project.findAll({
-      where,
-      order,
-      limit,
-      offset,
-      attributes: ['id', 'name', 'description', 'project_type', 'status', 'created_at', 'updated_at'],
+    const { where, sort, limit, skip } = parseQuery(req.query);
+
+    const count = await Project.countDocuments(where);
+    const rows = await Project.find(where)
+      .sort(sort)
+      .limit(limit)
+      .skip(skip);
+
+    const formattedRows = rows.map(project => {
+      const obj = project.toObject();
+      obj.id = obj._id;
+      return obj;
     });
-    const pages = Math.ceil(total / limit);
 
     res.json({
-      total,
-      pages,
+      total: count,
+      pages: Math.ceil(count / limit),
       page: parseInt(req.query.page || 1),
-      data: rows,
+      data: formattedRows,
     });
   } catch (err) {
     next(err);
@@ -39,15 +48,21 @@ exports.getAll = async (req, res, next) => {
 
 exports.getById = async (req, res, next) => {
   try {
-    const project = await Project.findByPk(req.params.id, {
-      include: [{ model: ProjectMember, include: [{ model: User, attributes: ['id', 'full_name', 'email'] }] }],
+    const project = await Project.findById(req.params.id).populate({
+      path: 'projectMembers',
+      populate: { path: 'user_id', select: 'full_name email' }
     });
+
     if (!project) {
       const error = new Error('Проект не найден');
       error.status = 404;
       throw error;
     }
-    res.json(project);
+
+    const formatted = project.toObject();
+    formatted.id = formatted._id;
+
+    res.json(formatted);
   } catch (err) {
     next(err);
   }
@@ -55,17 +70,22 @@ exports.getById = async (req, res, next) => {
 
 exports.update = async (req, res, next) => {
   try {
-    const project = await Project.findByPk(req.params.id);
+    const project = await Project.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true })
+      .populate({
+        path: 'projectMembers',
+        populate: { path: 'user_id', select: 'full_name email' }
+      });
+
     if (!project) {
       const error = new Error('Проект не найден');
       error.status = 404;
       throw error;
     }
-    await project.update(req.body);
-    const updated = await Project.findByPk(project.id, {
-      include: [{ model: ProjectMember, include: [{ model: User, attributes: ['id', 'full_name', 'email'] }] }],
-    });
-    res.json(updated);
+
+    const formatted = project.toObject();
+    formatted.id = formatted._id;
+
+    res.json(formatted);
   } catch (err) {
     next(err);
   }
@@ -73,13 +93,12 @@ exports.update = async (req, res, next) => {
 
 exports.delete = async (req, res, next) => {
   try {
-    const project = await Project.findByPk(req.params.id);
+    const project = await Project.findByIdAndDelete(req.params.id);
     if (!project) {
       const error = new Error('Проект не найден');
       error.status = 404;
       throw error;
     }
-    await project.destroy();
     res.status(204).send();
   } catch (err) {
     next(err);
@@ -88,7 +107,7 @@ exports.delete = async (req, res, next) => {
 
 exports.checkExists = async (req, res, next) => {
   try {
-    const project = await Project.findByPk(req.params.id);
+    const project = await Project.findById(req.params.id);
     res.status(project ? 200 : 404).send();
   } catch (err) {
     next(err);

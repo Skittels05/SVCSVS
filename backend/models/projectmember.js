@@ -1,28 +1,28 @@
-const { DataTypes } = require('sequelize');
+const { Schema, model } = require('mongoose');
 
-module.exports = (sequelize) => {
-  const ProjectMember = sequelize.define('ProjectMember', {
-    id: {
-      type: DataTypes.INTEGER,
-      autoIncrement: true,
-      primaryKey: true,
-    },
-    role: {
-      type: DataTypes.STRING(50),
-      allowNull: false,
-      validate: {
-        notNull: { msg: 'Роль в проекте обязательна' },
-        notEmpty: { msg: 'Роль не может быть пустой' },
-        len: { args: [1, 50], msg: 'Роль должна быть от 1 до 50 символов' },
-      },
-    },
-  }, {
-    tableName: 'projectmembers',
-    timestamps: false,
-    indexes: [
-      { unique: true, fields: ['project_id', 'user_id'], name: 'unique_project_user' },
-    ],
-  });
+const projectMemberSchema = new Schema({
+  _id: {
+    type: Number,
+    required: true
+  },
+  project_id: {
+    type: Number,
+    ref: 'Project',
+    required: [true, 'project_id обязателен'],
+  },
+  user_id: {
+    type: Number,
+    ref: 'User',
+    required: [true, 'user_id обязателен'],
+  },
+  role: {
+    type: String,
+    required: [true, 'Роль в проекте обязательна'],
+    minlength: [1, 'Роль должна быть от 1 до 50 символов'],
+    maxlength: [50, 'Роль должна быть от 1 до 50 символов'],
+  },
+}, { _id: false, timestamps: false });
 
-  return ProjectMember;
-};
+projectMemberSchema.index({ project_id: 1, user_id: 1 }, { unique: true });
+
+module.exports = model('ProjectMember', projectMemberSchema);
