@@ -3,7 +3,15 @@ const { parseQuery } = require('../helpers/queryParser');
 
 exports.create = async (req, res, next) => {
   try {
-    const member = await ProjectMember.create(req.body);
+    console.log('[PROJECT MEMBER CREATE] Пришедшее тело:', JSON.stringify(req.body, null, 2));
+
+    const lastMember = await ProjectMember.findOne().sort({ _id: -1 }).select('_id');
+    const newId = lastMember ? lastMember._id + 1 : 1;
+
+    const cleanBody = { ...req.body, _id: newId };
+
+    const member = await ProjectMember.create(cleanBody);
+
     const fullMember = await ProjectMember.findById(member._id).populate([
       { path: 'project_id', select: 'name' },
       { path: 'user_id', select: 'full_name email' },
@@ -14,8 +22,11 @@ exports.create = async (req, res, next) => {
     formatted.User = formatted.user_id;
     formatted.id = formatted._id;
 
+    console.log('[PROJECT MEMBER CREATE] Финальный ответ:', JSON.stringify(formatted, null, 2));
+
     res.status(201).json(formatted);
   } catch (err) {
+    console.error('[PROJECT MEMBER CREATE] Ошибка:', err);
     next(err);
   }
 };

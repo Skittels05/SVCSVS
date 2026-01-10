@@ -3,14 +3,27 @@ const { parseQuery } = require('../helpers/queryParser');
 
 exports.create = async (req, res, next) => {
   try {
-    const user = await User.create(req.body);
+    console.log('[USER CREATE] Пришедшее тело запроса:', JSON.stringify(req.body, null, 2));
 
-    // Форматируем ответ
+    const lastUser = await User.findOne().sort({ _id: -1 }).select('_id');
+    const newId = lastUser ? lastUser._id + 1 : 1;
+
+    const userData = { ...req.body, _id: newId };
+
+    console.log('[USER CREATE] Тело для сохранения с новым _id:', JSON.stringify(userData, null, 2));
+
+    // Создаём пользователя
+    const user = await User.create(userData);
+
+    // Форматируем ответ (добавляем id для фронта)
     const formatted = user.toObject();
     formatted.id = formatted._id;
 
+    console.log('[USER CREATE] Финальный ответ клиенту:', JSON.stringify(formatted, null, 2));
+
     res.status(201).json(formatted);
   } catch (err) {
+    console.error('[USER CREATE] Ошибка:', err);
     next(err);
   }
 };

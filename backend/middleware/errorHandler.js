@@ -1,69 +1,57 @@
 // middleware/errorHandler.js
 const errorHandler = (err, req, res, next) => {
-  // Для отладки — всегда полезно видеть полную ошибку в консоли
-  console.error('Ошибка сервера:', err);
-  console.error('Stack trace:', err.stack);
+  console.error('[ERROR HANDLER] Полная ошибка:', err);
 
   let status = 500;
-  let response = {
-    status: 'error',
-    message: 'Внутренняя ошибка сервера',
-  };
+  let message = 'Внутренняя ошибка сервера';
+  let details = null;
 
-  // Ошибки валидации Mongoose
-  if (err.name === 'ValidationError') {
+  // 1. Duplicate key error (E11000)
+  if (err.code === 11000) {
+    status = 409;
+    message = 'Такая запись уже существует';
+    details = {
+      duplicateField: Object.keys(err.keyValue)[0],
+      duplicateValue: Object.values(err.keyValue)[0]
+    };
+  }
+
+  // 2. Mongoose ValidationError
+  else if (err.name === 'ValidationError') {
     status = 400;
-    const errors = Object.values(err.errors).map(e => ({
-      field: e.path,
-      message: e.message,
-    }));
-
-    response = {
-      status: 'error',
-      message: 'Ошибка валидации данных',
-      errors,
-    };
+    message = 'Ошибка проверки данных';
+    details = {};
+    Object.keys(err.errors).forEach(key => {
+      details[key] = err.errors[key].message;
+    });
   }
 
-  // Нарушение уникальности (duplicate key)
-  else if (err.code === 11000) {
-    status = 409; // Conflict
-    response = {
-      status: 'error',
-      message: 'Запись с такими данными уже существует',
-      field: Object.keys(err.keyValue)[0] || 'unknown',
-    };
-  }
-
-  // CastError — например, неверный формат ObjectId
+  // 3. CastError (неверный формат id)
   else if (err.name === 'CastError') {
     status = 400;
-    response = {
-      status: 'error',
-      message: `Некорректный формат ID: ${err.value}`,
-    };
+    message = `Неверный формат поля "${err.path}"`;
+    details = { field: err.path, value: err.value };
   }
 
-  // Multer ошибки (загрузка файлов)
+  // 4. Ошибки, которые ты сам кидаешь с .status
+  else if (err.status) {
+    status = err.status;
+    message = err.message || 'Произошла ошибка';
+  }
+
+  // 5. Multer ошибки (загрузка файлов)
   else if (err instanceof require('multer').MulterError) {
     status = 400;
-    response = {
-      status: 'error',
-      message: `Ошибка загрузки файла: ${err.message}`,
-    };
+    message = `Ошибка загрузки файла: ${err.message}`;
   }
 
-  // Ошибки, которые мы сами кидаем (с .status)
-  else if (err.status || err.statusCode) {
-    status = err.status || err.statusCode;
-    response = {
-      status: 'error',
-      message: err.message || 'Произошла ошибка',
-    };
-  }
-
-  // Всё остальное — 500
-  res.status(status).json(response);
+  // Отправляем ответ фронтенду
+  res.status(status).json({
+    status: 'error',
+    message,
+    details,  // ← это главное для фронта
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+  });
 };
 
 module.exports = errorHandler;

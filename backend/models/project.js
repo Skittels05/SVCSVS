@@ -44,11 +44,10 @@ projectSchema.virtual('projectMembers', {
 projectSchema.set('toJSON', { virtuals: true });
 projectSchema.set('toObject', { virtuals: true });
 
-projectSchema.pre('save', function (next) {
+projectSchema.pre('save', function () {
   if (this.isModified()) {
     this.updated_at = Date.now();
   }
-  next();
 });
 
 module.exports = model('Project', projectSchema);

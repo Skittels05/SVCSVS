@@ -3,7 +3,15 @@ const { parseQuery } = require('../helpers/queryParser');
 
 exports.create = async (req, res, next) => {
   try {
-    const iteration = await Iteration.create(req.body);
+    console.log('[ITERATION CREATE] Пришедшее тело:', JSON.stringify(req.body, null, 2));
+
+    const lastIteration = await Iteration.findOne().sort({ _id: -1 }).select('_id');
+    const newId = lastIteration ? lastIteration._id + 1 : 1;
+
+    const cleanBody = { ...req.body, _id: newId };
+
+    const iteration = await Iteration.create(cleanBody);
+
     const fullIteration = await Iteration.findById(iteration._id)
       .populate('project_id', 'name');
 
@@ -11,8 +19,11 @@ exports.create = async (req, res, next) => {
     formatted.Project = formatted.project_id;
     formatted.id = formatted._id;
 
+    console.log('[ITERATION CREATE] Финальный ответ:', JSON.stringify(formatted, null, 2));
+
     res.status(201).json(formatted);
   } catch (err) {
+    console.error('[ITERATION CREATE] Ошибка:', err);
     next(err);
   }
 };

@@ -57,13 +57,19 @@ exports.create = async (req, res, next) => {
       const createdAttachments = [];
 
       for (const file of req.files) {
+        // Генерируем _id для каждого attachment
+        const lastAtt = await Attachment.findOne().sort({ _id: -1 }).select('_id');
+        const newId = lastAtt ? lastAtt._id + 1 : 1;
+
         const fileUrl = `/uploads/${file.filename}`;
         const attachment = await Attachment.create({
+          _id: newId,
           task_id: taskId,
           user_id: req.body.user_id ? Number(req.body.user_id) : null,
           file_name: file.originalname,
           file_url: fileUrl,
         });
+
         createdAttachments.push(attachment);
 
         await Task.findByIdAndUpdate(taskId, { $push: { attachments: attachment._id } });
@@ -85,7 +91,6 @@ exports.create = async (req, res, next) => {
 
       res.status(201).json(formatted);
     } catch (error) {
-      // откат файлов...
       next(error);
     }
   });

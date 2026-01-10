@@ -5,14 +5,11 @@ exports.create = async (req, res, next) => {
   try {
     console.log('[TASK CREATE] Пришедшее тело запроса:', JSON.stringify(req.body, null, 2));
 
-    // Находим максимальный существующий _id и увеличиваем на 1
     const lastTask = await Task.findOne().sort({ _id: -1 }).select('_id');
     const newId = lastTask ? lastTask._id + 1 : 1;
 
-    // Добавляем сгенерированный _id в тело
     const cleanBody = { ...req.body, _id: newId };
 
-    // Очистка ссылочных полей от возможных объектов (populate)
     cleanBody.project_id = cleanBody.project_id
       ? Number(cleanBody.project_id.id || cleanBody.project_id._id || cleanBody.project_id)
       : null;
@@ -35,10 +32,8 @@ exports.create = async (req, res, next) => {
 
     console.log('[TASK CREATE] Очищенное тело с новым _id:', JSON.stringify(cleanBody, null, 2));
 
-    // Создаём задачу
     const task = await Task.create(cleanBody);
 
-    // Получаем полную задачу с populate
     const fullTask = await Task.findById(task._id).populate([
       { path: 'project_id', select: 'name' },
       { path: 'iteration_id', select: 'name' },
@@ -48,7 +43,6 @@ exports.create = async (req, res, next) => {
       { path: 'attachments', select: 'file_name file_url' },
     ]);
 
-    // Форматируем ответ для фронта
     const formatted = fullTask.toObject();
     formatted.Project = formatted.project_id;
     formatted.Iteration = formatted.iteration_id;

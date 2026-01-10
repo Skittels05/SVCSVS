@@ -2,28 +2,35 @@ export const handleApiError = (resultAction, setFormErrors, setServerError = () 
   setFormErrors({});
   setServerError('');
 
-  const err = resultAction.payload || resultAction.error;
+  const err = resultAction.payload || resultAction.error || resultAction;
 
-  if (err && err.response && err.response.data) {
-    const data = err.response.data;
+  console.log('[handleApiError] Полная ошибка:', err);
 
-    if (data.errors && Array.isArray(data.errors)) {
+  const data = err?.response?.data || err?.data || err;
+
+  if (data && data.message) {
+
+    setServerError(data.message);
+
+    if (data.details) {
       const fieldErrors = {};
-      data.errors.forEach((e) => {
-        if (e.field) {
-          fieldErrors[e.field] = e.message;
-        }
-      });
-      setFormErrors(fieldErrors);
 
-      if (data.message && Object.keys(fieldErrors).length === 0) {
-        setServerError(data.message);
+      if (typeof data.details === 'object' && !Array.isArray(data.details)) {
+        Object.keys(data.details).forEach(key => {
+          fieldErrors[key] = data.details[key];
+        });
       }
-    } else if (data.message) {
-      setServerError(data.message);
+      else if (Array.isArray(data.details)) {
+        data.details.forEach(e => {
+          if (e.field) fieldErrors[e.field] = e.message;
+        });
+      }
+
+      setFormErrors(fieldErrors);
     }
   } else {
-
-    setServerError('Ошибка соединения с сервером. Проверьте, запущен ли бэкенд.');
+    setServerError('Неизвестная ошибка сервера. Попробуйте позже.');
   }
+
+  console.error('API Error обработана:', data);
 };

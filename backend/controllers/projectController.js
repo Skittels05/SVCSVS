@@ -3,8 +3,15 @@ const { parseQuery } = require('../helpers/queryParser');
 
 exports.create = async (req, res, next) => {
   try {
-    const project = await Project.create(req.body);
-    // populate виртуального поля projectMembers
+    console.log('[PROJECT CREATE] Пришедшее тело:', JSON.stringify(req.body, null, 2));
+
+    const lastProject = await Project.findOne().sort({ _id: -1 }).select('_id');
+    const newId = lastProject ? lastProject._id + 1 : 1;
+
+    const cleanBody = { ...req.body, _id: newId };
+
+    const project = await Project.create(cleanBody);
+
     const fullProject = await Project.findById(project._id).populate({
       path: 'projectMembers',
       populate: { path: 'user_id', select: 'full_name email' }
@@ -13,8 +20,11 @@ exports.create = async (req, res, next) => {
     const formatted = fullProject.toObject();
     formatted.id = formatted._id;
 
+    console.log('[PROJECT CREATE] Финальный ответ:', JSON.stringify(formatted, null, 2));
+
     res.status(201).json(formatted);
   } catch (err) {
+    console.error('[PROJECT CREATE] Ошибка:', err);
     next(err);
   }
 };
