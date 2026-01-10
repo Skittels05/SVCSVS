@@ -1,4 +1,6 @@
-* {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
@@ -7,12 +9,16 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   background-color: #f5f5f5;
   color: #333;
+  overflow-x: auto;
+  min-width: 320px;
 }
 
 .container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
+  width: 100%;
+  overflow-x: auto;
 }
 
 h1, h2, h3 {
@@ -25,6 +31,9 @@ table {
   background: white;
   margin-top: 20px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  min-width: 600px;
+  overflow-x: auto;
+  display: block;
 }
 
 th, td {
@@ -74,6 +83,34 @@ input, select, textarea {
   border-radius: 4px;
 }
 
+.kanban-page {
+  overflow-x: auto;
+  padding: 20px;
+}
+
+.kanban-board {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+  min-width: 800px;
+  scrollbar-width: thin;
+}
+
+.kanban-board::-webkit-scrollbar {
+  height: 8px;
+}
+
+.kanban-board::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.2);
+  border-radius: 4px;
+}
+
+.kanban-column {
+  flex: 1;
+  min-width: 300px;
+}
+
 .modal {
   position: fixed;
   top: 0;
@@ -93,6 +130,8 @@ input, select, textarea {
   border-radius: 8px;
   width: 90%;
   max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 img.attachment {
@@ -106,7 +145,23 @@ img.attachment {
   .container {
     padding: 10px;
   }
-  table, th, td {
+
+  table {
     font-size: 14px;
+  }
+
+  .kanban-board {
+    min-width: 600px;
+    gap: 15px;
+  }
+
+  .kanban-column {
+    min-width: 280px;
+  }
+}
+
+@media (max-width: 480px) {
+  .kanban-column {
+    min-width: 260px;
   }
 }

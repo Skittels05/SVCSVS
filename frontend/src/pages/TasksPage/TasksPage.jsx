@@ -9,18 +9,26 @@ import {
   deleteAttachment,
 } from '../../store/slices/tasksSlice';
 import Modal from '../../components/Modal/Modal';
-import DataTable from '../../components/DataTable/DataTable';
-import Pagination from '../../components/Pagination/Pagination';
-import SortingControls from '../../components/SortingControls/SortingControls';
-import api from '../../services/api';
-import { handleApiError } from '../../utils/handleApiError';
-import pdfMake from 'pdfmake/build/pdfmake';
-import pdfFonts from 'pdfmake/build/vfs_fonts.js';
-import * as XLSX from 'xlsx';
+import EditableTable from '../../components/EditableTable/EditableTable';
 import './TasksPage.css';
 import { useForm, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import api from '../../services/api';
+import { handleApiError } from '../../utils/handleApiError';
+import * as XLSX from 'xlsx';
+
+let pdfMake;
+try {
+  pdfMake = require('pdfmake/build/pdfmake');
+  const pdfFonts = require('pdfmake/build/vfs_fonts');
+  if (pdfFonts && pdfFonts.pdfMake && pdfFonts.pdfMake.vfs) {
+    pdfMake.vfs = pdfFonts.pdfMake.vfs;
+  }
+} catch (error) {
+  console.warn('PDFMake не загружен, экспорт в PDF будет недоступен:', error);
+}
+
 
 const taskSchema = z.object({
   title: z.string().trim().min(1, 'Заголовок обязателен'),
@@ -42,6 +50,7 @@ const taskSchema = z.object({
 });
 
 const TasksPage = () => {
+
   const dispatch = useDispatch();
   const { list: tasks, loading: tasksLoading } = useSelector((state) => state.tasks);
   const { user: currentUser } = useSelector((state) => state.auth);
@@ -59,14 +68,21 @@ const TasksPage = () => {
   const [loadingMembers, setLoadingMembers] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
-  const limit = 10;
+  const [pageSize, setPageSize] = useState(10);
   const [sortField, setSortField] = useState('id');
   const [sortDirection, setSortDirection] = useState('asc');
   const [filterProject, setFilterProject] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [totalTasks, setTotalTasks] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [tableFilters, setTableFilters] = useState({
+    status: '',
+    priority: '',
+    project: ''
+  });
 
   const {
     control,
@@ -144,29 +160,118 @@ const TasksPage = () => {
   }, [watchedProjectId]);
 
   useEffect(() => {
-    const params = {
-      page: currentPage,
-      limit,
-      sort: `${sortField}:${sortDirection}`,
-    };
-    if (filterProject) params.projectId = filterProject;
-    if (filterStatus) params.status = filterStatus;
+    const loadTasks = async () => {
+      const params = {
+        page: currentPage,
+        limit: pageSize,
+        sort: `${sortField}:${sortDirection}`,
+      };
 
-    dispatch(fetchTasks(params))
-      .unwrap()
-      .then((payload) => {
-        setTotalTasks(payload.total || 0);
-        setTotalPages(payload.pages || 1);
-      });
-  }, [dispatch, currentPage, sortField, sortDirection, filterProject, filterStatus]);
+      if (filterProject) {
+        params.projectId = filterProject;
+      }
+      if (filterStatus) {
+        params.status = filterStatus;
+      }
+      if (searchQuery.trim()) {
+        params.search = searchQuery.trim();
+      }
+
+      try {
+        const result = await dispatch(fetchTasks(params)).unwrap();
+        setTotalTasks(result.total || 0);
+        setTotalPages(result.pages || 1);
+      } catch (error) {
+        console.error('Ошибка загрузки задач:', error);
+      }
+    };
+
+    loadTasks();
+  }, [dispatch, currentPage, pageSize, sortField, sortDirection, filterProject, filterStatus, searchQuery]);
+
+  const handleTableFilterChange = (filterType, value) => {
+    if (filterType === 'reset') {
+      setTableFilters({ status: '', priority: '', project: '' });
+    } else {
+      setTableFilters(prev => ({ ...prev, [filterType]: value }));
+    }
+    setCurrentPage(1);
+  };
+  const handleStatusEdit = async (taskId, field, newValue) => {
+    try {
+      const task = tasks.find(t => t.id === taskId);
+      if (!task) return;
+
+      if (!canEditOrDeleteTask(task)) {
+        alert('У вас нет прав на редактирование этой задачи');
+        return;
+      }
+
+      const taskData = { [field]: newValue };
+      await dispatch(updateTask({ id: taskId, taskData })).unwrap();
+
+      showNotification(`Статус задачи обновлен на: ${getStatusLabel(newValue)}`);
+    } catch (err) {
+      console.error('Ошибка обновления статуса:', err);
+      alert('Не удалось обновить статус задачи');
+    }
+  };
+
+  const getStatusLabel = (status) => {
+    const statusMap = {
+      backlog: 'Бэклог',
+      todo: 'To Do',
+      in_progress: 'В работе',
+      review: 'На проверке',
+      done: 'Готово',
+    };
+    return statusMap[status] || status;
+  };
+
+  const getPriorityLabel = (priority) => {
+    const priorityMap = {
+      low: 'Низкий',
+      medium: 'Средний',
+      high: 'Высокий',
+      critical: 'Критический',
+    };
+    return priorityMap[priority] || priority;
+  };
+
+  const showNotification = (message) => {
+    const notification = document.createElement('div');
+    notification.className = 'status-notification';
+    notification.textContent = message;
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, #27ae60 0%, #219653 100%);
+      color: white;
+      padding: 14px 28px;
+      border-radius: 10px;
+      box-shadow: 0 8px 25px rgba(39, 174, 96, 0.3);
+      z-index: 1000;
+      font-weight: 600;
+      animation: slideIn 0.3s ease;
+      border-left: 5px solid #1e8449;
+    `;
+
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+      notification.style.animation = 'slideOut 0.3s ease';
+      setTimeout(() => document.body.removeChild(notification), 300);
+    }, 3000);
+  };
 
   const canEditOrDeleteTask = (task) => {
     if (!currentUser) return false;
     if (currentUser.rights === 'admin') return true;
 
-    const reporterId = task?.Reporter?.id ?? null;
-    const assigneeId = task?.Assignee?.id ?? null;
-    const projectCreatorId = task?.Project?.Creator?.id ?? null;
+    const reporterId = task?.reporter_id ?? task?.Reporter?.id ?? null;
+    const assigneeId = task?.assignee_id ?? task?.Assignee?.id ?? null;
+    const projectCreatorId = task?.Project?.creator_id ?? task?.Project?.Creator?.id ?? null;
 
     return (
       reporterId === currentUser.id ||
@@ -182,48 +287,437 @@ const TasksPage = () => {
   };
 
   const openTaskModal = (task = null, edit = false) => {
+    console.log('openTaskModal вызвана с параметрами:', { task, edit });
+
     if (task && edit && !canEditOrDeleteTask(task)) {
       alert('У вас нет прав на редактирование этой задачи');
       return;
     }
+
     setModalTask(task);
     setIsEditMode(edit || !task);
     setSelectedFiles([]);
     setServerError('');
+    setIsModalOpen(true);
 
-    reset(task
-      ? {
-          title: task.title || '',
-          description: task.description || '',
-          priority: task.priority || 'medium',
-          status: task.status || 'todo',
-          story_points: task.story_points || null,
-          due_date: task.due_date || '',
-          project_id: task.project_id || null,
-          iteration_id: task.iteration_id || null,
-          assignee_id: task.assignee_id || null,
-          reporter_id: task.reporter_id || null,
-        }
-      : {
-          title: '',
-          description: '',
-          priority: 'medium',
-          status: 'todo',
-          story_points: null,
-          due_date: '',
-          project_id: null,
-          iteration_id: null,
-          assignee_id: null,
-          reporter_id: null,
-        });
+    if (task) {
+      reset({
+        title: task.title || '',
+        description: task.description || '',
+        priority: task.priority || 'medium',
+        status: task.status || 'todo',
+        story_points: task.story_points || null,
+        due_date: task.due_date || '',
+        project_id: task.project_id || null,
+        iteration_id: task.iteration_id || null,
+        assignee_id: task.assignee_id || null,
+        reporter_id: task.reporter_id || null,
+      });
+    } else {
+
+      reset({
+        title: '',
+        description: '',
+        priority: 'medium',
+        status: 'todo',
+        story_points: null,
+        due_date: '',
+        project_id: null,
+        iteration_id: null,
+        assignee_id: null,
+        reporter_id: null,
+      });
+    }
   };
 
   const closeModal = () => {
+    setIsModalOpen(false); 
     setModalTask(null);
     setIsEditMode(false);
     setIterations([]);
     setProjectMembers([]);
     reset();
+  };
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  const handleSortChange = (field, direction) => {
+    setSortField(field);
+    setSortDirection(direction);
+    setCurrentPage(1);
+  };
+
+  const handleSearch = (e) => {
+    setSearchQuery(e.target.value);
+    setCurrentPage(1);
+  };
+
+  const handleFilterProjectChange = (e) => {
+    setFilterProject(e.target.value);
+    setCurrentPage(1);
+  };
+
+  const handleFilterStatusChange = (e) => {
+    setFilterStatus(e.target.value);
+    setCurrentPage(1);
+  };
+
+  const handlePageSizeChange = (e) => {
+    setPageSize(Number(e.target.value));
+    setCurrentPage(1);
+  };
+
+  const resetFilters = () => {
+    setFilterProject('');
+    setFilterStatus('');
+    setSearchQuery('');
+    setSortField('id');
+    setSortDirection('asc');
+    setCurrentPage(1);
+  };
+
+  const handleExportPDF = async () => {
+    const params = {
+      page: 1,
+      limit: 10000,
+      sort: `${sortField}:${sortDirection}`,
+    };
+    if (filterProject) params.projectId = filterProject;
+    if (filterStatus) params.status = filterStatus;
+    if (searchQuery.trim()) params.search = searchQuery.trim();
+
+    try {
+      const result = await dispatch(fetchTasks(params)).unwrap();
+      const dataToExport = result.data || [];
+
+      const statusMap = {
+        backlog: 'Бэклог',
+        todo: 'To Do',
+        in_progress: 'В работе',
+        review: 'На проверке',
+        done: 'Готово',
+      };
+
+      const priorityMap = {
+        low: 'Низкий',
+        medium: 'Средний',
+        high: 'Высокий',
+        critical: 'Критический',
+      };
+
+      const groupedTasks = dataToExport.reduce((acc, task) => {
+        const status = task.status || 'unknown';
+        if (!acc[status]) acc[status] = [];
+        acc[status].push(task);
+        return acc;
+      }, {});
+
+      const content = [
+        { text: 'Отчет по задачам', style: 'header', margin: [0, 0, 0, 20] },
+        { text: `Дата отчета: ${new Date().toLocaleDateString('ru-RU')}`, margin: [0, 0, 0, 8] },
+        { text: `Пользователь: ${currentUser?.full_name || 'Неизвестно'}`, margin: [0, 0, 0, 8] },
+        { text: `Всего задач в отчете: ${dataToExport.length}`, margin: [0, 0, 0, 20] },
+      ];
+
+      if (filterProject) {
+        const projectName = projects.find((p) => p.id === parseInt(filterProject))?.name || `ID ${filterProject}`;
+        content.push({ text: `Фильтр по проекту: ${projectName}`, margin: [0, 0, 0, 8] });
+      }
+      if (filterStatus) {
+        const statusName = statusMap[filterStatus] || filterStatus;
+        content.push({ text: `Фильтр по статусу: ${statusName}`, margin: [0, 0, 0, 8] });
+      }
+      if (searchQuery) {
+        content.push({ text: `Поисковый запрос: ${searchQuery}`, margin: [0, 0, 0, 20] });
+      }
+
+      Object.entries(groupedTasks)
+        .sort(([a], [b]) => {
+          const order = ['backlog', 'todo', 'in_progress', 'review', 'done'];
+          return order.indexOf(a) - order.indexOf(b);
+        })
+        .forEach(([status, groupTasks]) => {
+          const statusName = statusMap[status] || status;
+          const totalPoints = groupTasks.reduce((sum, task) => sum + (task.story_points || 0), 0);
+
+          const tableBody = [
+            ['ID', 'Название', 'Проект', 'Приоритет', 'Story Points', 'Исполнитель', 'Срок'],
+          ];
+
+          groupTasks.forEach((task) => {
+            tableBody.push([
+              task.id.toString(),
+              task.title || '—',
+              task.Project?.name || '—',
+              priorityMap[task.priority] || task.priority || '—',
+              task.story_points?.toString() || '—',
+              task.Assignee?.full_name || '—',
+              task.due_date ? new Date(task.due_date).toLocaleDateString('ru-RU') : '—',
+            ]);
+          });
+
+          content.push(
+            { text: `Группа: ${statusName} (${groupTasks.length} задач)`, style: 'subheader' },
+            {
+              table: {
+                headerRows: 1,
+                widths: ['auto', '*', 'auto', 'auto', 'auto', 'auto', 'auto'],
+                body: tableBody,
+              },
+              layout: 'lightHorizontalLines',
+              margin: [0, 10, 0, 10],
+            },
+            { text: `Итого story points: ${totalPoints}`, style: 'total', margin: [0, 0, 0, 20] },
+          );
+        });
+
+      const docDefinition = {
+        content,
+        styles: {
+          header: { fontSize: 18, bold: true, color: '#2c3e50' },
+          subheader: { fontSize: 14, bold: true, margin: [0, 10, 0, 5] },
+          total: { fontSize: 12, bold: true, color: '#27ae60' },
+        },
+        defaultStyle: {
+          fontSize: 11,
+          color: '#34495e',
+        },
+      };
+
+      pdfMake.createPdf(docDefinition).download('otchet_po_zadacham.pdf');
+    } catch (err) {
+      console.error('Ошибка экспорта PDF:', err);
+      alert('Не удалось загрузить данные для экспорта.');
+    }
+  };
+
+  const handleExportExcel = async () => {
+    const params = {
+      page: 1,
+      limit: 10000,
+      sort: `${sortField}:${sortDirection}`,
+    };
+    if (filterProject) params.projectId = filterProject;
+    if (filterStatus) params.status = filterStatus;
+    if (searchQuery.trim()) params.search = searchQuery.trim();
+
+    try {
+      const result = await dispatch(fetchTasks(params)).unwrap();
+      const dataToExport = result.data || [];
+
+      const wb = XLSX.utils.book_new();
+
+      const title = [['Отчет по задачам']];
+      const info = [
+        ['Дата отчета:', new Date().toLocaleDateString('ru-RU')],
+        ['Пользователь:', currentUser?.full_name || 'Неизвестно'],
+        ['Всего задач в отчете:', dataToExport.length],
+      ];
+      if (filterProject) {
+        const projectName = projects.find((p) => p.id === parseInt(filterProject))?.name || `ID ${filterProject}`;
+        info.push(['Фильтр по проекту:', projectName]);
+      }
+      if (filterStatus) {
+        const statusName = {
+          backlog: 'Бэклог',
+          todo: 'To Do',
+          in_progress: 'В работе',
+          review: 'На проверке',
+          done: 'Готово',
+        }[filterStatus] || filterStatus;
+        info.push(['Фильтр по статусу:', statusName]);
+      }
+      if (searchQuery) {
+        info.push(['Поисковый запрос:', searchQuery]);
+      }
+      info.push([]);
+
+      const statusMap = {
+        backlog: 'Бэклог',
+        todo: 'To Do',
+        in_progress: 'В работе',
+        review: 'На проверке',
+        done: 'Готово',
+      };
+
+      const priorityMap = {
+        low: 'Низкий',
+        medium: 'Средний',
+        high: 'Высокий',
+        critical: 'Критический',
+      };
+
+      const groupedTasks = dataToExport.reduce((acc, task) => {
+        const status = task.status || 'unknown';
+        if (!acc[status]) acc[status] = [];
+        acc[status].push(task);
+        return acc;
+      }, {});
+
+      let allRows = [...title, ...info];
+
+      Object.entries(groupedTasks)
+        .sort(([a], [b]) => {
+          const order = ['backlog', 'todo', 'in_progress', 'review', 'done'];
+          return order.indexOf(a) - order.indexOf(b);
+        })
+        .forEach(([status, groupTasks]) => {
+          const statusName = statusMap[status] || status;
+          let totalPoints = 0;
+
+          allRows.push([`Группа: ${statusName} (Задач: ${groupTasks.length})`]);
+          allRows.push(['ID', 'Название', 'Проект', 'Приоритет', 'Story Points', 'Исполнитель', 'Срок']);
+
+          groupTasks.forEach((task) => {
+            totalPoints += task.story_points || 0;
+            allRows.push([
+              task.id,
+              task.title || '—',
+              task.Project?.name || '—',
+              priorityMap[task.priority] || task.priority || '—',
+              task.story_points || '—',
+              task.Assignee?.full_name || '—',
+              task.due_date ? new Date(task.due_date).toLocaleDateString('ru-RU') : '—',
+            ]);
+          });
+
+          allRows.push(['Итого story points:', totalPoints]);
+          allRows.push([]);
+        });
+
+      const ws = XLSX.utils.aoa_to_sheet(allRows);
+
+      ws['!cols'] = [
+        { wch: 8 },
+        { wch: 50 },
+        { wch: 25 },
+        { wch: 15 },
+        { wch: 15 },
+        { wch: 25 },
+        { wch: 15 },
+      ];
+
+      XLSX.utils.book_append_sheet(wb, ws, 'Задачи');
+      XLSX.writeFile(wb, 'otchet_po_zadacham.xlsx');
+    } catch (err) {
+      console.error('Ошибка экспорта Excel:', err);
+      alert('Не удалось загрузить данные для экспорта.');
+    }
+  };
+
+  const tableColumns = [
+    {
+      key: 'id',
+      header: 'ID',
+      enableSorting: true,
+      meta: { width: '80px' }
+    },
+    {
+      key: 'title',
+      header: 'Название',
+      render: (t) => <strong>{t.title}</strong>,
+      enableSorting: true,
+      meta: { width: '300px' }
+    },
+    {
+      key: 'Project.name',
+      header: 'Проект',
+      render: (t) => t.Project?.name || '—',
+      enableSorting: false,
+      meta: { width: '180px' }
+    },
+    {
+      key: 'Iteration.name',
+      header: 'Итерация',
+      render: (t) => t.Iteration?.name || '—',
+      enableSorting: false,
+      meta: { width: '150px' }
+    },
+    {
+      key: 'priority',
+      header: 'Приоритет',
+      render: (t) => (
+        <span className={`priority-tag priority-${t.priority}`}>
+          {getPriorityLabel(t.priority)}
+        </span>
+      ),
+      enableSorting: true,
+      meta: { width: '140px' }
+    },
+    {
+      key: 'status',
+      header: 'Статус',
+      render: (t) => (
+        <span className={`status-tag status-${t.status}`}>
+          {getStatusLabel(t.status)}
+        </span>
+      ),
+      enableSorting: true,
+      meta: { width: '140px' }
+    },
+    {
+      key: 'Assignee.full_name',
+      header: 'Исполнитель',
+      render: (t) => t.Assignee?.full_name || '—',
+      enableSorting: false,
+      meta: { width: '180px' }
+    },
+    {
+      key: 'due_date',
+      header: 'Срок',
+      render: (t) => t.due_date ? new Date(t.due_date).toLocaleDateString('ru-RU') : '—',
+      enableSorting: true,
+      meta: { width: '120px' }
+    },
+    {
+      key: 'actions',
+      header: 'Действия',
+      render: (task) => {
+        const canManage = canEditOrDeleteTask(task);
+        return (
+          <div className="table-actions">
+            <button
+              onClick={() => openTaskModal(task, false)}
+              className="btn btn-info btn-small"
+              title="Просмотреть"
+            >
+              👁️
+            </button>
+            <button
+              onClick={() => openTaskModal(task, true)}
+              className="btn btn-primary btn-small"
+              disabled={!canManage}
+              title={!canManage ? 'Нет прав на редактирование' : 'Редактировать'}
+            >
+              ✏️
+            </button>
+            <button
+              onClick={() => handleDelete(task.id)}
+              className="btn btn-danger btn-small"
+              disabled={!canManage}
+              title={!canManage ? 'Нет прав на удаление' : 'Удалить'}
+            >
+              🗑️
+            </button>
+          </div>
+        );
+      },
+      enableSorting: false,
+      meta: { width: '180px' }
+    },
+  ];
+
+  const handleDelete = (id) => {
+    const task = tasks.find((t) => t.id === id);
+    if (!canEditOrDeleteTask(task)) {
+      alert('У вас нет прав на удаление этой задачи');
+      return;
+    }
+    if (window.confirm('Удалить задачу? Все вложения будут удалены безвозвратно.')) {
+      dispatch(deleteTask(id));
+    }
   };
 
   const handleFileChange = (e) => {
@@ -275,17 +769,6 @@ const TasksPage = () => {
     }
   };
 
-  const handleDelete = (id) => {
-    const task = tasks.find((t) => t.id === id);
-    if (!canEditOrDeleteTask(task)) {
-      alert('У вас нет прав на удаление этой задачи');
-      return;
-    }
-    if (window.confirm('Удалить задачу? Все вложения будут удалены безвозвратно.')) {
-      dispatch(deleteTask(id));
-    }
-  };
-
   const handleDeleteAttachment = (attachmentId) => {
     const attachment = modalTask?.Attachments?.find((a) => a.id === attachmentId);
     if (!canDeleteAttachment(attachment)) {
@@ -301,349 +784,98 @@ const TasksPage = () => {
     }
   };
 
-  const handleExportPDF = async () => {
-    const params = {
-      page: 1,
-      limit: 10000,
-      sort: `${sortField}:${sortDirection}`,
-    };
-    if (filterProject) params.projectId = filterProject;
-    if (filterStatus) params.status = filterStatus;
-
-    try {
-      const result = await dispatch(fetchTasks(params)).unwrap();
-      const dataToExport = result.data || [];
-
-      const statusMap = {
-        backlog: 'Бэклог',
-        todo: 'To Do',
-        in_progress: 'В работе',
-        review: 'На проверке',
-        done: 'Готово',
-      };
-
-      const groupedTasks = dataToExport.reduce((acc, task) => {
-        const status = task.status || 'unknown';
-        if (!acc[status]) acc[status] = [];
-        acc[status].push(task);
-        return acc;
-      }, {});
-
-      const content = [
-        { text: 'Отчет по задачам', style: 'header', margin: [0, 0, 0, 20] },
-        { text: `Дата отчета: ${new Date().toLocaleDateString('ru-RU')}`, margin: [0, 0, 0, 8] },
-        { text: `Пользователь: ${currentUser?.full_name || 'Неизвестно'}`, margin: [0, 0, 0, 8] },
-        { text: `Всего задач в отчете: ${dataToExport.length}`, margin: [0, 0, 0, 20] },
-      ];
-
-      if (filterProject) {
-        const projectName = projects.find((p) => p.id === parseInt(filterProject))?.name || `ID ${filterProject}`;
-        content.push({ text: `Фильтр по проекту: ${projectName}`, margin: [0, 0, 0, 8] });
-      }
-      if (filterStatus) {
-        const statusName = statusMap[filterStatus] || filterStatus;
-        content.push({ text: `Фильтр по статусу: ${statusName}`, margin: [0, 0, 0, 20] });
-      }
-
-      Object.entries(groupedTasks)
-        .sort(([a], [b]) => {
-          const order = ['backlog', 'todo', 'in_progress', 'review', 'done'];
-          return order.indexOf(a) - order.indexOf(b);
-        })
-        .forEach(([status, groupTasks]) => {
-          const statusName = statusMap[status] || status;
-          const totalPoints = groupTasks.reduce((sum, task) => sum + (task.story_points || 0), 0);
-
-          const tableBody = [
-            ['ID', 'Название', 'Проект', 'Приоритет', 'Story Points', 'Исполнитель'],
-          ];
-
-          groupTasks.forEach((task) => {
-            tableBody.push([
-              task.id.toString(),
-              task.title || '—',
-              task.Project?.name || '—',
-              task.priority || '—',
-              task.story_points?.toString() || '—',
-              task.Assignee?.full_name || '—',
-            ]);
-          });
-
-          content.push(
-            { text: `Группа: ${statusName} (${groupTasks.length} задач)`, style: 'subheader' },
-            {
-              table: {
-                headerRows: 1,
-                widths: ['auto', '*', 'auto', 'auto', 'auto', 'auto'],
-                body: tableBody,
-              },
-              layout: 'lightHorizontalLines',
-              margin: [0, 10, 0, 10],
-            },
-            { text: `Итого story points: ${totalPoints}`, style: 'total', margin: [0, 0, 0, 20] },
-          );
-        });
-
-      const docDefinition = {
-        content,
-        styles: {
-          header: { fontSize: 18, bold: true, color: '#2c3e50' },
-          subheader: { fontSize: 14, bold: true, margin: [0, 10, 0, 5] },
-          total: { fontSize: 12, bold: true, color: '#27ae60' },
-        },
-        defaultStyle: {
-          fontSize: 11,
-          color: '#34495e',
-        },
-      };
-
-      pdfMake.createPdf(docDefinition).download('otchet_po_zadacham.pdf');
-    } catch (err) {
-      console.error('Ошибка экспорта PDF:', err);
-      alert('Не удалось загрузить данные для экспорта.');
-    }
-  };
-
-  const handleExportExcel = async () => {
-    const params = {
-      page: 1,
-      limit: 10000,
-      sort: `${sortField}:${sortDirection}`,
-    };
-    if (filterProject) params.projectId = filterProject;
-    if (filterStatus) params.status = filterStatus;
-
-    try {
-      const result = await dispatch(fetchTasks(params)).unwrap();
-      const dataToExport = result.data || [];
-
-      const wb = XLSX.utils.book_new();
-
-      const title = [['Отчет по задачам']];
-      const info = [
-        ['Дата отчета:', new Date().toLocaleDateString('ru-RU')],
-        ['Пользователь:', currentUser?.full_name || 'Неизвестно'],
-        ['Всего задач в отчете:', dataToExport.length],
-      ];
-      if (filterProject) {
-        const projectName = projects.find((p) => p.id === parseInt(filterProject))?.name || `ID ${filterProject}`;
-        info.push(['Фильтр по проекту:', projectName]);
-      }
-      if (filterStatus) {
-        const statusName = {
-          backlog: 'Бэклог',
-          todo: 'To Do',
-          in_progress: 'В работе',
-          review: 'На проверке',
-          done: 'Готово',
-        }[filterStatus] || filterStatus;
-        info.push(['Фильтр по статусу:', statusName]);
-      }
-      info.push([]);
-
-      const statusMap = {
-        backlog: 'Бэклог',
-        todo: 'To Do',
-        in_progress: 'В работе',
-        review: 'На проверке',
-        done: 'Готово',
-      };
-
-      const groupedTasks = dataToExport.reduce((acc, task) => {
-        const status = task.status || 'unknown';
-        if (!acc[status]) acc[status] = [];
-        acc[status].push(task);
-        return acc;
-      }, {});
-
-      let allRows = [...title, ...info];
-
-      Object.entries(groupedTasks)
-        .sort(([a], [b]) => {
-          const order = ['backlog', 'todo', 'in_progress', 'review', 'done'];
-          return order.indexOf(a) - order.indexOf(b);
-        })
-        .forEach(([status, groupTasks]) => {
-          const statusName = statusMap[status] || status;
-          let totalPoints = 0;
-
-          allRows.push([`Группа: ${statusName} (Задач: ${groupTasks.length})`]);
-          allRows.push(['ID', 'Название', 'Проект', 'Приоритет', 'Story Points', 'Исполнитель']);
-
-          groupTasks.forEach((task) => {
-            totalPoints += task.story_points || 0;
-            allRows.push([
-              task.id,
-              task.title || '—',
-              task.Project?.name || '—',
-              task.priority || '—',
-              task.story_points || '—',
-              task.Assignee?.full_name || '—',
-            ]);
-          });
-
-          allRows.push(['Итого story points:', totalPoints]);
-          allRows.push([]);
-        });
-
-      const ws = XLSX.utils.aoa_to_sheet(allRows);
-
-      ws['!cols'] = [
-        { wch: 8 },
-        { wch: 50 },
-        { wch: 25 },
-        { wch: 15 },
-        { wch: 15 },
-        { wch: 25 },
-      ];
-
-      XLSX.utils.book_append_sheet(wb, ws, 'Задачи');
-      XLSX.writeFile(wb, 'otchet_po_zadacham.xlsx');
-    } catch (err) {
-      console.error('Ошибка экспорта Excel:', err);
-      alert('Не удалось загрузить данные для экспорта.');
-    }
-  };
-
-  const tableColumns = [
-    { key: 'title', header: 'Название', render: (t) => <strong>{t.title}</strong> },
-    { key: 'Project', header: 'Проект', render: (t) => t.Project?.name || '—' },
-    { key: 'Iteration', header: 'Итерация', render: (t) => t.Iteration?.name || '—' },
-    {
-      key: 'priority',
-      header: 'Приоритет',
-      render: (t) => <span className={`priority-tag priority-${t.priority}`}>{t.priority}</span>,
-    },
-    {
-      key: 'status',
-      header: 'Статус',
-      render: (t) => <span className={`status-tag status-${t.status}`}>{t.status}</span>,
-    },
-    { key: 'Assignee', header: 'Исполнитель', render: (t) => t.Assignee?.full_name || '—' },
-  ];
-
-  const sortingFields = [
-    { key: 'id', label: 'ID' },
-    { key: 'title', label: 'Название' },
-    { key: 'priority', label: 'Приоритет' },
-    { key: 'status', label: 'Статус' },
-    { key: 'Project.name', label: 'Проект' },
-    { key: 'Iteration.name', label: 'Итерация' },
-  ];
-
-  const additionalFilters = () => (
-    <div className="filter-group">
-      <div className="filter-item">
-        <label>Проект:</label>
-        <select value={filterProject} onChange={(e) => { setFilterProject(e.target.value); setCurrentPage(1); }}>
-          <option value="">Все проекты</option>
-          {projects.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className="filter-item">
-        <label>Статус:</label>
-        <select value={filterStatus} onChange={(e) => { setFilterStatus(e.target.value); setCurrentPage(1); }}>
-          <option value="">Все статусы</option>
-          <option value="backlog">Бэклог</option>
-          <option value="todo">To Do</option>
-          <option value="in_progress">В работе</option>
-          <option value="review">На проверке</option>
-          <option value="done">Готово</option>
-        </select>
-      </div>
-    </div>
-  );
-
-  const resetFilters = () => {
-    setFilterProject('');
-    setFilterStatus('');
-    setCurrentPage(1);
-  };
-
-  const customActions = (task) => {
-    const canManage = canEditOrDeleteTask(task);
-
+  if (tasksLoading && currentPage === 1) {
     return (
-      <div className="table-actions">
-        <button onClick={() => openTaskModal(task, false)} className="btn btn-info btn-small">
-          Просмотр
-        </button>
-        <button
-          onClick={() => openTaskModal(task, true)}
-          className="btn btn-primary btn-small"
-          disabled={!canManage}
-          title={!canManage ? 'Нет прав на редактирование' : ''}
-        >
-          Редактировать
-        </button>
-        <button
-          onClick={() => handleDelete(task.id)}
-          className="btn btn-danger btn-small"
-          disabled={!canManage}
-          title={!canManage ? 'Нет прав на удаление' : ''}
-        >
-          Удалить
-        </button>
+      <div className="page-loading">
+        <div className="loading-spinner"></div>
+        <p>Загрузка задач...</p>
       </div>
     );
-  };
-
-  if (tasksLoading && currentPage === 1) {
-    return <div className="page-loading">Загрузка задач...</div>;
   }
 
   return (
     <div className="tasks-page">
       <div className="page-header">
         <h2>Задачи</h2>
-        <div className="export-buttons">
-          <button onClick={handleExportPDF} className="btn btn-pdf">
-            Экспорт в PDF
-          </button>
-          <button onClick={handleExportExcel} className="btn btn-excel">
-            Экспорт в Excel
-          </button>
-          <button onClick={() => openTaskModal()} className="btn btn-success btn-add">
-            + Добавить задачу
+        <div className="header-actions">
+          <div className="export-buttons">
+            <button onClick={handleExportPDF} className="btn btn-pdf">
+              📄 Экспорт в PDF
+            </button>
+            <button onClick={handleExportExcel} className="btn btn-excel">
+              📊 Экспорт в Excel
+            </button>
+          </div>
+          <button
+            onClick={() => openTaskModal()}
+            className="btn btn-success btn-add"
+          >
+            <span>+</span> Создать задачу
           </button>
         </div>
       </div>
 
-      <SortingControls
-        sortField={sortField}
-        sortDirection={sortDirection}
-        onSortFieldChange={setSortField}
-        onSortDirectionChange={setSortDirection}
-        availableFields={sortingFields}
-        onResetFilters={resetFilters}
-        additionalControls={additionalFilters}
-        title="Фильтры и сортировка"
-      />
+      <div className="filters-panel">
+        <div className="search-box">
+          <input
+            type="text"
+            placeholder="Поиск по названию задачи..."
+            value={searchQuery}
+            onChange={handleSearch}
+            className="search-input"
+          />
+          <span className="search-icon">🔍</span>
+        </div>
+        <div className="filter-group">
+            <label htmlFor="page-size">На странице:</label>
+            <select
+              id="page-size"
+              value={pageSize}
+              onChange={handlePageSizeChange}
+              className="filter-select"
+            >
+              <option value="5">5</option>
+              <option value="10">10</option>
+              <option value="20">20</option>
+              <option value="50">50</option>
+            </select>
+          </div>
 
-      <DataTable
+          <button
+            onClick={resetFilters}
+            className="btn btn-secondary reset-btn"
+            title="Сбросить все фильтры"
+          >
+            ⭮ Сбросить фильтры
+          </button>
+        </div>
+
+        
+
+      <EditableTable
         data={tasks}
         columns={tableColumns}
-        emptyMessage="Задач не найдено"
-        customActions={customActions}
-      />
-
-      <Pagination
+        onEditCell={handleStatusEdit}
+        emptyMessage="Задачи не найдены. Попробуйте изменить фильтры или создать новую задачу."
+        pageSize={pageSize}
+        totalCount={totalTasks}
         currentPage={currentPage}
         totalPages={totalPages}
-        totalCount={totalTasks}
-        pageSize={limit}
-        onPageChange={setCurrentPage}
+        onPageChange={handlePageChange}
+        onSortChange={handleSortChange}
+        sortField={sortField}
+        sortDirection={sortDirection}
         loading={tasksLoading}
+        projects={projects}
+        filters={tableFilters}
+        onFilterChange={handleTableFilterChange}
       />
 
       <Modal
-        isOpen={modalTask !== null}
+        isOpen={isModalOpen}
         onClose={closeModal}
         title={isEditMode ? (modalTask ? 'Редактировать задачу' : 'Создать задачу') : 'Просмотр задачи'}
+        size="large"
       >
         <div className="task-modal-content">
           {isEditMode ? (
@@ -890,9 +1122,14 @@ const TasksPage = () => {
                 {selectedFiles.length > 0 && <p className="file-info">Выбрано: {selectedFiles.length} файлов</p>}
               </div>
 
-              <button type="submit" className="btn btn-primary btn-submit">
-                {modalTask ? 'Сохранить изменения' : 'Создать задачу'}
-              </button>
+              <div className="form-actions">
+                <button type="button" onClick={closeModal} className="btn btn-secondary">
+                  Отмена
+                </button>
+                <button type="submit" className="btn btn-primary btn-submit">
+                  {modalTask ? 'Сохранить изменения' : 'Создать задачу'}
+                </button>
+              </div>
             </form>
           ) : (
             <div className="task-view">
@@ -901,10 +1138,10 @@ const TasksPage = () => {
                 <p><strong>Описание:</strong> {modalTask?.description || '—'}</p>
                 <p><strong>Проект:</strong> {modalTask?.Project?.name || '—'}</p>
                 <p><strong>Итерация:</strong> {modalTask?.Iteration?.name || '—'}</p>
-                <p><strong>Приоритет:</strong> <span className={`priority-tag priority-${modalTask?.priority}`}>{modalTask?.priority}</span></p>
-                <p><strong>Статус:</strong> <span className={`status-tag status-${modalTask?.status}`}>{modalTask?.status}</span></p>
+                <p><strong>Приоритет:</strong> <span className={`priority-tag priority-${modalTask?.priority}`}>{getPriorityLabel(modalTask?.priority)}</span></p>
+                <p><strong>Статус:</strong> <span className={`status-tag status-${modalTask?.status}`}>{getStatusLabel(modalTask?.status)}</span></p>
                 <p><strong>Story Points:</strong> {modalTask?.story_points || '—'}</p>
-                <p><strong>Срок:</strong> {modalTask?.due_date || '—'}</p>
+                <p><strong>Срок:</strong> {modalTask?.due_date ? new Date(modalTask.due_date).toLocaleDateString('ru-RU') : '—'}</p>
                 <p><strong>Исполнитель:</strong> {modalTask?.Assignee?.full_name || '—'}</p>
                 <p><strong>Репортер:</strong> {modalTask?.Reporter?.full_name || '—'}</p>
               </div>
@@ -923,18 +1160,54 @@ const TasksPage = () => {
                 </div>
               )}
 
-              <button
-                onClick={() => setIsEditMode(true)}
-                className="btn btn-primary"
-                disabled={!canEditOrDeleteTask(modalTask)}
-                title={!canEditOrDeleteTask(modalTask) ? 'Нет прав на редактирование' : ''}
-              >
-                Редактировать задачу
-              </button>
+              <div className="task-view-actions">
+                <button
+                  onClick={() => setIsEditMode(true)}
+                  className="btn btn-primary"
+                  disabled={!canEditOrDeleteTask(modalTask)}
+                  title={!canEditOrDeleteTask(modalTask) ? 'Нет прав на редактирование' : ''}
+                >
+                  Редактировать задачу
+                </button>
+                <button onClick={closeModal} className="btn btn-secondary">
+                  Закрыть
+                </button>
+              </div>
             </div>
           )}
         </div>
       </Modal>
+
+      <style>
+        {`
+          @keyframes slideIn {
+            from {
+              transform: translateX(100%);
+              opacity: 0;
+            }
+            to {
+              transform: translateX(0);
+              opacity: 1;
+            }
+          }
+          
+          @keyframes slideOut {
+            from {
+              transform: translateX(0);
+              opacity: 1;
+            }
+            to {
+              transform: translateX(100%);
+              opacity: 0;
+            }
+          }
+          
+          .status-notification {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            font-size: 14px;
+          }
+        `}
+      </style>
     </div>
   );
 };

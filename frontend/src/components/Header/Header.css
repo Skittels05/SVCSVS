@@ -1,10 +1,14 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 .header {
   background: #2c3e50;
   color: white;
   padding: 15px 0;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  position: sticky;
-  top: 0;
   z-index: 1000;
 }
 
@@ -16,14 +20,16 @@
   justify-content: space-between;
   align-items: center;
   position: relative;
-  flex-wrap: wrap; /* Важно: перенос на новую строку при нехватке места */
+  flex-wrap: wrap;
   gap: 15px;
+  width: 100%;
 }
 
 .header-title {
   margin: 0;
   font-size: 24px;
   flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .header-logo {
@@ -41,6 +47,18 @@
   display: flex;
   gap: 30px;
   flex-shrink: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 5px;
+}
+
+.header-nav::-webkit-scrollbar {
+  height: 4px;
+}
+
+.header-nav::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
 }
 
 .nav-link {
@@ -52,6 +70,7 @@
   position: relative;
   transition: color 0.2s;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .nav-link:hover {
@@ -95,7 +114,6 @@
   transition: all 0.3s ease;
 }
 
-/* Блок с пользователем */
 .user-info {
   display: flex;
   align-items: center;
@@ -103,6 +121,7 @@
   flex-shrink: 0;
   flex-wrap: wrap;
   justify-content: flex-end;
+  min-width: 0;
 }
 
 .user-greeting {
@@ -110,14 +129,14 @@
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
-  justify-content: flex-end;
+  min-width: 0;
 }
 
 .user-name {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 200px; /* Ограничиваем ширину имени */
+  max-width: 200px;
 }
 
 .admin-badge {
@@ -140,6 +159,7 @@
   font-size: 14px;
   transition: all 0.3s ease;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .btn-logout:hover {
@@ -147,7 +167,6 @@
   border-color: white;
 }
 
-/* Мобильная версия */
 @media (max-width: 992px) {
   .header-nav {
     gap: 20px;
@@ -165,6 +184,7 @@
   }
 
   .header-nav {
+    width: 100%;
     position: absolute;
     top: 100%;
     left: 0;
@@ -179,6 +199,7 @@
     visibility: hidden;
     transition: all 0.4s ease;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    overflow-x: visible;
   }
 
   .nav-toggle:checked ~ .header-nav {
@@ -220,11 +241,6 @@
 
   .user-name {
     max-width: 150px;
-  }
-
-  .btn-logout {
-    padding: 8px 14px;
-    font-size: 14px;
   }
 }
 

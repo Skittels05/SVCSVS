@@ -13,6 +13,7 @@ import RegisterPage from './pages/RegisterPage/RegisterPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage/ResetPasswordPage';
 import AnalyticsPage from './pages/AnalyticsPage/AnalyticsPage';
+import KanbanBoardPage from './pages/KanbanBoardPage/KanbanBoardPage';
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
                 <Route path="/attachments" element={<AttachmentsPage />} />
                 <Route path="/iterations" element={<IterationsPage />} />
                 <Route path="/analytics" element={<AnalyticsPage />} />
+                <Route path="/kanban" element={<KanbanBoardPage />} />
               </Routes>
             </div>
           </PrivateRoute>

@@ -38,6 +38,7 @@ const Header = () => {
           <Link to="/attachments" className="nav-link">Вложения</Link>
           <Link to="/iterations" className="nav-link">Итерации</Link>
           <Link to="/analytics" className="nav-link">Аналитика</Link>
+          <Link to="/kanban" className="nav-link">Канбан-доска</Link>
         </nav>
 
         {user && (
