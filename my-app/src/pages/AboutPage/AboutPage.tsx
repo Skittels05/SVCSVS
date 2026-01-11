@@ -4,7 +4,7 @@ import TestimonialsSection from './TestimonialsSection/TestimonialsSection';
 import SkillsSection from './SkillsSection/SkillsSection';
 import FactsSection from './FactsSection/FactsSection';
 
-const AboutPage = () => {
+const AboutPage: React.FC = () => {
   return (
     <div>
       <AgencySection />

@@ -2,17 +2,30 @@ import React, { useState, useEffect } from 'react';
 import './FactsSection.css';
 import factsData from '../../../data/facts.json';
 
-const FactsSection = () => {
-  const [facts, setFacts] = useState([]);
-  const [selectedItems, setSelectedItems] = useState([]);
+// Тип для одного элемента из facts.json
+interface Fact {
+  id: number | string;
+  img?: string;
+  digit: string;
+  text: string;
+  className?: string;
+}
+
+const FactsSection: React.FC = () => {
+  const [facts, setFacts] = useState<Fact[]>([]);
+  const [selectedItems, setSelectedItems] = useState<Array<number | string>>([]);
 
   useEffect(() => {
-    setFacts(factsData);
+    // Предполагаем, что factsData соответствует массиву Fact
+    // Если формат в JSON отличается — скорректируйте тип
+    setFacts(factsData as Fact[]);
   }, []);
 
-  const handleSelect = (id) => {
+  const handleSelect = (id: number | string) => {
     setSelectedItems((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+      prev.includes(id)
+        ? prev.filter((item) => item !== id)
+        : [...prev, id]
     );
   };
 
@@ -22,6 +35,7 @@ const FactsSection = () => {
         <span className="bold3">fun</span>
         <span className="regular8">facts</span>
       </h2>
+
       <div className="facts">
         {facts.map((fact) => (
           <div
@@ -29,7 +43,12 @@ const FactsSection = () => {
             className={selectedItems.includes(fact.id) ? 'selected' : ''}
             onClick={() => handleSelect(fact.id)}
           >
-            {fact.img && <img src={require(`../../../images/${fact.img}`)} alt="icon" />}
+            {fact.img && (
+              <img
+                src={require(`../../../images/${fact.img}`)}
+                alt="fact icon"
+              />
+            )}
             <p className={fact.className || ''}>
               <span className={fact.digit.length > 2 ? 'digit2' : 'digit'}>
                 {fact.digit}

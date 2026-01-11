@@ -1,28 +1,38 @@
 import React from 'react';
 import './AgencySection.css';
 
-const AgencySection = () => {
-  const awards = [
-    {
-      title: 'Awwards',
-      items: [
-        { text: 'Site of the Day', count: 3 },
-        { text: 'Developer Award', count: 1 },
-        { text: 'Honorable Mention', count: 7 },
-        { text: 'Mobile Excellence', count: 3 },
-      ],
-    },
-    {
-      title: 'CSS Design Awards',
-      items: [
-        { text: 'UX Design Award', count: 10 },
-        { text: 'UI Design Award', count: 4 },
-        { text: 'Innovation Design Award', count: 7 },
-        { text: 'Website of the Day', count: 13 },
-      ],
-    },
-  ];
+interface AwardItem {
+  text: string;
+  count: number;
+}
 
+interface Award {
+  title: string;
+  items: AwardItem[];
+}
+
+const awards: Award[] = [
+  {
+    title: 'Awwwards',
+    items: [
+      { text: 'Site of the Day', count: 3 },
+      { text: 'Developer Award', count: 1 },
+      { text: 'Honorable Mention', count: 7 },
+      { text: 'Mobile Excellence', count: 3 },
+    ],
+  },
+  {
+    title: 'CSS Design Awards',
+    items: [
+      { text: 'UX Design Award', count: 10 },
+      { text: 'UI Design Award', count: 4 },
+      { text: 'Innovation Design Award', count: 7 },
+      { text: 'Website of the Day', count: 13 },
+    ],
+  },
+];
+
+const AgencySection: React.FC = () => {
   return (
     <section className="section1">
       <div className="agency">
@@ -40,6 +50,7 @@ const AgencySection = () => {
           the company and people are born.
         </p>
       </div>
+
       <div className="awwards">
         {awards.map((award, index) => (
           <div key={index}>

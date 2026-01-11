@@ -1,17 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import './SkillsSection.css';
 import teamImage from '../../../images/team.png';
 import skillsData from '../../../data/skills.json';
+import './SkillsSection.css';
 
-const SkillsSection = () => {
-  const [skills, setSkills] = useState([]);
-  const [selectedItems, setSelectedItems] = useState([]);
+interface Skill {
+  id: number | string;
+  name: string;
+  percentage: number;
+  className?: string;
+}
+
+const SkillsSection: React.FC = () => {
+  const [skills, setSkills] = useState<Skill[]>([]);
+  const [selectedItems, setSelectedItems] = useState<Array<number | string>>([]);
 
   useEffect(() => {
-    setSkills(skillsData);
+    // предполагаем, что skillsData имеет правильную структуру
+    setSkills(skillsData as Skill[]);
   }, []);
 
-  const handleSelect = (id) => {
+  const handleSelect = (id: number | string) => {
     setSelectedItems((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     );
@@ -25,6 +33,7 @@ const SkillsSection = () => {
           <span className="regular7">team</span>
           <span>skills</span>
         </h2>
+
         <div className="graphic">
           {skills.map((skill) => (
             <div
@@ -39,10 +48,12 @@ const SkillsSection = () => {
               <hr className={skill.className} />
             </div>
           ))}
+
           <p>* Over 8 years creating templates on Marketplace.</p>
         </div>
       </div>
-      <img src={teamImage} alt="team" />
+
+      <img src={teamImage} alt="Команда" />
     </section>
   );
 };
