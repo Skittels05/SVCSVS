@@ -6,7 +6,7 @@ interface HeaderProps {
   logo: string;
 }
 
-const Header: React.FC<HeaderProps> = ({ logo }) => {
+const Header = ({ logo }: HeaderProps) => {
   return (
     <header>
       <img src={logo} alt="roby_header" />

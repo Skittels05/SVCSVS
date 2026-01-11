@@ -1,27 +1,57 @@
 import React from 'react';
-import './Footer.css';
 import roby from '../../images/roby.png';
+import './Footer.css';
 
-const Footer: React.FC = () => {
+const Footer = () => {
   return (
     <footer>
       <div className="social_logo">
-        <img src={roby} alt="roby" />
+        <img src={roby} alt="Логотип Robi" />
+        
         <div className="social-icons">
-          <a href="https://facebook.com" target="_blank" rel="noopener noreferrer">
-            <i className="fab fa-facebook-f"></i>
+          <a 
+            href="https://facebook.com" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            aria-label="Facebook"
+          >
+            <i className="fab fa-facebook-f" />
           </a>
-          <a href="https://instagram.com" target="_blank" rel="noopener noreferrer">
-            <i className="fab fa-instagram"></i>
+          
+          <a 
+            href="https://instagram.com" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            aria-label="Instagram"
+          >
+            <i className="fab fa-instagram" />
           </a>
-          <a href="https://twitter.com" target="_blank" rel="noopener noreferrer">
-            <i className="fab fa-twitter"></i>
+          
+          <a 
+            href="https://twitter.com" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            aria-label="Twitter"
+          >
+            <i className="fab fa-twitter" />
           </a>
-          <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer">
-            <i className="fab fa-linkedin-in"></i>
+          
+          <a 
+            href="https://linkedin.com" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            aria-label="LinkedIn"
+          >
+            <i className="fab fa-linkedin-in" />
           </a>
-          <a href="https://dribbble.com" target="_blank" rel="noopener noreferrer">
-            <i className="fa-brands fa-dribbble"></i>
+          
+          <a 
+            href="https://dribbble.com" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            aria-label="Dribbble"
+          >
+            <i className="fa-brands fa-dribbble" />
           </a>
         </div>
       </div>
@@ -59,7 +89,7 @@ const Footer: React.FC = () => {
       </div>
 
       <p className="copyright">
-        &copy; This is a Deni Bozo template powered by Webflow.
+        © This is a Deni Bozo template powered by Webflow.
       </p>
     </footer>
   );

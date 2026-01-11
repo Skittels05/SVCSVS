@@ -4,7 +4,7 @@ import postsData from '../../../data/posts.json';
 import './BlogSection.css';
 import { Post } from '../../../types/post';
 
-const BlogSection: React.FC = () => {
+const BlogSection = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [selectedItems, setSelectedItems] = useState<number[]>([]);

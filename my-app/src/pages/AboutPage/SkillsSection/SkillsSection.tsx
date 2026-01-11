@@ -10,12 +10,11 @@ interface Skill {
   className?: string;
 }
 
-const SkillsSection: React.FC = () => {
+const SkillsSection = () => {
   const [skills, setSkills] = useState<Skill[]>([]);
   const [selectedItems, setSelectedItems] = useState<Array<number | string>>([]);
 
   useEffect(() => {
-    // предполагаем, что skillsData имеет правильную структуру
     setSkills(skillsData as Skill[]);
   }, []);
 

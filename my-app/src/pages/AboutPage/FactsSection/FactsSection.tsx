@@ -11,13 +11,11 @@ interface Fact {
   className?: string;
 }
 
-const FactsSection: React.FC = () => {
+const FactsSection = () => {
   const [facts, setFacts] = useState<Fact[]>([]);
   const [selectedItems, setSelectedItems] = useState<Array<number | string>>([]);
 
   useEffect(() => {
-    // Предполагаем, что factsData соответствует массиву Fact
-    // Если формат в JSON отличается — скорректируйте тип
     setFacts(factsData as Fact[]);
   }, []);
 

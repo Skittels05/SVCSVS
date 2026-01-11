@@ -6,7 +6,7 @@ interface HeroProps {
   logo: string;
 }
 
-const Hero: React.FC<HeroProps> = ({ logo }) => {
+const Hero = ({ logo }: HeroProps) => {
   return (
     <div className="hero">
       <div className="roby">

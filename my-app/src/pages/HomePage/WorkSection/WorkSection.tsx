@@ -4,7 +4,7 @@ import worksData from '../../../data/works.json';
 import './WorkSection.css';
 import {Work} from '../../../types/work'
 
-const WorkSection: React.FC = () => {
+const WorkSection = () => {
   const [works, setWorks] = useState<Work[]>([]);
   const [selectedWork, setSelectedWork] = useState<Work | null>(null);
   const [selectedItems, setSelectedItems] = useState<number[]>([]);

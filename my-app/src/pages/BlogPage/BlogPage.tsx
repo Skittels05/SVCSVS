@@ -2,7 +2,7 @@ import React from 'react';
 import BlogSection from './BlogSection/BlogSection';
 import ContactSection from './ContactSection/ContactSection';
 
-const BlogPage: React.FC = () => {
+const BlogPage = () => {
   return (
     <div>
       <BlogSection />

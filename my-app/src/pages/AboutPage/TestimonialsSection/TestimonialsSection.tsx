@@ -10,7 +10,7 @@ interface Testimonial {
   status: string;
 }
 
-const TestimonialsSection: React.FC = () => {
+const TestimonialsSection = () => {
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
 

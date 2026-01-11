@@ -2,7 +2,7 @@ import React from 'react';
 import partnersImage from '../../../images/partners.png';
 import './Partners.css';
 
-const Partners: React.FC = () => {
+const Partners = () => {
   return (
     <div className="partners">
       <p>

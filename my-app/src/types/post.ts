@@ -1,6 +1,5 @@
-// src/types/post.ts (или где у тебя общие типы)
 export interface Post {
-  id: number;                    // ← убираем string
+  id: number;
   img: string;
   title: string;
   category: string;

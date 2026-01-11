@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import placeholder from '../../images/placeholder.png';
 import './NotFoundPage.css';
 
-const NotFoundPage: React.FC = () => {
+const NotFoundPage = () => {
   const [isButtonHovered, setIsButtonHovered] = useState<boolean>(false);
 
   return (

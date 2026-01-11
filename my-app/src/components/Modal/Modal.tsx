@@ -1,14 +1,11 @@
-// src/components/Modal/Modal.tsx
 import React, { useState } from 'react';
 import './Modal.css';
 
-// Базовый минимальный интерфейс, который должен быть у любого контента
 interface BaseContent {
   id: number;
   title: string;
 }
 
-// Полный тип пропсов с generic
 interface ModalProps<T extends BaseContent> {
   content: T;
   onClose: () => void;
@@ -51,7 +48,6 @@ const Modal = <T extends BaseContent>({
               />
             </label>
 
-            {/* Поле description (для Post) */}
             {'description' in editedContent && (
               <label>
                 Описание:
@@ -68,7 +64,6 @@ const Modal = <T extends BaseContent>({
               </label>
             )}
 
-            {/* Поле desc (для Work) */}
             {'desc' in editedContent && (
               <label>
                 Описание:
@@ -85,7 +80,6 @@ const Modal = <T extends BaseContent>({
               </label>
             )}
 
-            {/* Дополнительные поля, если они есть (например category/date) */}
             {'category' in editedContent && (
               <label>
                 Категория:
@@ -127,11 +121,9 @@ const Modal = <T extends BaseContent>({
           <div className="view-content">
             <h3>{content.title}</h3>
 
-            {/* Отображение описания */}
             {'description' in content && <p>{(content as any).description}</p>}
             {'desc' in content && <p>{(content as any).desc}</p>}
 
-            {/* Дополнительные поля */}
             {'category' in content && (
               <p>
                 <strong>Категория:</strong> {(content as any).category}

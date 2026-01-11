@@ -1,7 +1,7 @@
 import React from 'react';
 import './ContactSection.css';
 
-const ContactSection: React.FC = () => {
+const ContactSection = () => {
   return (
     <section className="contact">
       <div>

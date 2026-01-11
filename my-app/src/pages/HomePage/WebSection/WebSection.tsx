@@ -3,7 +3,7 @@ import websiteImage from '../../../images/website.png';
 import phoneImage from '../../../images/phone.png';
 import './WebSection.css';
 
-const WebSection: React.FC = () => {
+const WebSection = () => {
   return (
     <section className="web">
       <div className="web-content">

@@ -5,7 +5,7 @@ import WorkSection from './WorkSection/WorkSection';
 import WebSection from './WebSection/WebSection';
 import roby from '../../images/roby.png';
 
-const HomePage: React.FC = () => {
+const HomePage = () => {
   return (
     <div>
       <Hero logo={roby} />

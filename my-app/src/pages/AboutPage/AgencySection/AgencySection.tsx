@@ -32,7 +32,7 @@ const awards: Award[] = [
   },
 ];
 
-const AgencySection: React.FC = () => {
+const AgencySection = () => {
   return (
     <section className="section1">
       <div className="agency">
