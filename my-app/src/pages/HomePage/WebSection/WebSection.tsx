@@ -1,9 +1,9 @@
 import React from 'react';
-import './WebSection.css';
 import websiteImage from '../../../images/website.png';
 import phoneImage from '../../../images/phone.png';
+import './WebSection.css';
 
-const WebSection = () => {
+const WebSection: React.FC = () => {
   return (
     <section className="web">
       <div className="web-content">
@@ -13,6 +13,7 @@ const WebSection = () => {
           <span className="regular4">brand</span>
           <span className="bold2">with an awesome site.</span>
         </h2>
+
         <h4>
           <span>Comprehensive</span>
           <span className="regular5">brand</span>
@@ -21,6 +22,7 @@ const WebSection = () => {
           Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse
           varius enim in eros.
         </p>
+
         <h4>
           <span>Web</span>
           <span className="regular5">Presence</span>
@@ -30,9 +32,10 @@ const WebSection = () => {
           varius enim in eros.
         </p>
       </div>
-      <img src={websiteImage} alt="Website" className="pc" />
+
+      <img src={websiteImage} alt="Пример сайта на компьютере" className="pc" />
       <div className="phone-div">
-        <img src={phoneImage} alt="Phone" className="phone" />
+        <img src={phoneImage} alt="Пример сайта на телефоне" className="phone" />
       </div>
     </section>
   );

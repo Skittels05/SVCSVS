@@ -1,19 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import './WorkSection.css';
 import Modal from '../../../components/Modal/Modal';
 import worksData from '../../../data/works.json';
+import './WorkSection.css';
+import {Work} from '../../../types/work'
 
-const WorkSection = () => {
-  const [works, setWorks] = useState([]);
-  const [selectedWork, setSelectedWork] = useState(null);
-  const [selectedItems, setSelectedItems] = useState([]);
-  const [newWork, setNewWork] = useState({ title: '', desc: '' });
+const WorkSection: React.FC = () => {
+  const [works, setWorks] = useState<Work[]>([]);
+  const [selectedWork, setSelectedWork] = useState<Work | null>(null);
+  const [selectedItems, setSelectedItems] = useState<number[]>([]);
+  const [newWork, setNewWork] = useState<{
+    title: string;
+    desc: string;
+  }>({
+    title: '',
+    desc: '',
+  });
 
   useEffect(() => {
-    setWorks(worksData);
+    setWorks(worksData as Work[]);
   }, []);
 
-  const handleSelect = (id) => {
+  const handleSelect = (id: number) => {
     setSelectedItems((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     );
@@ -21,20 +28,28 @@ const WorkSection = () => {
 
   const handleAdd = () => {
     if (newWork.title && newWork.desc) {
+      const newId = works.length > 0
+        ? Math.max(...works.map(w => w.id)) + 1
+        : 1;
+
       setWorks((prev) => [
         ...prev,
-        { id: prev.length + 1, ...newWork, img: 'placeholder.png' },
+        {
+          id: newId,
+          ...newWork,
+          img: 'placeholder.png',
+        },
       ]);
+
       setNewWork({ title: '', desc: '' });
     }
   };
-  
 
-  const handleDelete = (id) => {
+  const handleDelete = (id: number) => {
     setWorks((prev) => prev.filter((work) => work.id !== id));
   };
 
-  const handleEdit = (id, updatedWork) => {
+  const handleEdit = (id: number, updatedWork: Partial<Work>) => {
     setWorks((prev) =>
       prev.map((work) => (work.id === id ? { ...work, ...updatedWork } : work))
     );
@@ -46,6 +61,7 @@ const WorkSection = () => {
         <span className="bold">selected</span>
         <span className="regular3">work</span>
       </h2>
+
       <div className="work-images">
         <div className="left-part">
           {works.slice(0, Math.ceil(works.length / 2)).map((work) => (
@@ -54,7 +70,10 @@ const WorkSection = () => {
               className={selectedItems.includes(work.id) ? 'selected' : ''}
               onClick={() => handleSelect(work.id)}
             >
-              <img src={require(`../../../images/${work.img}`)} alt={work.title} />
+              <img
+                src={require(`../../../images/${work.img}`)}
+                alt={work.title}
+              />
               <h4>{work.title}</h4>
               <p>{work.desc}</p>
               <button onClick={() => setSelectedWork(work)}>View Details</button>
@@ -62,6 +81,7 @@ const WorkSection = () => {
             </div>
           ))}
         </div>
+
         <div className="right-part">
           {works.slice(Math.ceil(works.length / 2)).map((work) => (
             <div
@@ -69,7 +89,10 @@ const WorkSection = () => {
               className={selectedItems.includes(work.id) ? 'selected' : ''}
               onClick={() => handleSelect(work.id)}
             >
-              <img src={require(`../../../images/${work.img}`)} alt={work.title} />
+              <img
+                src={require(`../../../images/${work.img}`)}
+                alt={work.title}
+              />
               <h4>{work.title}</h4>
               <p>{work.desc}</p>
               <button onClick={() => setSelectedWork(work)}>View Details</button>
@@ -78,6 +101,7 @@ const WorkSection = () => {
           ))}
         </div>
       </div>
+
       <div className="add-work">
         <input
           type="text"
@@ -93,6 +117,7 @@ const WorkSection = () => {
         />
         <button onClick={handleAdd}>Add Work</button>
       </div>
+
       {selectedWork && (
         <Modal
           content={selectedWork}

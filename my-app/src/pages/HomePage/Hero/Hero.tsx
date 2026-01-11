@@ -1,15 +1,20 @@
 import React from 'react';
-import './Hero.css';
 import man from '../../../images/man.png';
+import './Hero.css';
 
-const Hero = ({ logo }) => {
+interface HeroProps {
+  logo: string;
+}
+
+const Hero: React.FC<HeroProps> = ({ logo }) => {
   return (
     <div className="hero">
       <div className="roby">
-        <img src={logo} alt="roby" className="name" />
+        <img src={logo} alt="Robi logo" className="name" />
       </div>
+
       <div className="moto">
-        <img src={man} alt="Мужик" className="man" />
+        <img src={man} alt="Иллюстрация человека" className="man" />
         <div>
           <h1>
             <span className="x1">“</span>
@@ -18,6 +23,7 @@ const Hero = ({ logo }) => {
             <span className="bold">HELPS <br />BUSINESSES</span>
             <span className="x2">.”</span>
           </h1>
+
           <div className="circle-container">
             <button className="circle">
               WORK<br />WITH US

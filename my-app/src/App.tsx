@@ -9,17 +9,22 @@ import NotFoundPage from './pages/NotFoundPage/NotFoundPage';
 import roby from './images/roby.png';
 import './App.css';
 
-const App = () => {
+const App: React.FC = () => {
   return (
     <Router>
-      <div>
+      <div className="app-wrapper">
         <Header logo={roby} />
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/about" element={<AboutPage />} />
-          <Route path="/blog" element={<BlogPage />} />
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
+
+        <main className="main-content">
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/blog" element={<BlogPage />} />
+            {/* 404 для всех остальных путей */}
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+        </main>
+
         <Footer />
       </div>
     </Router>

@@ -1,8 +1,8 @@
 import React from 'react';
-import './Partners.css';
 import partnersImage from '../../../images/partners.png';
+import './Partners.css';
 
-const Partners = () => {
+const Partners: React.FC = () => {
   return (
     <div className="partners">
       <p>
@@ -10,8 +10,9 @@ const Partners = () => {
         <span className="style1">forward-thinking</span>
         <span>startups.</span>
       </p>
+
       <div className="icons">
-        <img src={partnersImage} alt="partners" className="partners-icons" />
+        <img src={partnersImage} alt="Логотипы партнёров" className="partners-icons" />
       </div>
     </div>
   );
