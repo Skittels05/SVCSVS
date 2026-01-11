@@ -1,9 +1,26 @@
 import React, { useState } from 'react';
 import './Modal.css';
 
-const Modal = ({ content, onClose, onEdit }) => {
+// Определяем общий тип для содержимого (можно вынести в отдельный файл types.ts)
+interface ContentItem {
+  id: number;
+  title: string;
+  desc?: string;
+  description?: string;
+  category?: string;
+  date?: string;
+  [key: string]: any; // временно, потом лучше убрать
+}
+
+interface ModalProps {
+  content: ContentItem;
+  onClose: () => void;
+  onEdit: (id: number, updated: Partial<ContentItem>) => void;
+}
+
+const Modal: React.FC<ModalProps> = ({ content, onClose, onEdit }) => {
   const [editMode, setEditMode] = useState(false);
-  const [editedContent, setEditedContent] = useState({ ...content });
+  const [editedContent, setEditedContent] = useState<ContentItem>({ ...content });
 
   const handleSave = () => {
     onEdit(content.id, editedContent);
@@ -14,6 +31,7 @@ const Modal = ({ content, onClose, onEdit }) => {
     <div className="modal-overlay">
       <div className="modal-content">
         <button className="modal-close" onClick={onClose}>X</button>
+
         {editMode ? (
           <div>
             <input
@@ -23,25 +41,26 @@ const Modal = ({ content, onClose, onEdit }) => {
             />
             <input
               type="text"
-              value={editedContent.desc || editedContent.description}
+              value={editedContent.desc ?? editedContent.description ?? ''}
               onChange={(e) =>
                 setEditedContent({
                   ...editedContent,
-                  [content.desc ? 'desc' : 'description']: e.target.value,
+                  desc: e.target.value,
+                  description: e.target.value,
                 })
               }
             />
-            {content.category && (
+            {content.category !== undefined && (
               <input
                 type="text"
-                value={editedContent.category}
+                value={editedContent.category ?? ''}
                 onChange={(e) => setEditedContent({ ...editedContent, category: e.target.value })}
               />
             )}
-            {content.date && (
+            {content.date !== undefined && (
               <input
                 type="text"
-                value={editedContent.date}
+                value={editedContent.date ?? ''}
                 onChange={(e) => setEditedContent({ ...editedContent, date: e.target.value })}
               />
             )}
@@ -50,7 +69,7 @@ const Modal = ({ content, onClose, onEdit }) => {
         ) : (
           <div>
             <h3>{content.title}</h3>
-            <p>{content.desc || content.description}</p>
+            <p>{content.desc ?? content.description ?? ''}</p>
             {content.category && <p>Category: {content.category}</p>}
             {content.date && <p>Date: {content.date}</p>}
             <button onClick={() => setEditMode(true)}>Edit</button>

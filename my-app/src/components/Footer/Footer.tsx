@@ -2,7 +2,7 @@ import React from 'react';
 import './Footer.css';
 import roby from '../../images/roby.png';
 
-const Footer = () => {
+const Footer: React.FC = () => {
   return (
     <footer>
       <div className="social_logo">
@@ -25,6 +25,7 @@ const Footer = () => {
           </a>
         </div>
       </div>
+
       <div className="prelast">
         <div className="addressf">
           <h5>address</h5>
@@ -33,6 +34,7 @@ const Footer = () => {
           <p>London, UK</p>
           <button className="map">find on map</button>
         </div>
+
         <div className="sitemapf">
           <h5>sitemap</h5>
           <nav>
@@ -46,6 +48,7 @@ const Footer = () => {
             </ul>
           </nav>
         </div>
+
         <div className="contactf">
           <h5>contact</h5>
           <p>
@@ -54,7 +57,10 @@ const Footer = () => {
           </p>
         </div>
       </div>
-      <p className="copyright">&copy; This is a Deni Bozo template powered by Webflow.</p>
+
+      <p className="copyright">
+        &copy; This is a Deni Bozo template powered by Webflow.
+      </p>
     </footer>
   );
 };
