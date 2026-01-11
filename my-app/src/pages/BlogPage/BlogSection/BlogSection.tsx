@@ -1,19 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import './BlogSection.css';
 import Modal from '../../../components/Modal/Modal';
 import postsData from '../../../data/posts.json';
+import './BlogSection.css';
+import { Post } from '../../../types/post';
 
-const BlogSection = () => {
-  const [posts, setPosts] = useState([]);
-  const [selectedPost, setSelectedPost] = useState(null);
-  const [selectedItems, setSelectedItems] = useState([]);
-  const [newPost, setNewPost] = useState({ title: '', category: '', date: '', description: '' });
+const BlogSection: React.FC = () => {
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
+  const [selectedItems, setSelectedItems] = useState<number[]>([]);
+  const [newPost, setNewPost] = useState<{
+    title: string;
+    category: string;
+    date: string;
+    description: string;
+  }>({
+    title: '',
+    category: '',
+    date: '',
+    description: '',
+  });
 
   useEffect(() => {
-    setPosts(postsData);
+    setPosts(postsData as Post[]);
   }, []);
 
-  const handleSelect = (id) => {
+  const handleSelect = (id: number) => {
     setSelectedItems((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     );
@@ -21,19 +32,28 @@ const BlogSection = () => {
 
   const handleAdd = () => {
     if (newPost.title && newPost.category && newPost.date && newPost.description) {
+      const newId = posts.length > 0
+        ? Math.max(...posts.map(p => p.id)) + 1
+        : 1;
+
       setPosts((prev) => [
         ...prev,
-        { id: prev.length + 1, img: 'placeholder.png', ...newPost },
+        {
+          id: newId,
+          img: 'placeholder.png',
+          ...newPost,
+        },
       ]);
+
       setNewPost({ title: '', category: '', date: '', description: '' });
     }
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = (id: number) => {
     setPosts((prev) => prev.filter((post) => post.id !== id));
   };
 
-  const handleEdit = (id, updatedPost) => {
+  const handleEdit = (id: number, updatedPost: Partial<Post>) => {
     setPosts((prev) =>
       prev.map((post) => (post.id === id ? { ...post, ...updatedPost } : post))
     );
@@ -50,6 +70,7 @@ const BlogSection = () => {
           view all <br />posts
         </button>
       </div>
+
       <div className="blogs">
         {posts.map((post) => (
           <div
@@ -57,7 +78,10 @@ const BlogSection = () => {
             className={selectedItems.includes(post.id) ? 'selected' : ''}
             onClick={() => handleSelect(post.id)}
           >
-            <img src={require(`../../../images/${post.img}`)} alt="blog" />
+            <img
+              src={require(`../../../images/${post.img}`)}
+              alt={post.title}
+            />
             <button className="post-buttons">{post.category}</button>
             <h3>{post.title}</h3>
             <p>{post.date}</p>
@@ -66,6 +90,7 @@ const BlogSection = () => {
           </div>
         ))}
       </div>
+
       <div className="add-post">
         <input
           type="text"
@@ -93,6 +118,7 @@ const BlogSection = () => {
         />
         <button onClick={handleAdd}>Add Post</button>
       </div>
+
       {selectedPost && (
         <Modal
           content={selectedPost}

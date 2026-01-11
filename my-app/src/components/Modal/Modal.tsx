@@ -1,26 +1,16 @@
 import React, { useState } from 'react';
 import './Modal.css';
-
-// Определяем общий тип для содержимого (можно вынести в отдельный файл types.ts)
-interface ContentItem {
-  id: number;
-  title: string;
-  desc?: string;
-  description?: string;
-  category?: string;
-  date?: string;
-  [key: string]: any; // временно, потом лучше убрать
-}
+import { Post } from '../../types/post';
 
 interface ModalProps {
-  content: ContentItem;
+  content: Post;
   onClose: () => void;
-  onEdit: (id: number, updated: Partial<ContentItem>) => void;
+  onEdit: (id: number, updated: Partial<Post>) => void;
 }
 
 const Modal: React.FC<ModalProps> = ({ content, onClose, onEdit }) => {
   const [editMode, setEditMode] = useState(false);
-  const [editedContent, setEditedContent] = useState<ContentItem>({ ...content });
+  const [editedContent, setEditedContent] = useState<Post>({ ...content });
 
   const handleSave = () => {
     onEdit(content.id, editedContent);
@@ -30,49 +20,66 @@ const Modal: React.FC<ModalProps> = ({ content, onClose, onEdit }) => {
   return (
     <div className="modal-overlay">
       <div className="modal-content">
-        <button className="modal-close" onClick={onClose}>X</button>
+        <button className="modal-close" onClick={onClose}>
+          X
+        </button>
 
         {editMode ? (
           <div>
             <input
               type="text"
               value={editedContent.title}
-              onChange={(e) => setEditedContent({ ...editedContent, title: e.target.value })}
+              onChange={(e) =>
+                setEditedContent({ ...editedContent, title: e.target.value })
+              }
             />
+
             <input
               type="text"
-              value={editedContent.desc ?? editedContent.description ?? ''}
+              value={editedContent.description}
               onChange={(e) =>
                 setEditedContent({
                   ...editedContent,
-                  desc: e.target.value,
                   description: e.target.value,
                 })
               }
             />
-            {content.category !== undefined && (
+
+            {editedContent.category !== undefined && (
               <input
                 type="text"
-                value={editedContent.category ?? ''}
-                onChange={(e) => setEditedContent({ ...editedContent, category: e.target.value })}
+                value={editedContent.category}
+                onChange={(e) =>
+                  setEditedContent({
+                    ...editedContent,
+                    category: e.target.value,
+                  })
+                }
               />
             )}
-            {content.date !== undefined && (
+
+            {editedContent.date !== undefined && (
               <input
                 type="text"
-                value={editedContent.date ?? ''}
-                onChange={(e) => setEditedContent({ ...editedContent, date: e.target.value })}
+                value={editedContent.date}
+                onChange={(e) =>
+                  setEditedContent({
+                    ...editedContent,
+                    date: e.target.value,
+                  })
+                }
               />
             )}
-            <button onClick={handleSave}>Save</button>
+
+            <button onClick={handleSave}>Сохранить</button>
           </div>
         ) : (
           <div>
             <h3>{content.title}</h3>
-            <p>{content.desc ?? content.description ?? ''}</p>
-            {content.category && <p>Category: {content.category}</p>}
-            {content.date && <p>Date: {content.date}</p>}
-            <button onClick={() => setEditMode(true)}>Edit</button>
+            <p>{content.description}</p>
+            {content.category && <p>Категория: {content.category}</p>}
+            {content.date && <p>Дата: {content.date}</p>}
+            <button onClick={() => setEditMode(true)}>Редактировать</button>
           </div>
         )}
       </div>
