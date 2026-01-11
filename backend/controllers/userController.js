@@ -12,10 +12,8 @@ exports.create = async (req, res, next) => {
 
     console.log('[USER CREATE] Тело для сохранения с новым _id:', JSON.stringify(userData, null, 2));
 
-    // Создаём пользователя
     const user = await User.create(userData);
 
-    // Форматируем ответ (добавляем id для фронта)
     const formatted = user.toObject();
     formatted.id = formatted._id;
 
@@ -37,9 +35,8 @@ exports.getAll = async (req, res, next) => {
       .sort(sort)
       .limit(limit)
       .skip(skip)
-      .select('full_name email created_at'); // выбираем только нужные поля
+      .select('full_name email created_at');
 
-    // Форматируем каждый документ
     const formattedRows = rows.map(user => {
       const obj = user.toObject();
       obj.id = obj._id;
@@ -69,7 +66,6 @@ exports.getById = async (req, res, next) => {
       throw error;
     }
 
-    // Форматируем
     const formatted = user.toObject();
     formatted.id = formatted._id;
 
@@ -93,7 +89,6 @@ exports.update = async (req, res, next) => {
       throw error;
     }
 
-    // Форматируем
     const formatted = user.toObject();
     formatted.id = formatted._id;
 

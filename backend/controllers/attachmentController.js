@@ -57,7 +57,6 @@ exports.create = async (req, res, next) => {
       const createdAttachments = [];
 
       for (const file of req.files) {
-        // Генерируем _id для каждого attachment
         const lastAtt = await Attachment.findOne().sort({ _id: -1 }).select('_id');
         const newId = lastAtt ? lastAtt._id + 1 : 1;
 

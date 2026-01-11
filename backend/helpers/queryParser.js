@@ -1,40 +1,52 @@
 exports.parseQuery = (query) => {
-  const { page = 1, limit = 10, sort, search, searchFields, include } = query;
+  let mongoSort = { _id: 1 };
+  const page = parseInt(query.page) || 1;
+  const limit = parseInt(query.limit) || 10;
+  const skip = (page - 1) * limit;
 
-  const skip = (parseInt(page) - 1) * parseInt(limit);
-  const limitInt = parseInt(limit);
+  if (query.sort) {
+    const decodedSort = decodeURIComponent(query.sort);
+    const parts = decodedSort.split(':');
+    let field = parts[0]?.trim();
+    const direction = (parts[1] || 'asc').toLowerCase().trim();
 
-  let mongoSort = { _id: 1 }; // По умолчанию ASC по id
-  if (sort) {
-    const [field, direction = 'asc'] = sort.split(':');
-    const dir = direction.toLowerCase() === 'desc' ? -1 : 1;
-    mongoSort = { [field]: dir };
+    if (field === 'id') field = '_id';
+
+    if (field) {
+      mongoSort = { [field]: direction === 'desc' ? -1 : 1 };
+    }
   }
 
-  let where = {};
-  let populate = [];
-
+  const where = {};
   Object.keys(query).forEach((key) => {
     if (!['page', 'limit', 'sort', 'search', 'searchFields', 'include'].includes(key)) {
       where[key] = query[key];
     }
   });
 
-  if (search && searchFields) {
-    const fields = searchFields.split(',');
-    where.$or = fields.map((field) => ({
-      [field]: { $regex: search, $options: 'i' },
+  if (query.search && query.searchFields) {
+    const fields = query.searchFields.split(',').map(f => f.trim());
+    where.$or = fields.map(field => ({
+      [field]: { $regex: query.search.trim(), $options: 'i' }
     }));
   }
 
-  if (include) {
-    const modelsToInclude = include.split(',');
-    modelsToInclude.forEach((modelName) => {
-      if (modelName === 'Attachments') {
+  let populate = [];
+  if (query.include) {
+    const includes = query.include.split(',').map(i => i.trim());
+    includes.forEach(model => {
+      if (model === 'Attachments') {
         populate.push({ path: 'attachments', select: 'id file_name file_url' });
       }
     });
   }
 
-  return { where, sort: mongoSort, limit: limitInt, skip, populate };
+  return {
+    where,
+    sort: mongoSort,
+    limit,
+    skip,
+    populate,
+    page
+  };
 };

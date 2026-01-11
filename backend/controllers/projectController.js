@@ -32,12 +32,15 @@ exports.create = async (req, res, next) => {
 exports.getAll = async (req, res, next) => {
   try {
     const { where, sort, limit, skip } = parseQuery(req.query);
+    console.log('[GET ALL] Полученный sort из query:', req.query.sort);
+    console.log('[GET ALL] Распарсенный mongoSort:', sort);
 
     const count = await Project.countDocuments(where);
     const rows = await Project.find(where)
-      .sort(sort)
+      .sort(sort || { _id: 1 })
       .limit(limit)
       .skip(skip);
+      console.log('[PROJECT GET ALL] Первые 3 id после сортировки:', rows.slice(0,5).map(r => r._id));
 
     const formattedRows = rows.map(project => {
       const obj = project.toObject();

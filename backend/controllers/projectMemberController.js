@@ -139,8 +139,6 @@ exports.getMembersByProject = async (req, res, next) => {
     const members = await ProjectMember.find({ project_id })
       .populate({ path: 'user_id', select: 'full_name email' })
       .sort({ 'user_id.full_name': 1 });
-
-    // Возвращаем только пользователей (как раньше)
     const users = members.map(pm => pm.user_id);
 
     res.json(users);
