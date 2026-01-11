@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Парсер цитат: Love × Life</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>Цитаты с тегами Love и Life</h1>
+
+    <button id="parseBtn">Запустить парсинг</button>
+    <div id="loader" class="loader hidden">Загрузка...</div>
+
+    <div class="filters">
+      <select id="categoryFilter">
+        <option value="">Все категории</option>
+        <option value="love">Только love</option>
+        <option value="life">Только life</option>
+        <option value="оба">Оба тега</option>
+      </select>
+
+      <input type="text" id="authorFilter" placeholder="Автор...">
+      <input type="text" id="tagFilter" placeholder="Тег...">
+      <input type="text" id="search" placeholder="Поиск по тексту...">
+    </div>
+
+    <div id="stats" class="stats"></div>
+
+    <div class="charts">
+      <div class="chart-container">
+        <canvas id="pieChart"></canvas>
+      </div>
+      <div class="chart-container">
+        <canvas id="barChart"></canvas>
+      </div>
+    </div>
+
+    <div id="venn" class="venn"></div>
+
+    <h2>Цитаты (<span id="count">0</span>)</h2>
+    <div id="quotes" class="quotes-grid"></div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
