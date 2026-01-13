@@ -491,8 +491,19 @@ const TasksPage = () => {
 
       info.push([]);
 
-      const statusMap = { /* тот же маппинг */ };
-      const priorityMap = { /* тот же маппинг */ };
+      const statusMap = {
+        backlog: 'Бэклог',
+        todo: 'To Do',
+        in_progress: 'В работе',
+        review: 'На проверке',
+        done: 'Готово',
+      };
+      const priorityMap = {
+        low: 'Низкий',
+        medium: 'Средний',
+        high: 'Высокий',
+        critical: 'Критический',
+      };
 
       const groupedTasks = dataToExport.reduce((acc, task) => {
         const status = task.status || 'unknown';
@@ -750,9 +761,6 @@ const TasksPage = () => {
         </div>
       </div>
 
-      <div className="filters-panel">
-        {/* Здесь больше ничего нет — фильтры только в заголовках таблицы */}
-      </div>
 
       <EditableTable
         data={tasks}
