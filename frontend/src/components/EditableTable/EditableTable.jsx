@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -21,8 +21,11 @@ const EditableTable = ({
   onFilterChange,
   filters = {
     status: '',
-    project: ''
-  }
+    priority: '',
+    project: '',
+  },
+  sorting = [],               // массив вида [{ id: 'title', desc: true/false }]
+  onSortingChange,            // setSorting из TasksPage
 }) => {
   const [editingCell, setEditingCell] = useState(null);
 
@@ -31,7 +34,12 @@ const EditableTable = ({
       accessorKey: col.key,
       header: col.header,
       cell: (info) => {
-        if (col.key === 'status' && editingCell?.rowId === info.row.id && editingCell?.columnId === col.key) {
+        // Редактирование статуса по двойному клику
+        if (
+          col.key === 'status' &&
+          editingCell?.rowId === info.row.id &&
+          editingCell?.columnId === col.key
+        ) {
           return (
             <select
               className="status-edit-select"
@@ -69,20 +77,25 @@ const EditableTable = ({
         return info.getValue() || '—';
       },
       meta: col.meta || {},
+      // Разрешаем сортировку для большинства колонок
+      enableSorting: !['actions', 'priority', 'status'].includes(col.key),
     }));
 
+    // Делаем статус редактируемым по двойному клику
     if (onEditCell) {
-      baseColumns.forEach(col => {
+      baseColumns.forEach((col) => {
         if (col.accessorKey === 'status') {
           const originalCell = col.cell;
           col.cell = (info) => (
             <div
               className="editable-cell"
-              onDoubleClick={() => setEditingCell({
-                rowId: info.row.id,
-                columnId: col.accessorKey,
-                value: info.getValue()
-              })}
+              onDoubleClick={() =>
+                setEditingCell({
+                  rowId: info.row.id,
+                  columnId: col.accessorKey,
+                  value: info.getValue(),
+                })
+              }
             >
               {originalCell(info)}
             </div>
@@ -91,7 +104,8 @@ const EditableTable = ({
       });
     }
 
-    baseColumns.forEach(col => {
+    // Фильтры в заголовках (для status и Project.name)
+    baseColumns.forEach((col) => {
       if (col.accessorKey === 'status') {
         const originalHeader = col.header;
         col.header = () => (
@@ -149,10 +163,19 @@ const EditableTable = ({
     columns: tableColumns,
     manualPagination: true,
     pageCount: totalPages,
+    manualSorting: true,                  // ← серверная сортировка
+    state: {
+      pagination: {
+        pageIndex: currentPage - 1,
+        pageSize,
+      },
+      sorting,                            // ← состояние сортировки
+    },
+    onSortingChange,                      // ← setSorting
     getCoreRowModel: getCoreRowModel(),
   });
 
-  const hasActiveFilters = filters.status || filters.project;
+  const hasActiveFilters = filters.status || filters.project || filters.priority;
 
   if (loading && data.length === 0) {
     return (
@@ -182,13 +205,6 @@ const EditableTable = ({
 
   return (
     <div className="editable-table-container">
-      <div className="table-instruction">
-        <div className="instruction-icon">💡</div>
-        <div className="instruction-text">
-          <strong>Фильтрация:</strong> Используйте выпадающие списки в заголовках колонок.
-          <strong> Быстрое редактирование:</strong> Двойной клик по статусу задачи.
-        </div>
-      </div>
 
       <div className="table-filters-info">
         {hasActiveFilters && (
@@ -207,7 +223,9 @@ const EditableTable = ({
             )}
             {filters.project && (
               <span className="filter-badge">
-                Проект: {projects.find(p => p.id === parseInt(filters.project))?.name || `ID ${filters.project}`}
+                Проект:{' '}
+                {projects.find((p) => p.id === parseInt(filters.project))?.name ||
+                  `ID ${filters.project}`}
                 <button
                   onClick={() => onFilterChange?.('project', '')}
                   className="filter-remove"
@@ -231,15 +249,41 @@ const EditableTable = ({
           <thead>
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    className="table-header-cell"
-                    style={header.column.columnDef.meta?.width ? { width: header.column.columnDef.meta.width } : {}}
-                  >
-                    {flexRender(header.column.columnDef.header, header.getContext())}
-                  </th>
-                ))}
+                {headerGroup.headers.map((header) => {
+                  const canSort = header.column.getCanSort();
+
+                  return (
+                    <th
+                      key={header.id}
+                      className="table-header-cell"
+                      style={
+                        header.column.columnDef.meta?.width
+                          ? { width: header.column.columnDef.meta.width }
+                          : {}
+                      }
+                      onClick={canSort ? header.column.getToggleSortingHandler() : undefined}
+                    >
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          justifyContent:
+                            header.column.columnDef.meta?.align || 'flex-start',
+                        }}
+                      >
+                        {flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
+
+                        {/* Стрелки сортировки */}
+                        {header.column.getIsSorted() === 'asc' && ' ↑'}
+                        {header.column.getIsSorted() === 'desc' && ' ↓'}
+                      </div>
+                    </th>
+                  );
+                })}
               </tr>
             ))}
           </thead>
@@ -250,7 +294,11 @@ const EditableTable = ({
                   <td
                     key={cell.id}
                     className="table-cell"
-                    style={cell.column.columnDef.meta?.width ? { width: cell.column.columnDef.meta.width } : {}}
+                    style={
+                      cell.column.columnDef.meta?.width
+                        ? { width: cell.column.columnDef.meta.width }
+                        : {}
+                    }
                   >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+
 import {
   fetchTasks,
   createTask,
@@ -18,16 +19,10 @@ import api from '../../services/api';
 import { handleApiError } from '../../utils/handleApiError';
 import * as XLSX from 'xlsx';
 
-let pdfMake;
-try {
-  pdfMake = require('pdfmake/build/pdfmake');
-  const pdfFonts = require('pdfmake/build/vfs_fonts');
-  if (pdfFonts && pdfFonts.pdfMake && pdfFonts.pdfMake.vfs) {
-    pdfMake.vfs = pdfFonts.pdfMake.vfs;
-  }
-} catch (error) {
-  console.warn('PDFMake не загружен, экспорт в PDF будет недоступен:', error);
-}
+import pdfMake from 'pdfmake/build/pdfmake';
+import * as pdfFonts from 'pdfmake/build/vfs_fonts';
+
+pdfMake.vfs = pdfFonts;
 
 const taskSchema = z.object({
   title: z.string().trim().min(1, 'Заголовок обязателен'),
@@ -38,7 +33,7 @@ const taskSchema = z.object({
     .number({ invalid_type_error: 'Должно быть числом' })
     .int()
     .min(1, 'Story points должно быть не менее 1')
-    .max(21, 'Story points не более 21')
+    .max(30, 'Story points не более 21')
     .optional()
     .nullable(),
   due_date: z.string().optional().nullable(),
@@ -66,12 +61,12 @@ const TasksPage = () => {
   const [loadingMembers, setLoadingMembers] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 10; 
+  const pageSize = 10;
 
   const [totalTasks, setTotalTasks] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
+  const [sorting, setSorting] = useState([]);
   const [tableFilters, setTableFilters] = useState({
     status: '',
     priority: '',
@@ -104,19 +99,33 @@ const TasksPage = () => {
   const watchedProjectId = useWatch({ control, name: 'project_id' });
 
   useEffect(() => {
-    const loadProjects = async () => {
-      setLoadingProjects(true);
+    const loadTasks = async () => {
+      const params = {
+        page: currentPage,
+        limit: pageSize,
+      };
+
+      if (tableFilters.project) params.projectId = tableFilters.project;
+      if (tableFilters.status) params.status = tableFilters.status;
+      if (tableFilters.priority) params.priority = tableFilters.priority;
+
+      if (sorting.length > 0) {
+        const sort = sorting[0];
+        const direction = sort.desc ? 'DESC' : 'ASC';
+        params.sort = `${sort.id}:${direction}`;
+      }
+
       try {
-        const response = await api.get('/projects?limit=1000');
-        setProjects(response.data.data || []);
-      } catch (err) {
-        console.error('Ошибка загрузки проектов:', err);
-      } finally {
-        setLoadingProjects(false);
+        const result = await dispatch(fetchTasks(params)).unwrap();
+        setTotalTasks(result.total || 0);
+        setTotalPages(result.pages || 1);
+      } catch (error) {
+        console.error('Ошибка загрузки задач:', error);
       }
     };
-    loadProjects();
-  }, []);
+
+    loadTasks();
+  }, [dispatch, currentPage, tableFilters, sorting]);
 
   useEffect(() => {
     if (watchedProjectId) {
@@ -160,9 +169,9 @@ const TasksPage = () => {
         limit: pageSize,
       };
 
-      if (tableFilters.project)   params.projectId = tableFilters.project;
-      if (tableFilters.status)    params.status    = tableFilters.status;
-      if (tableFilters.priority)  params.priority  = tableFilters.priority;
+      if (tableFilters.project) params.projectId = tableFilters.project;
+      if (tableFilters.status) params.status = tableFilters.status;
+      if (tableFilters.priority) params.priority = tableFilters.priority;
 
       try {
         const result = await dispatch(fetchTasks(params)).unwrap();
@@ -764,6 +773,8 @@ const TasksPage = () => {
       <EditableTable
         data={tasks}
         columns={tableColumns}
+        sorting={sorting}
+        onSortingChange={setSorting}
         onEditCell={handleStatusEdit}
         emptyMessage="Задачи не найдены. Попробуйте изменить фильтры в заголовках таблицы или создать новую задачу."
         pageSize={pageSize}
