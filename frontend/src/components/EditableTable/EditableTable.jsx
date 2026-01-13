@@ -2,7 +2,6 @@ import React, { useState, useMemo } from 'react';
 import {
   useReactTable,
   getCoreRowModel,
-  getSortedRowModel,
   flexRender,
 } from '@tanstack/react-table';
 import './EditableTable.css';
@@ -17,15 +16,11 @@ const EditableTable = ({
   currentPage = 1,
   totalPages = 1,
   onPageChange,
-  onSortChange,
-  sortField = 'id',
-  sortDirection = 'asc',
   loading = false,
   projects = [],
   onFilterChange,
   filters = {
     status: '',
-    priority: '',
     project: ''
   }
 }) => {
@@ -36,12 +31,11 @@ const EditableTable = ({
       accessorKey: col.key,
       header: col.header,
       cell: (info) => {
-        // Если это колонка статуса и мы находимся в режиме редактирования
         if (col.key === 'status' && editingCell?.rowId === info.row.id && editingCell?.columnId === col.key) {
           return (
             <select
               className="status-edit-select"
-              value={info.getValue()}
+              value={info.getValue() || ''}
               onChange={(e) => {
                 onEditCell(info.row.original.id, col.key, e.target.value);
                 setEditingCell(null);
@@ -58,12 +52,10 @@ const EditableTable = ({
           );
         }
 
-        // Обычный рендеринг
         if (col.render) {
           return col.render(info.row.original);
         }
-        
-        // Обработка вложенных объектов
+
         if (col.key.includes('.')) {
           const keys = col.key.split('.');
           let value = info.row.original;
@@ -73,14 +65,12 @@ const EditableTable = ({
           }
           return value || '—';
         }
-        
+
         return info.getValue() || '—';
       },
-      enableSorting: col.enableSorting !== false,
       meta: col.meta || {},
     }));
 
-    // Добавляем колонку для двойного клика (если есть onEditCell)
     if (onEditCell) {
       baseColumns.forEach(col => {
         if (col.accessorKey === 'status') {
@@ -101,7 +91,6 @@ const EditableTable = ({
       });
     }
 
-    // Добавляем выпадающие списки фильтров
     baseColumns.forEach(col => {
       if (col.accessorKey === 'status') {
         const originalHeader = col.header;
@@ -126,30 +115,7 @@ const EditableTable = ({
           </div>
         );
       }
-      
-      if (col.accessorKey === 'priority') {
-        const originalHeader = col.header;
-        col.header = () => (
-          <div className="header-with-filter">
-            <div className="header-text">{originalHeader}</div>
-            <div className="column-filter-dropdown">
-              <select
-                value={filters.priority || ''}
-                onChange={(e) => onFilterChange?.('priority', e.target.value)}
-                className="column-filter-select"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <option value="">Все приоритеты</option>
-                <option value="low">Низкий</option>
-                <option value="medium">Средний</option>
-                <option value="high">Высокий</option>
-                <option value="critical">Критический</option>
-              </select>
-            </div>
-          </div>
-        );
-      }
-      
+
       if (col.accessorKey === 'Project.name') {
         const originalHeader = col.header;
         col.header = () => (
@@ -181,46 +147,12 @@ const EditableTable = ({
   const table = useReactTable({
     data,
     columns: tableColumns,
-    manualSorting: true,
     manualPagination: true,
     pageCount: totalPages,
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
   });
 
-  const handleSort = (columnId) => {
-    if (onSortChange) {
-      const isSameColumn = sortField === columnId;
-      const newDirection = isSameColumn
-        ? sortDirection === 'asc' ? 'desc' : 'asc'
-        : 'asc';
-      
-      onSortChange(columnId, newDirection);
-    }
-  };
-
-  // Фильтрация данных на клиенте
-  const filteredData = useMemo(() => {
-    if (!filters.status && !filters.priority && !filters.project) return data;
-    
-    return data.filter(item => {
-      // Фильтр по статусу
-      if (filters.status && item.status !== filters.status) return false;
-      
-      // Фильтр по приоритету
-      if (filters.priority && item.priority !== filters.priority) return false;
-      
-      // Фильтр по проекту (нужно сравнивать по project_id)
-      if (filters.project && item.project_id !== parseInt(filters.project)) return false;
-      
-      return true;
-    });
-  }, [data, filters]);
-
-  const displayData = (filters.status || filters.priority || filters.project) ? filteredData : data;
-  const displayCount = (filters.status || filters.priority || filters.project) ? filteredData.length : totalCount;
-
-  const hasActiveFilters = filters.status || filters.priority || filters.project;
+  const hasActiveFilters = filters.status || filters.project;
 
   if (loading && data.length === 0) {
     return (
@@ -231,13 +163,13 @@ const EditableTable = ({
     );
   }
 
-  if (displayData.length === 0 && !loading) {
+  if (data.length === 0 && !loading) {
     return (
       <div className="table-empty">
         <div className="empty-icon">📭</div>
         <p>{emptyMessage}</p>
         {hasActiveFilters && (
-          <button 
+          <button
             onClick={() => onFilterChange?.('reset', '')}
             className="btn btn-primary reset-filter-btn"
           >
@@ -250,8 +182,49 @@ const EditableTable = ({
 
   return (
     <div className="editable-table-container">
+      <div className="table-instruction">
+        <div className="instruction-icon">💡</div>
+        <div className="instruction-text">
+          <strong>Фильтрация:</strong> Используйте выпадающие списки в заголовках колонок.
+          <strong> Быстрое редактирование:</strong> Двойной клик по статусу задачи.
+        </div>
+      </div>
 
-      
+      <div className="table-filters-info">
+        {hasActiveFilters && (
+          <div className="active-filters">
+            <span className="filters-label">Активные фильтры:</span>
+            {filters.status && (
+              <span className="filter-badge">
+                Статус: {getStatusLabel(filters.status)}
+                <button
+                  onClick={() => onFilterChange?.('status', '')}
+                  className="filter-remove"
+                >
+                  ×
+                </button>
+              </span>
+            )}
+            {filters.project && (
+              <span className="filter-badge">
+                Проект: {projects.find(p => p.id === parseInt(filters.project))?.name || `ID ${filters.project}`}
+                <button
+                  onClick={() => onFilterChange?.('project', '')}
+                  className="filter-remove"
+                >
+                  ×
+                </button>
+              </span>
+            )}
+            <button
+              onClick={() => onFilterChange?.('reset', '')}
+              className="btn btn-secondary btn-small reset-all-filters"
+            >
+              Сбросить все
+            </button>
+          </div>
+        )}
+      </div>
 
       <div className="table-wrapper">
         <table className="editable-table">
@@ -259,60 +232,41 @@ const EditableTable = ({
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <th 
-                    key={header.id} 
+                  <th
+                    key={header.id}
                     className="table-header-cell"
                     style={header.column.columnDef.meta?.width ? { width: header.column.columnDef.meta.width } : {}}
                   >
-                    <div
-                      className={`sortable-header ${sortField === header.column.id ? 'active' : ''}`}
-                      onClick={() => header.column.getCanSort() && handleSort(header.column.id)}
-                    >
-                      {flexRender(header.column.columnDef.header, header.getContext())}
-                      {sortField === header.column.id && (
-                        <span className="sort-icon">
-                          {sortDirection === 'asc' ? ' 🔼' : ' 🔽'}
-                        </span>
-                      )}
-                    </div>
+                    {flexRender(header.column.columnDef.header, header.getContext())}
                   </th>
                 ))}
               </tr>
             ))}
           </thead>
           <tbody>
-            {table.getRowModel().rows.map((row) => {
-              const rowData = row.original;
-              
-              // Применяем фильтры
-              if (filters.status && rowData.status !== filters.status) return null;
-              if (filters.priority && rowData.priority !== filters.priority) return null;
-              if (filters.project && rowData.project_id !== parseInt(filters.project)) return null;
-              
-              return (
-                <tr key={row.id} className="table-row">
-                  {row.getVisibleCells().map((cell) => (
-                    <td 
-                      key={cell.id} 
-                      className="table-cell"
-                      style={cell.column.columnDef.meta?.width ? { width: cell.column.columnDef.meta.width } : {}}
-                    >
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </td>
-                  ))}
-                </tr>
-              );
-            })}
+            {table.getRowModel().rows.map((row) => (
+              <tr key={row.id} className="table-row">
+                {row.getVisibleCells().map((cell) => (
+                  <td
+                    key={cell.id}
+                    className="table-cell"
+                    style={cell.column.columnDef.meta?.width ? { width: cell.column.columnDef.meta.width } : {}}
+                  >
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </td>
+                ))}
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
 
       <div className="table-footer">
         <div className="table-info">
-          Показано {displayData.length} из {displayCount} записей
+          Показано {data.length} из {totalCount} записей
           {hasActiveFilters && ' (с фильтрацией)'}
         </div>
-        
+
         <div className="pagination-controls">
           <button
             onClick={() => onPageChange(Math.max(1, currentPage - 1))}
@@ -321,7 +275,7 @@ const EditableTable = ({
           >
             ◀ Назад
           </button>
-          
+
           <div className="page-numbers">
             {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
               let pageNum;
@@ -334,9 +288,9 @@ const EditableTable = ({
               } else {
                 pageNum = currentPage - 2 + i;
               }
-              
+
               if (pageNum > totalPages) return null;
-              
+
               return (
                 <button
                   key={pageNum}
@@ -348,7 +302,7 @@ const EditableTable = ({
                 </button>
               );
             })}
-            
+
             {totalPages > 5 && currentPage < totalPages - 2 && (
               <>
                 <span className="page-dots">...</span>
@@ -362,7 +316,7 @@ const EditableTable = ({
               </>
             )}
           </div>
-          
+
           <button
             onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
             disabled={currentPage >= totalPages || loading}
@@ -371,17 +325,15 @@ const EditableTable = ({
             Вперёд ▶
           </button>
         </div>
-        
+
         <div className="page-size-control">
-          <span>На странице:</span>
-          <span className="page-size-value">{pageSize}</span>
+          <span>На странице: 10</span>
         </div>
       </div>
     </div>
   );
 };
 
-// Вспомогательные функции для отображения меток
 const getStatusLabel = (status) => {
   const statusMap = {
     backlog: 'Бэклог',
@@ -391,16 +343,6 @@ const getStatusLabel = (status) => {
     done: 'Готово',
   };
   return statusMap[status] || status;
-};
-
-const getPriorityLabel = (priority) => {
-  const priorityMap = {
-    low: 'Низкий',
-    medium: 'Средний',
-    high: 'Высокий',
-    critical: 'Критический',
-  };
-  return priorityMap[priority] || priority;
 };
 
 export default EditableTable;

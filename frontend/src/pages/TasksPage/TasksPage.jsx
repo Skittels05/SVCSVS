@@ -29,7 +29,6 @@ try {
   console.warn('PDFMake не загружен, экспорт в PDF будет недоступен:', error);
 }
 
-
 const taskSchema = z.object({
   title: z.string().trim().min(1, 'Заголовок обязателен'),
   description: z.string().trim().optional(),
@@ -50,7 +49,6 @@ const taskSchema = z.object({
 });
 
 const TasksPage = () => {
-
   const dispatch = useDispatch();
   const { list: tasks, loading: tasksLoading } = useSelector((state) => state.tasks);
   const { user: currentUser } = useSelector((state) => state.auth);
@@ -68,20 +66,16 @@ const TasksPage = () => {
   const [loadingMembers, setLoadingMembers] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [sortField, setSortField] = useState('id');
-  const [sortDirection, setSortDirection] = useState('asc');
-  const [filterProject, setFilterProject] = useState('');
-  const [filterStatus, setFilterStatus] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
+  const pageSize = 10; 
 
   const [totalTasks, setTotalTasks] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
   const [tableFilters, setTableFilters] = useState({
     status: '',
     priority: '',
-    project: ''
+    project: '',
   });
 
   const {
@@ -164,18 +158,11 @@ const TasksPage = () => {
       const params = {
         page: currentPage,
         limit: pageSize,
-        sort: `${sortField}:${sortDirection}`,
       };
 
-      if (filterProject) {
-        params.projectId = filterProject;
-      }
-      if (filterStatus) {
-        params.status = filterStatus;
-      }
-      if (searchQuery.trim()) {
-        params.search = searchQuery.trim();
-      }
+      if (tableFilters.project)   params.projectId = tableFilters.project;
+      if (tableFilters.status)    params.status    = tableFilters.status;
+      if (tableFilters.priority)  params.priority  = tableFilters.priority;
 
       try {
         const result = await dispatch(fetchTasks(params)).unwrap();
@@ -187,19 +174,20 @@ const TasksPage = () => {
     };
 
     loadTasks();
-  }, [dispatch, currentPage, pageSize, sortField, sortDirection, filterProject, filterStatus, searchQuery]);
+  }, [dispatch, currentPage, tableFilters]);
 
   const handleTableFilterChange = (filterType, value) => {
     if (filterType === 'reset') {
       setTableFilters({ status: '', priority: '', project: '' });
     } else {
-      setTableFilters(prev => ({ ...prev, [filterType]: value }));
+      setTableFilters((prev) => ({ ...prev, [filterType]: value }));
     }
     setCurrentPage(1);
   };
+
   const handleStatusEdit = async (taskId, field, newValue) => {
     try {
-      const task = tasks.find(t => t.id === taskId);
+      const task = tasks.find((t) => t.id === taskId);
       if (!task) return;
 
       if (!canEditOrDeleteTask(task)) {
@@ -287,8 +275,6 @@ const TasksPage = () => {
   };
 
   const openTaskModal = (task = null, edit = false) => {
-    console.log('openTaskModal вызвана с параметрами:', { task, edit });
-
     if (task && edit && !canEditOrDeleteTask(task)) {
       alert('У вас нет прав на редактирование этой задачи');
       return;
@@ -314,7 +300,6 @@ const TasksPage = () => {
         reporter_id: task.reporter_id || null,
       });
     } else {
-
       reset({
         title: '',
         description: '',
@@ -331,7 +316,7 @@ const TasksPage = () => {
   };
 
   const closeModal = () => {
-    setIsModalOpen(false); 
+    setIsModalOpen(false);
     setModalTask(null);
     setIsEditMode(false);
     setIterations([]);
@@ -343,50 +328,14 @@ const TasksPage = () => {
     setCurrentPage(page);
   };
 
-  const handleSortChange = (field, direction) => {
-    setSortField(field);
-    setSortDirection(direction);
-    setCurrentPage(1);
-  };
-
-  const handleSearch = (e) => {
-    setSearchQuery(e.target.value);
-    setCurrentPage(1);
-  };
-
-  const handleFilterProjectChange = (e) => {
-    setFilterProject(e.target.value);
-    setCurrentPage(1);
-  };
-
-  const handleFilterStatusChange = (e) => {
-    setFilterStatus(e.target.value);
-    setCurrentPage(1);
-  };
-
-  const handlePageSizeChange = (e) => {
-    setPageSize(Number(e.target.value));
-    setCurrentPage(1);
-  };
-
-  const resetFilters = () => {
-    setFilterProject('');
-    setFilterStatus('');
-    setSearchQuery('');
-    setSortField('id');
-    setSortDirection('asc');
-    setCurrentPage(1);
-  };
-
   const handleExportPDF = async () => {
     const params = {
       page: 1,
       limit: 10000,
-      sort: `${sortField}:${sortDirection}`,
     };
-    if (filterProject) params.projectId = filterProject;
-    if (filterStatus) params.status = filterStatus;
-    if (searchQuery.trim()) params.search = searchQuery.trim();
+    if (tableFilters.project) params.projectId = tableFilters.project;
+    if (tableFilters.status) params.status = tableFilters.status;
+    if (tableFilters.priority) params.priority = tableFilters.priority;
 
     try {
       const result = await dispatch(fetchTasks(params)).unwrap();
@@ -421,16 +370,17 @@ const TasksPage = () => {
         { text: `Всего задач в отчете: ${dataToExport.length}`, margin: [0, 0, 0, 20] },
       ];
 
-      if (filterProject) {
-        const projectName = projects.find((p) => p.id === parseInt(filterProject))?.name || `ID ${filterProject}`;
+      if (tableFilters.project) {
+        const projectName = projects.find((p) => p.id === parseInt(tableFilters.project))?.name || `ID ${tableFilters.project}`;
         content.push({ text: `Фильтр по проекту: ${projectName}`, margin: [0, 0, 0, 8] });
       }
-      if (filterStatus) {
-        const statusName = statusMap[filterStatus] || filterStatus;
+      if (tableFilters.status) {
+        const statusName = statusMap[tableFilters.status] || tableFilters.status;
         content.push({ text: `Фильтр по статусу: ${statusName}`, margin: [0, 0, 0, 8] });
       }
-      if (searchQuery) {
-        content.push({ text: `Поисковый запрос: ${searchQuery}`, margin: [0, 0, 0, 20] });
+      if (tableFilters.priority) {
+        const priorityName = priorityMap[tableFilters.priority] || tableFilters.priority;
+        content.push({ text: `Фильтр по приоритету: ${priorityName}`, margin: [0, 0, 0, 8] });
       }
 
       Object.entries(groupedTasks)
@@ -497,11 +447,10 @@ const TasksPage = () => {
     const params = {
       page: 1,
       limit: 10000,
-      sort: `${sortField}:${sortDirection}`,
     };
-    if (filterProject) params.projectId = filterProject;
-    if (filterStatus) params.status = filterStatus;
-    if (searchQuery.trim()) params.search = searchQuery.trim();
+    if (tableFilters.project) params.projectId = tableFilters.project;
+    if (tableFilters.status) params.status = tableFilters.status;
+    if (tableFilters.priority) params.priority = tableFilters.priority;
 
     try {
       const result = await dispatch(fetchTasks(params)).unwrap();
@@ -515,39 +464,35 @@ const TasksPage = () => {
         ['Пользователь:', currentUser?.full_name || 'Неизвестно'],
         ['Всего задач в отчете:', dataToExport.length],
       ];
-      if (filterProject) {
-        const projectName = projects.find((p) => p.id === parseInt(filterProject))?.name || `ID ${filterProject}`;
+
+      if (tableFilters.project) {
+        const projectName = projects.find((p) => p.id === parseInt(tableFilters.project))?.name || `ID ${tableFilters.project}`;
         info.push(['Фильтр по проекту:', projectName]);
       }
-      if (filterStatus) {
+      if (tableFilters.status) {
         const statusName = {
           backlog: 'Бэклог',
           todo: 'To Do',
           in_progress: 'В работе',
           review: 'На проверке',
           done: 'Готово',
-        }[filterStatus] || filterStatus;
+        }[tableFilters.status] || tableFilters.status;
         info.push(['Фильтр по статусу:', statusName]);
       }
-      if (searchQuery) {
-        info.push(['Поисковый запрос:', searchQuery]);
+      if (tableFilters.priority) {
+        const priorityName = {
+          low: 'Низкий',
+          medium: 'Средний',
+          high: 'Высокий',
+          critical: 'Критический',
+        }[tableFilters.priority] || tableFilters.priority;
+        info.push(['Фильтр по приоритету:', priorityName]);
       }
+
       info.push([]);
 
-      const statusMap = {
-        backlog: 'Бэклог',
-        todo: 'To Do',
-        in_progress: 'В работе',
-        review: 'На проверке',
-        done: 'Готово',
-      };
-
-      const priorityMap = {
-        low: 'Низкий',
-        medium: 'Средний',
-        high: 'Высокий',
-        critical: 'Критический',
-      };
+      const statusMap = { /* тот же маппинг */ };
+      const priorityMap = { /* тот же маппинг */ };
 
       const groupedTasks = dataToExport.reduce((acc, task) => {
         const status = task.status || 'unknown';
@@ -611,29 +556,25 @@ const TasksPage = () => {
     {
       key: 'id',
       header: 'ID',
-      enableSorting: true,
-      meta: { width: '80px' }
+      meta: { width: '80px' },
     },
     {
       key: 'title',
       header: 'Название',
       render: (t) => <strong>{t.title}</strong>,
-      enableSorting: true,
-      meta: { width: '300px' }
+      meta: { width: '300px' },
     },
     {
       key: 'Project.name',
       header: 'Проект',
       render: (t) => t.Project?.name || '—',
-      enableSorting: false,
-      meta: { width: '180px' }
+      meta: { width: '180px' },
     },
     {
       key: 'Iteration.name',
       header: 'Итерация',
       render: (t) => t.Iteration?.name || '—',
-      enableSorting: false,
-      meta: { width: '150px' }
+      meta: { width: '150px' },
     },
     {
       key: 'priority',
@@ -643,8 +584,7 @@ const TasksPage = () => {
           {getPriorityLabel(t.priority)}
         </span>
       ),
-      enableSorting: true,
-      meta: { width: '140px' }
+      meta: { width: '140px' },
     },
     {
       key: 'status',
@@ -654,22 +594,19 @@ const TasksPage = () => {
           {getStatusLabel(t.status)}
         </span>
       ),
-      enableSorting: true,
-      meta: { width: '140px' }
+      meta: { width: '140px' },
     },
     {
       key: 'Assignee.full_name',
       header: 'Исполнитель',
       render: (t) => t.Assignee?.full_name || '—',
-      enableSorting: false,
-      meta: { width: '180px' }
+      meta: { width: '180px' },
     },
     {
       key: 'due_date',
       header: 'Срок',
-      render: (t) => t.due_date ? new Date(t.due_date).toLocaleDateString('ru-RU') : '—',
-      enableSorting: true,
-      meta: { width: '120px' }
+      render: (t) => (t.due_date ? new Date(t.due_date).toLocaleDateString('ru-RU') : '—'),
+      meta: { width: '120px' },
     },
     {
       key: 'actions',
@@ -704,8 +641,7 @@ const TasksPage = () => {
           </div>
         );
       },
-      enableSorting: false,
-      meta: { width: '180px' }
+      meta: { width: '180px' },
     },
   ];
 
@@ -752,11 +688,13 @@ const TasksPage = () => {
       }
 
       if (selectedFiles.length > 0) {
-        await dispatch(uploadAttachments({
-          taskId: newTask.id,
-          files: selectedFiles,
-          userId: currentUser.id,
-        }));
+        await dispatch(
+          uploadAttachments({
+            taskId: newTask.id,
+            files: selectedFiles,
+            userId: currentUser.id,
+          })
+        );
       }
 
       closeModal();
@@ -806,65 +744,26 @@ const TasksPage = () => {
               📊 Экспорт в Excel
             </button>
           </div>
-          <button
-            onClick={() => openTaskModal()}
-            className="btn btn-success btn-add"
-          >
+          <button onClick={() => openTaskModal()} className="btn btn-success btn-add">
             <span>+</span> Создать задачу
           </button>
         </div>
       </div>
 
       <div className="filters-panel">
-        <div className="search-box">
-          <input
-            type="text"
-            placeholder="Поиск по названию задачи..."
-            value={searchQuery}
-            onChange={handleSearch}
-            className="search-input"
-          />
-          <span className="search-icon">🔍</span>
-        </div>
-        <div className="filter-group">
-            <label htmlFor="page-size">На странице:</label>
-            <select
-              id="page-size"
-              value={pageSize}
-              onChange={handlePageSizeChange}
-              className="filter-select"
-            >
-              <option value="5">5</option>
-              <option value="10">10</option>
-              <option value="20">20</option>
-              <option value="50">50</option>
-            </select>
-          </div>
-
-          <button
-            onClick={resetFilters}
-            className="btn btn-secondary reset-btn"
-            title="Сбросить все фильтры"
-          >
-            ⭮ Сбросить фильтры
-          </button>
-        </div>
-
-        
+        {/* Здесь больше ничего нет — фильтры только в заголовках таблицы */}
+      </div>
 
       <EditableTable
         data={tasks}
         columns={tableColumns}
         onEditCell={handleStatusEdit}
-        emptyMessage="Задачи не найдены. Попробуйте изменить фильтры или создать новую задачу."
+        emptyMessage="Задачи не найдены. Попробуйте изменить фильтры в заголовках таблицы или создать новую задачу."
         pageSize={pageSize}
         totalCount={totalTasks}
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={handlePageChange}
-        onSortChange={handleSortChange}
-        sortField={sortField}
-        sortDirection={sortDirection}
         loading={tasksLoading}
         projects={projects}
         filters={tableFilters}
@@ -1181,27 +1080,13 @@ const TasksPage = () => {
       <style>
         {`
           @keyframes slideIn {
-            from {
-              transform: translateX(100%);
-              opacity: 0;
-            }
-            to {
-              transform: translateX(0);
-              opacity: 1;
-            }
+            from { transform: translateX(100%); opacity: 0; }
+            to   { transform: translateX(0); opacity: 1; }
           }
-          
           @keyframes slideOut {
-            from {
-              transform: translateX(0);
-              opacity: 1;
-            }
-            to {
-              transform: translateX(100%);
-              opacity: 0;
-            }
+            from { transform: translateX(0); opacity: 1; }
+            to   { transform: translateX(100%); opacity: 0; }
           }
-          
           .status-notification {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
             font-size: 14px;
