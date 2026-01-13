@@ -761,7 +761,6 @@ const TasksPage = () => {
         </div>
       </div>
 
-
       <EditableTable
         data={tasks}
         columns={tableColumns}
