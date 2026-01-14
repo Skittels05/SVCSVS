@@ -24,8 +24,8 @@ const EditableTable = ({
     priority: '',
     project: '',
   },
-  sorting = [],               // массив вида [{ id: 'title', desc: true/false }]
-  onSortingChange,            // setSorting из TasksPage
+  sorting = [],
+  onSortingChange,
 }) => {
   const [editingCell, setEditingCell] = useState(null);
 
@@ -34,7 +34,6 @@ const EditableTable = ({
       accessorKey: col.key,
       header: col.header,
       cell: (info) => {
-        // Редактирование статуса по двойному клику
         if (
           col.key === 'status' &&
           editingCell?.rowId === info.row.id &&
@@ -77,11 +76,9 @@ const EditableTable = ({
         return info.getValue() || '—';
       },
       meta: col.meta || {},
-      // Разрешаем сортировку для большинства колонок
       enableSorting: !['actions', 'priority', 'status'].includes(col.key),
     }));
 
-    // Делаем статус редактируемым по двойному клику
     if (onEditCell) {
       baseColumns.forEach((col) => {
         if (col.accessorKey === 'status') {
@@ -104,7 +101,6 @@ const EditableTable = ({
       });
     }
 
-    // Фильтры в заголовках (для status и Project.name)
     baseColumns.forEach((col) => {
       if (col.accessorKey === 'status') {
         const originalHeader = col.header;
@@ -163,15 +159,15 @@ const EditableTable = ({
     columns: tableColumns,
     manualPagination: true,
     pageCount: totalPages,
-    manualSorting: true,                  // ← серверная сортировка
+    manualSorting: true,
     state: {
       pagination: {
         pageIndex: currentPage - 1,
         pageSize,
       },
-      sorting,                            // ← состояние сортировки
+      sorting,
     },
-    onSortingChange,                      // ← setSorting
+    onSortingChange,
     getCoreRowModel: getCoreRowModel(),
   });
 
@@ -277,7 +273,6 @@ const EditableTable = ({
                           header.getContext()
                         )}
 
-                        {/* Стрелки сортировки */}
                         {header.column.getIsSorted() === 'asc' && ' ↑'}
                         {header.column.getIsSorted() === 'desc' && ' ↓'}
                       </div>
