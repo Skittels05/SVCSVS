@@ -3,14 +3,14 @@ import api from '../../services/api';
 
 export const fetchTasks = createAsyncThunk(
   'tasks/fetchTasks',
-  async ({ page = 1, limit = 10, sort, projectId, status } = {}, { rejectWithValue }) => {
+  async ({ page = 1, limit = 10, sort, project_id, status } = {}, { rejectWithValue }) => {
     try {
       let url = '/tasks';
       const params = new URLSearchParams();
       params.append('page', page);
       params.append('limit', limit);
       if (sort) params.append('sort', sort);
-      if (projectId) params.append('project_id', projectId);
+      if (project_id) params.append('project_id', project_id);
       if (status) params.append('status', status);
 
       url += `?${params.toString()}`;

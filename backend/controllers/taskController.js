@@ -1,4 +1,4 @@
-const { Task, Project, Iteration, User, Attachment } = require('../models');
+const { Task } = require('../models');
 const { parseQuery } = require('../helpers/queryParser');
 
 exports.create = async (req, res, next) => {
@@ -8,31 +8,17 @@ exports.create = async (req, res, next) => {
     const lastTask = await Task.findOne().sort({ _id: -1 }).select('_id');
     const newId = lastTask ? lastTask._id + 1 : 1;
 
-    const cleanBody = { ...req.body, _id: newId };
+    const taskData = { ...req.body, _id: newId };
 
-    cleanBody.project_id = cleanBody.project_id
-      ? Number(cleanBody.project_id.id || cleanBody.project_id._id || cleanBody.project_id)
-      : null;
+    if (taskData.project_id) taskData.project_id = Number(taskData.project_id);
+    if (taskData.iteration_id) taskData.iteration_id = Number(taskData.iteration_id);
+    if (taskData.reporter_id) taskData.reporter_id = Number(taskData.reporter_id);
+    if (taskData.assignee_id) taskData.assignee_id = Number(taskData.assignee_id);
+    if (taskData.parent_task_id) taskData.parent_task_id = Number(taskData.parent_task_id);
 
-    cleanBody.iteration_id = cleanBody.iteration_id
-      ? Number(cleanBody.iteration_id.id || cleanBody.iteration_id._id || cleanBody.iteration_id)
-      : null;
+    console.log('[TASK CREATE] Подготовленные данные:', JSON.stringify(taskData, null, 2));
 
-    cleanBody.reporter_id = cleanBody.reporter_id
-      ? Number(cleanBody.reporter_id.id || cleanBody.reporter_id._id || cleanBody.reporter_id)
-      : null;
-
-    cleanBody.assignee_id = cleanBody.assignee_id
-      ? Number(cleanBody.assignee_id.id || cleanBody.assignee_id._id || cleanBody.assignee_id)
-      : null;
-
-    cleanBody.parent_task_id = cleanBody.parent_task_id
-      ? Number(cleanBody.parent_task_id.id || cleanBody.parent_task_id._id || cleanBody.parent_task_id)
-      : null;
-
-    console.log('[TASK CREATE] Очищенное тело с новым _id:', JSON.stringify(cleanBody, null, 2));
-
-    const task = await Task.create(cleanBody);
+    const task = await Task.create(taskData);
 
     const fullTask = await Task.findById(task._id).populate([
       { path: 'project_id', select: 'name' },
@@ -64,6 +50,16 @@ exports.getAll = async (req, res, next) => {
     console.log('[TASK GET ALL] Запрос параметров:', req.query);
 
     const { where, sort, limit, skip } = parseQuery(req.query);
+    if (where.project) {
+      where.project_id = Number(where.project);
+      delete where.project;
+    }
+    if (where.project_id) {
+      where.project_id = Number(where.project_id);
+    }
+    if (where.iteration_id) {
+      where.iteration_id = Number(where.iteration_id);
+    }
 
     const count = await Task.countDocuments(where);
 
@@ -99,8 +95,6 @@ exports.getAll = async (req, res, next) => {
       data: formattedRows,
     };
 
-    console.log('[TASK GET ALL] Отправляем клиенту:', response.data.length, 'задач');
-
     res.json(response);
   } catch (err) {
     console.error('[TASK GET ALL] Ошибка:', err);
@@ -119,13 +113,13 @@ exports.getById = async (req, res, next) => {
       { path: 'assignee_id', select: 'full_name', as: 'Assignee' },
       { path: 'parent_task_id', select: 'title' },
       { path: 'subTasks', select: 'title status priority' },
-      { path: 'attachments', select: 'file_name file_url', 
-        populate: { path: 'user_id', select: 'full_name', as: 'Uploader' } 
+      {
+        path: 'attachments', select: 'file_name file_url',
+        populate: { path: 'user_id', select: 'full_name', as: 'Uploader' }
       },
     ]);
 
     if (!task) {
-      console.log('[TASK GET BY ID] Задача не найдена:', req.params.id);
       const error = new Error('Задача не найдена');
       error.status = 404;
       throw error;
@@ -137,8 +131,6 @@ exports.getById = async (req, res, next) => {
     formatted.Reporter = formatted.reporter_id;
     formatted.Assignee = formatted.assignee_id;
     formatted.id = formatted._id;
-
-    console.log('[TASK GET BY ID] Отправляем задачу:', formatted.id);
 
     res.json(formatted);
   } catch (err) {
@@ -149,35 +141,21 @@ exports.getById = async (req, res, next) => {
 
 exports.update = async (req, res, next) => {
   try {
-    console.log('[TASK UPDATE] Пришедшее тело запроса:', JSON.stringify(req.body, null, 2));
+    console.log('[TASK UPDATE] Пришедшее тело:', JSON.stringify(req.body, null, 2));
 
-    const cleanBody = { ...req.body };
+    const updateData = { ...req.body };
 
-    cleanBody.project_id = cleanBody.project_id
-      ? Number(cleanBody.project_id.id || cleanBody.project_id._id || cleanBody.project_id)
-      : null;
+    if (updateData.project_id) updateData.project_id = Number(updateData.project_id);
+    if (updateData.iteration_id) updateData.iteration_id = Number(updateData.iteration_id);
+    if (updateData.reporter_id) updateData.reporter_id = Number(updateData.reporter_id);
+    if (updateData.assignee_id) updateData.assignee_id = Number(updateData.assignee_id);
+    if (updateData.parent_task_id) updateData.parent_task_id = Number(updateData.parent_task_id);
 
-    cleanBody.iteration_id = cleanBody.iteration_id
-      ? Number(cleanBody.iteration_id.id || cleanBody.iteration_id._id || cleanBody.iteration_id)
-      : null;
+    console.log('[TASK UPDATE] Данные для обновления:', JSON.stringify(updateData, null, 2));
 
-    cleanBody.reporter_id = cleanBody.reporter_id
-      ? Number(cleanBody.reporter_id.id || cleanBody.reporter_id._id || cleanBody.reporter_id)
-      : null;
-
-    cleanBody.assignee_id = cleanBody.assignee_id
-      ? Number(cleanBody.assignee_id.id || cleanBody.assignee_id._id || cleanBody.assignee_id)
-      : null;
-
-    cleanBody.parent_task_id = cleanBody.parent_task_id
-      ? Number(cleanBody.parent_task_id.id || cleanBody.parent_task_id._id || cleanBody.parent_task_id)
-      : null;
-
-    console.log('[TASK UPDATE] Очищенное тело для обновления:', JSON.stringify(cleanBody, null, 2));
-
-    const task = await Task.findByIdAndUpdate(req.params.id, cleanBody, {
+    const task = await Task.findByIdAndUpdate(req.params.id, updateData, {
       new: true,
-      runValidators: true
+      runValidators: true,
     }).populate([
       { path: 'project_id', select: 'name' },
       { path: 'iteration_id', select: 'name' },
@@ -185,13 +163,13 @@ exports.update = async (req, res, next) => {
       { path: 'assignee_id', select: 'full_name', as: 'Assignee' },
       { path: 'parent_task_id', select: 'title' },
       { path: 'subTasks', select: 'title status priority' },
-      { path: 'attachments', select: 'file_name file_url', 
-        populate: { path: 'user_id', select: 'full_name', as: 'Uploader' } 
+      {
+        path: 'attachments', select: 'file_name file_url',
+        populate: { path: 'user_id', select: 'full_name', as: 'Uploader' }
       },
     ]);
 
     if (!task) {
-      console.log('[TASK UPDATE] Задача не найдена:', req.params.id);
       const error = new Error('Задача не найдена');
       error.status = 404;
       throw error;
@@ -203,8 +181,6 @@ exports.update = async (req, res, next) => {
     formatted.Reporter = formatted.reporter_id;
     formatted.Assignee = formatted.assignee_id;
     formatted.id = formatted._id;
-
-    console.log('[TASK UPDATE] Финальный обновлённый ответ:', JSON.stringify(formatted, null, 2));
 
     res.json(formatted);
   } catch (err) {
@@ -219,13 +195,11 @@ exports.delete = async (req, res, next) => {
 
     const task = await Task.findByIdAndDelete(req.params.id);
     if (!task) {
-      console.log('[TASK DELETE] Задача не найдена:', req.params.id);
       const error = new Error('Задача не найдена');
       error.status = 404;
       throw error;
     }
 
-    console.log('[TASK DELETE] Успешно удалена задача:', req.params.id);
     res.status(204).send();
   } catch (err) {
     console.error('[TASK DELETE] Ошибка:', err);
@@ -236,7 +210,6 @@ exports.delete = async (req, res, next) => {
 exports.checkExists = async (req, res, next) => {
   try {
     const task = await Task.findById(req.params.id);
-    console.log('[TASK CHECK EXISTS] Задача существует:', !!task);
     res.status(task ? 200 : 404).send();
   } catch (err) {
     console.error('[TASK CHECK EXISTS] Ошибка:', err);

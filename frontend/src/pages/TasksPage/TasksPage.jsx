@@ -55,7 +55,6 @@ const TasksPage = () => {
   const [totalTasks, setTotalTasks] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Загрузка проектов
   useEffect(() => {
     const loadProjects = async () => {
       setLoadingProjects(true);
@@ -71,7 +70,6 @@ const TasksPage = () => {
     loadProjects();
   }, []);
 
-  // Загрузка итераций
   useEffect(() => {
     if (formData.project_id && !isNaN(Number(formData.project_id))) {
       const loadIterations = async () => {
@@ -93,7 +91,6 @@ const TasksPage = () => {
     }
   }, [formData.project_id]);
 
-  // Загрузка участников проекта
   useEffect(() => {
     if (formData.project_id && !isNaN(Number(formData.project_id))) {
       const loadMembers = async () => {
@@ -115,7 +112,6 @@ const TasksPage = () => {
     }
   }, [formData.project_id]);
 
-  // Загрузка задач
   useEffect(() => {
     const params = {
       page: currentPage,
@@ -359,7 +355,7 @@ const TasksPage = () => {
       />
 
       <Modal
-        isOpen={modalTask !== null || isEditMode} // ← Открывается всегда, если isEditMode = true (для создания)
+        isOpen={modalTask !== null || isEditMode} 
         onClose={closeModal}
         title={isEditMode ? (modalTask ? 'Редактировать задачу' : 'Создать задачу') : 'Просмотр задачи'}
       >

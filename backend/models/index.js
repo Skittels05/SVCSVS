@@ -1,4 +1,4 @@
-const mongoose = require('../config/database'); // или просто require('mongoose')
+const mongoose = require('../config/database');
 
 const db = {};
 

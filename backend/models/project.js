@@ -34,7 +34,6 @@ const projectSchema = new Schema({
   },
 }, { _id: false });
 
-// Виртуальное поле для участников проекта
 projectSchema.virtual('projectMembers', {
   ref: 'ProjectMember',
   localField: '_id',

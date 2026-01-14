@@ -65,7 +65,6 @@ const taskSchema = new Schema({
   }],
 }, { _id: false });
 
-// Виртуальные поля
 taskSchema.virtual('Project').get(function () {
   return this.project_id;
 });
@@ -84,13 +83,12 @@ taskSchema.virtual('subTasks', {
   foreignField: 'parent_task_id',
 });
 
-// Важно: отключаем строгую проверку populate для виртуальных полей
 taskSchema.set('strictPopulate', false);
 
 taskSchema.set('toJSON', { virtuals: true });
 taskSchema.set('toObject', { virtuals: true });
 
-taskSchema.pre('save', function () {  // ← без next
+taskSchema.pre('save', function () {
   if (this.isModified()) {
     this.updated_at = Date.now();
   }
