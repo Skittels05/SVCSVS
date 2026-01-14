@@ -25,6 +25,12 @@
       <input type="text" id="authorFilter" placeholder="Автор...">
       <input type="text" id="tagFilter" placeholder="Тег...">
       <input type="text" id="search" placeholder="Поиск по тексту...">
+
+      <select id="limitSelect">
+        <option value="10">10 на странице</option>
+        <option value="20" selected>20 на странице</option>
+        <option value="50">50 на странице</option>
+      </select>
     </div>
 
     <div id="stats" class="stats"></div>
@@ -41,7 +47,15 @@
     <div id="venn" class="venn"></div>
 
     <h2>Цитаты (<span id="count">0</span>)</h2>
+
     <div id="quotes" class="quotes-grid"></div>
+
+    <!-- Пагинация -->
+    <div class="pagination">
+      <button id="prevPage">« Предыдущая</button>
+      <span id="pageInfo">Страница 1 из 1</span>
+      <button id="nextPage">Следующая »</button>
+    </div>
   </div>
 
   <script src="script.js"></script>
